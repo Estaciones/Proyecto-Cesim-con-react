@@ -1,30 +1,30 @@
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import dotenv from 'dotenv';
-import authRoutes from './routes/authRoutes.js';
-import apiRoutes from './routes/apiRoutes.js';
+import express from "express"
+import cors from "cors"
+import helmet from "helmet"
+import dotenv from "dotenv"
+import authRoutes from "./routes/authRoutes.js"
+import apiRoutes from "./routes/apiRoutes.js"
 
-dotenv.config();
+dotenv.config()
 
-const app = express();
+const app = express()
 
 // ✅ Configurar CORS específico en lugar del wildcard '*'
 const corsOptions = {
-  origin: ['http://127.0.0.1:3001','http://127.0.0.1:3000','http://localhost:3000', 'http://localhost:3000'], // Orígenes permitidos
+  origin: ["http://localhost:5173"], // Orígenes permitidos
   credentials: true, // Permitir credenciales
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-};
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}
 
-app.use(helmet());
-app.use(cors(corsOptions)); // ✅ Usar configuración específica
-app.use(express.json());
+app.use(helmet())
+app.use(cors(corsOptions)) // ✅ Usar configuración específica
+app.use(express.json())
 
-app.use('/api/auth', authRoutes);
-app.use('/api', apiRoutes);
+app.use("/api/auth", authRoutes)
+app.use("/api", apiRoutes)
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
-  console.log(`Servidor escuchando en el puerto ${PORT}`);
-});
+  console.log(`Servidor escuchando en el puerto ${PORT}`)
+})
