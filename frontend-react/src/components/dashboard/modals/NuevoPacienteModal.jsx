@@ -1,7 +1,7 @@
 // src/components/dashboard/modals/NuevoPacienteModal.jsx
 import React, { useContext, useState, useEffect } from "react";
 import Modal from "./Modal";
-import { DashboardContext } from "../../context/DashboardContext";
+import { DashboardContext } from "../../../context/DashboardContext";
 
 export default function NuevoPacienteModal() {
   const { modals, closeModal, createPatient, profile } = useContext(DashboardContext);

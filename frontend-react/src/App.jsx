@@ -1,21 +1,25 @@
 // src/App.jsx
-import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Login from "./components/Login";
-import Register from "./components/Register";
-// import Dashboard from "./pages/Dashboard"; // crea esta página más tarde
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { DashboardProvider } from './context/DashboardProvider';
+import Login from './components/Login';
+import Dashboard from './components/dashboard/Dashboard';
+import Register from './components/Register'; // si tienes
+import './App.css';
 
-export default function App() {
+function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<Login />} />
-        {<Route path="/register" element={<Register />} />}
-        
-        {/* dashboard después del login */}
-        {/* <Route path="/dashboard" element={<Dashboard />} /> */}
-      </Routes>
-    </BrowserRouter>
+    <DashboardProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/dashboard/*" element={<Dashboard />} />
+          <Route path="/" element={<Login />} /> {/* redirige a login por defecto */}
+        </Routes>
+      </BrowserRouter>
+    </DashboardProvider>
   );
 }
+
+export default App;

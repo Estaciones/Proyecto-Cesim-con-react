@@ -1,7 +1,7 @@
 // src/components/dashboard/modals/ViewPlanModal.jsx
 import React, { useContext } from "react";
 import Modal from "./Modal";
-import { DashboardContext } from "../../context/DashboardContext";
+import { DashboardContext } from "../../../context/DashboardContext";
 
 export default function ViewPlanModal() {
   const { modals, closeModal, currentViewPlan } = useContext(DashboardContext);

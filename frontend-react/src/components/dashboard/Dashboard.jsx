@@ -122,8 +122,8 @@ function ToastPlaceholder() {
       toast.type === "error"
         ? "#ff6b6b"
         : toast.type === "success"
-        ? "#2ed573"
-        : "#0b84ff",
+          ? "#2ed573"
+          : "#0b84ff",
     zIndex: 9999,
   };
   return <div style={style}>{toast.text}</div>;

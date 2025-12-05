@@ -1,7 +1,7 @@
 // src/components/dashboard/modals/CrearPlanModal.jsx
 import React, { useContext, useState, useEffect } from "react";
 import Modal from "./Modal";
-import { DashboardContext } from "../../context/DashboardContext";
+import { DashboardContext } from "../../../context/DashboardContext";
 
 /*
   Implementa prescripciones como array de objetos en estado local.

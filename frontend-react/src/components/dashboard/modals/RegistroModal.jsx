@@ -1,7 +1,7 @@
 // src/components/dashboard/modals/RegistroModal.jsx
 import React, { useContext, useState, useEffect } from "react";
 import Modal from "./Modal";
-import { DashboardContext } from "../../context/DashboardContext";
+import { DashboardContext } from "../../../context/DashboardContext";
 
 export default function RegistroModal() {
   const { modals, closeModal, createRegistro, profile } = useContext(DashboardContext);

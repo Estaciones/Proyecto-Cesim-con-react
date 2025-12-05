@@ -1,10 +1,14 @@
 // src/utils/api.js
-// Helper para construir URLs de API centralizado.
-// Usa REACT_APP_API_BASE (Create React App) o caída a cadena vacía
-// para llamadas relativas (útil si usas "proxy" en package.json).
-export const API_BASE = (process.env.REACT_APP_API_BASE || "").replace(/\/$/, "");
+// Helper simple para construir URLs de API centralizado.
+// Usa una URL explícita en lugar de confiar en variables de entorno.
+export const API_BASE = "http://localhost:3000/api".replace(/\/$/, "");
 
-export function apiUrl(path) {
-  const cleaned = String(path || "").replace(/^\//, "");
-  return API_BASE ? `${API_BASE}/${cleaned}` : `/${cleaned}`;
+/**
+ * apiUrl(path)
+ * - path: cadena relativa (puede incluir query string), p. ej. "profile?id=123" o "/historia"
+ * - devuelve: URL absoluta completa para usar en fetch
+ */
+export function apiUrl(path = "") {
+  const cleaned = String(path || "").replace(/^\/+/, ""); // quita slashes iniciales
+  return cleaned ? `${API_BASE}/${cleaned}` : API_BASE;
 }

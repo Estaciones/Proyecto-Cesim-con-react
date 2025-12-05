@@ -1,7 +1,7 @@
 // src/context/DashboardProvider.jsx
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DashboardContext } from "./DashboardContext";
-import { apiUrl } from "../../utils/api";
+import { apiUrl } from "../utils/api";
 
 export function DashboardProvider({ children }) {
   const [user, setUser] = useState(() => {
@@ -407,6 +407,7 @@ export function DashboardProvider({ children }) {
   const value = {
     // Estado
     user,
+    setUser,
     profile,
     patients,
     plans,
