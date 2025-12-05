@@ -1,0 +1,212 @@
+:root {
+  --bg: #f4f6fb;
+  --card: #fff;
+  --accent: #4b6cb7;
+  --accent-dark: #182848;
+  --muted: #666;
+  --success: #2ed573;
+  --danger: #ff6b6b;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  background: linear-gradient(180deg, #eef2ff, #f7fbff);
+  color: #222;
+  min-height: 100vh;
+} /* Layout */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+  border-bottom: 1px solid #eee;
+  background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+  color: #fff;
+}
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.badge {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+} /* Inner layout */
+.dashboard-inner {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 520px;
+}
+.dashboard-sidebar {
+  border-right: 1px solid #eee;
+  padding: 18px;
+  background: linear-gradient(0deg, #fbfdff, #fff);
+}
+.dashboard-main {
+  padding: 20px;
+} /* Nav */
+.dashboard-sidebar nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dashboard-sidebar .nav-item {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #233;
+  text-decoration: none;
+  background: transparent;
+  border: 1px solid transparent;
+}
+.dashboard-sidebar .nav-item.active {
+  background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+  color: #fff;
+} /* Content sections */
+.content-section {
+  background: var(--bg);
+  padding: 18px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+}
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.section-content {
+  min-height: 120px;
+} /* pacientes grid */
+.pacientes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.paciente-card {
+  background: var(--card);
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(20, 20, 40, 0.04);
+}
+.paciente-card h4 {
+  margin: 0 0 6px 0;
+}
+.paciente-card .meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+.card-actions {
+  display: flex;
+  gap: 8px;
+} /* Buttons & inputs */
+.btn-primary {
+  background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.btn-secondary {
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: inherit;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.input-search {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  width: 100%;
+} /* Empty / loading states */
+.empty-state,
+.loading-state {
+  text-align: center;
+  color: var(--muted);
+  padding: 18px;
+} /* Modal */
+.modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 60;
+}
+.modal-body {
+  width: 100%;
+  max-width: 720px;
+  background: var(--card);
+  border-radius: 10px;
+  padding: 18px;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+.modal-close {
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+}
+.form-group {
+  margin-bottom: 12px;
+}
+.form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 12px;
+} /* utilities */
+.oculto {
+  display: none !important;
+}
+.badge-small {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: #f0f0f0;
+} /* responsive */
+@media (max-width: 900px) {
+  .dashboard-inner {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-sidebar {
+    order: 2;
+    display: flex;
+    gap: 8px;
+    overflow: auto;
+    padding: 12px;
+  }
+  .dashboard-main {
+    order: 1;
+    padding: 12px;
+  }
+}
