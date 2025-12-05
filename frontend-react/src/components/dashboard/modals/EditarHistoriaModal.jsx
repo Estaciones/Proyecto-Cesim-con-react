@@ -1,7 +1,7 @@
 // src/components/dashboard/modals/EditHistoriaModal.jsx
 import React, { useContext, useEffect, useState } from "react";
 import Modal from "./Modal";
-import { DashboardContext } from "../../context/DashboardContext";
+import { DashboardContext } from "../../../context/DashboardContext";
 
 export default function EditHistoriaModal() {
   const { modals, closeModal, currentEditHistoria, updateHistoria } = useContext(DashboardContext);
@@ -28,7 +28,7 @@ export default function EditHistoriaModal() {
     setSubmitting(true);
     try {
       await updateHistoria({ recordId, titulo, descripcion });
-    } catch (err) {}
+    } catch (err) {  console.error("Error en EditHistorialModal:", err);}
     finally { setSubmitting(false); }
   }
 
