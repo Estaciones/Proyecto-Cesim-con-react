@@ -31,7 +31,7 @@ export default function NuevoPacienteModal() {
     setSubmitting(true);
     try {
       await createPatient(payload);
-    } catch (err) {}
+    } catch (err) {console.error("Error en NuevoPacienteModal:", err);}
     finally { setSubmitting(false); }
   }
 

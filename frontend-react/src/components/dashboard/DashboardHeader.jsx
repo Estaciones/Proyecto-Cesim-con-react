@@ -3,24 +3,32 @@ import React, { useContext } from "react";
 import { DashboardContext } from "../../context/DashboardContext";
 
 /*
-  Header separado para mayor claridad.
-  Recibe onLogout prop desde el Dashboard contenedor (para navegar).
+  Header del dashboard:
+  - Muestra el nombre del usuario.
+  - Botón de logout.
 */
 export default function DashboardHeader({ onLogout }) {
   const { profile } = useContext(DashboardContext);
 
-  const userName = profile?.nombre_usuario || profile?.email || "Usuario";
-  const role = (profile?.tipo_usuario || profile?.tipo || "usuario").toUpperCase();
-
   return (
     <header className="dashboard-header">
       <div className="header-left">
-        <h1 id="appTitle">Panel</h1>
-        <span id="userWelcome">Bienvenido, <strong id="userName">{userName}</strong></span>
+        <h1 className="header-title">Panel de Control</h1>
       </div>
+
       <div className="header-right">
-        <span id="userRole" className="badge">{role === "GESTOR_CASOS" ? "GESTOR DE CASOS" : role}</span>
-        <button id="logoutBtn" className="btn-ghost" onClick={onLogout}>Cerrar Sesión</button>
+        {profile && (
+          <div className="user-info">
+            <span className="user-name">
+              {profile.nombre} {profile.apellido}
+            </span>
+            <span className="user-role">{profile.tipo_usuario}</span>
+          </div>
+        )}
+
+        <button className="btn-logout" onClick={onLogout}>
+          Cerrar sesión
+        </button>
       </div>
     </header>
   );

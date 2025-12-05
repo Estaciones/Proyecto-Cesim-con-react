@@ -34,7 +34,7 @@ export default function RegistroModal() {
     try {
       await createRegistro({ titulo, descripcion, id_paciente, ci });
     } catch (err) {
-      // error ya manejado en context
+      console.error("Error en RegistroModal:", err);
     } finally {
       setSubmitting(false);
     }

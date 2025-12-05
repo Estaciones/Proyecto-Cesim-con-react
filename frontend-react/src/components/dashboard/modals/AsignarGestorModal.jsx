@@ -1,7 +1,7 @@
 // src/components/dashboard/modals/AsignarGestorModal.jsx
 import React, { useContext, useEffect, useState } from "react";
 import Modal from "./Modal";
-import { DashboardContext } from "../../context/DashboardContext";
+import { DashboardContext } from "../../../context/DashboardContext";
 import { apiUrl } from "../../../utils/api";
 
 export default function AsignarGestorModal() {
@@ -30,7 +30,7 @@ export default function AsignarGestorModal() {
     const pid = currentAsignarPacienteId;
     if (!selected) return alert("Selecciona un gestor");
     if (!pid) return alert("No se proporcionó el id del paciente");
-    try { await assignGestor({ id_gestor: selected, id_paciente: pid }); } catch (err) {}
+    try { await assignGestor({ id_gestor: selected, id_paciente: pid }); } catch (err) {console.error("Error en AsignarGestorModlal:", err);}
   }
 
   return (
