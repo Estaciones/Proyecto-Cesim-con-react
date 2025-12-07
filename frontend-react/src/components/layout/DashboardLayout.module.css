@@ -1,0 +1,30 @@
+.dashboard-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f8fafc;
+}
+
+.dashboard-main-container {
+  display: flex;
+  flex: 1;
+  margin-top: 64px; /* Ajusta según la altura de tu header */
+}
+
+.dashboard-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  background-color: #ffffff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard-main-container {
+    flex-direction: column;
+  }
+  
+  .dashboard-content {
+    padding: 1rem;
+  }
+}

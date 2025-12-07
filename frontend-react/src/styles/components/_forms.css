@@ -1,0 +1,20 @@
+/* src/styles/components/_forms.css */
+.form-group { display:flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+label { font-size: 0.92rem; color: var(--muted); }
+
+.input, input[type="text"], input[type="email"], input[type="tel"], input[type="password"], select, textarea {
+  padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid rgba(16,24,40,0.06); background: #fff; font-size: 0.95rem; color: var(--text);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.input:focus, input:focus, select:focus, textarea:focus { outline: none; box-shadow: 0 10px 30px rgba(75,108,183,0.06); border-color: rgba(75,108,183,0.9); transform: translateY(-2px); }
+
+.input-error { border-color: rgba(255,107,107,0.9) !important; box-shadow: 0 6px 20px rgba(255,107,107,0.06); }
+.small-muted { font-size: 0.85rem; color: var(--muted); }
+
+/* Password strength bar (ejemplo) */
+#passwordStrength { margin-top: 6px; }
+#passwordBar { height: 8px; border-radius: 8px; background: #eee; transition: width 0.25s ease, background 0.25s ease; box-shadow: inset 0 -3px 8px rgba(0,0,0,0.03); }
+#passwordBar.level-weak { background: linear-gradient(90deg, #ff6b6b, #ff9a9a); }
+#passwordBar.level-medium { background: linear-gradient(90deg, #f6d365, #fda085); }
+#passwordBar.level-strong { background: linear-gradient(90deg, #7ee787, #2ed573); }
