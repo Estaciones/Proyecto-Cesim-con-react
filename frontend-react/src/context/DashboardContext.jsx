@@ -1,11 +1,14 @@
 // src/context/DashboardContext.jsx
 import { createContext } from "react";
 
-export const DashboardContext = createContext();
+/**
+ * DashboardContext
+ * - Se usa para proporcionar estado y funciones del dashboard a la app.
+ * - El default (aquí) sirve como documentación y para tests/TS.
+ */
+export const DashboardContext = createContext(null);
 
-// Valor por defecto para el contexto (opcional, pero útil para TypeScript/testing)
 export const defaultDashboardContext = {
-  // Estado principal
   user: null,
   profile: null,
   patients: null,
@@ -15,8 +18,6 @@ export const defaultDashboardContext = {
   activeSection: "historia",
   loading: false,
   toast: null,
-  
-  // Estados de modales
   modals: {
     registro: false,
     crearPlan: false,
@@ -26,10 +27,8 @@ export const defaultDashboardContext = {
     editHistoria: false,
     editPlan: false,
     viewHistoria: false,
-    viewPlan: false
+    viewPlan: false,
   },
-  
-  // Estados de contexto para modales (datos que se están editando/viendo)
   currentEditHistoria: null,
   currentViewHistoria: null,
   currentEditPlan: null,
@@ -37,20 +36,14 @@ export const defaultDashboardContext = {
   currentEditPres: null,
   currentAsignarPacienteId: null,
   currentCrearPlanPacienteId: null,
-  
-  // Funciones de UI/estado
   showToast: () => {},
   logout: () => {},
   setActiveSection: () => {},
   selectPatient: () => {},
-  
-  // Funciones de carga de datos
   loadProfile: async () => {},
   loadPatients: async () => {},
   loadPlanes: async () => {},
   loadHistoria: async () => {},
-  
-  // Funciones de apertura/cierre de modales
   openModal: () => {},
   closeModal: () => {},
   openViewHistoria: () => {},
@@ -60,8 +53,6 @@ export const defaultDashboardContext = {
   openEditPresWithId: async () => {},
   openAsignarGestor: () => {},
   openCrearPlanWithPatient: () => {},
-  
-  // Funciones CRUD
   createRegistro: async () => {},
   createPlan: async () => {},
   updatePlan: async () => {},
@@ -69,14 +60,7 @@ export const defaultDashboardContext = {
   assignGestor: async () => {},
   updatePrescripcion: async () => {},
   updateHistoria: async () => {},
-  
-  // Setters directos (para casos especiales)
   setPatients: () => {},
   setPlans: () => {},
   setHistoria: () => {},
-  
-  // Nota: Estas funciones no están en el contexto por defecto, pero son útiles para debugging
-  // __DEV__ functions (solo para desarrollo)
-  // resetContext: () => {}, // Si quieres agregar una función de reset
 };
-// Solo exportamos el contexto, no componentes

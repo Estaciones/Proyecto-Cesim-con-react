@@ -1,5 +1,5 @@
 .sidebar {
-  width: 260px;
+  width: var(--sidebar-width);
   background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
   color: white;
   display: flex;

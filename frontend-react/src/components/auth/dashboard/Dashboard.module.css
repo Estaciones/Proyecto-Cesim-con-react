@@ -1,3 +1,9 @@
+:root {
+  --sidebar-width: 260px; /* valor por defecto */
+  --header-height: 64px;
+}
+
+/* contenedor principal */
 .container {
   display: flex;
   flex-direction: column;
@@ -5,18 +11,21 @@
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
 }
 
+/* layout */
 .mainLayout {
   display: flex;
   flex: 1;
   overflow: hidden;
 }
 
+/* Content area: ahora deja espacio para el header (margin-top) y para el sidebar (padding-left) */
 .contentArea {
   flex: 1;
   overflow-y: auto;
-  padding-left: 260px; /* Ancho del sidebar */
+  padding-left: var(--sidebar-width); /* Ancho del sidebar */
+  margin-top: var(--header-height); /* Altura del header fijo */
   background: white;
-  min-height: calc(100vh - 64px); /* Altura del header */
+  min-height: calc(100vh - var(--header-height));
 }
 
 .contentWrapper {
@@ -24,7 +33,32 @@
   margin: 0 auto;
   width: 100%;
 }
+@media (max-width: 768px) {
+  :root {
+    --sidebar-width: 72px;
+  }
 
+  .contentArea {
+    padding-left: var(--sidebar-width);
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --sidebar-width: 0px; /* sidebar colapsado / fuera del flujo en móviles */
+  }
+
+  .contentArea {
+    padding-left: 0;
+    margin-top: var(
+      --header-height
+    ); /* mantener espacio superior para header */
+  }
+
+  .mainLayout {
+    flex-direction: column;
+  }
+}
 /* Loading State */
 .loadingContainer {
   display: flex;
@@ -184,22 +218,38 @@
 }
 
 .toast.success {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.95) 0%, rgba(5, 150, 105, 0.95) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.95) 0%,
+    rgba(5, 150, 105, 0.95) 100%
+  );
   color: white;
 }
 
 .toast.error {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.95) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.95) 0%,
+    rgba(220, 38, 38, 0.95) 100%
+  );
   color: white;
 }
 
 .toast.info {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.95) 0%, rgba(37, 99, 235, 0.95) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.95) 0%,
+    rgba(37, 99, 235, 0.95) 100%
+  );
   color: white;
 }
 
 .toast.warning {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.95) 0%, rgba(217, 119, 6, 0.95) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(245, 158, 11, 0.95) 0%,
+    rgba(217, 119, 6, 0.95) 100%
+  );
   color: white;
 }
 
@@ -232,21 +282,21 @@
   .contentArea {
     padding-left: 72px; /* Ancho del sidebar colapsado */
   }
-  
+
   .comingSoonTitle {
     font-size: 2rem;
   }
-  
+
   .comingSoonIcon {
     width: 80px;
     height: 80px;
   }
-  
+
   .comingSoonIcon svg {
     width: 36px;
     height: 36px;
   }
-  
+
   .toast {
     left: 16px;
     right: 16px;
@@ -260,23 +310,23 @@
     padding-left: 0;
     margin-top: 64px; /* Altura del header */
   }
-  
+
   .mainLayout {
     flex-direction: column;
   }
-  
+
   .comingSoonSection {
     padding: 2rem 1rem;
   }
-  
+
   .comingSoonTitle {
     font-size: 1.75rem;
   }
-  
+
   .featureItem {
     padding: 0.75rem 1rem;
   }
-  
+
   .toast {
     bottom: 80px; /* Evitar que se superponga con la barra de navegación móvil */
   }

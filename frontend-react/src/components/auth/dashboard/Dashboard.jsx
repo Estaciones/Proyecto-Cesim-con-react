@@ -1,7 +1,6 @@
 import React, { useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardContext } from '../../../context/DashboardContext';
-import Header from './Header/Header';
 import Sidebar from './Sidebar/Sidebar';
 import Historia from './sections/Historia/Historia';
 import Planes from './sections/Planes/Planes';
@@ -16,6 +15,7 @@ import EditPresModal from '../../modals/EditPresModal/EditPresModal';
 import EditHistoriaModal from '../../modals/EditHistoriaModal/EditHistoriaModal';
 import ViewHistoriaModal from '../../modals/ViewHistoriaModal/ViewHistoriaModal';
 import ViewPlanModal from '../../modals/ViewPlanModal/ViewPlanModal';
+import EditPlanModal from '../../modals/EditPlanModal/EditPlanModal';
 
 import styles from './Dashboard.module.css';
 
@@ -26,33 +26,49 @@ export default function Dashboard() {
     activeSection,
     setActiveSection,
     loadProfile,
-    logout,
+    profile,
     toast,
   } = useContext(DashboardContext);
 
+  // Determinar el tipo de usuario
+  const userType = user?.tipo || profile?.tipo_usuario;
+
   useEffect(() => {
-    // Si no hay usuario en contexto, redirige al login
     if (!user) {
       navigate('/login');
       return;
     }
 
-    // Asegurar que profile esté cargado
+    let mounted = true;
+
     (async () => {
       try {
-        await loadProfile();
+        // Cargar profile solo si no existe (evita recargas innecesarias)
+        if (!profile) {
+          await loadProfile();
+        }
       } catch (err) {
         console.error('Error cargando perfil:', err);
       }
+
+      // Determinar la sección por defecto según tipo de usuario
+      const type = (profile && profile.tipo_usuario) || user.tipo;
+      let defaultSection = 'historia';
+      if (type === 'medico' || (typeof type === 'string' && type.includes('gestor'))) {
+        defaultSection = 'pacientes';
+      } else if (type === 'paciente') {
+        defaultSection = 'historia';
+      }
+
+      // Solo cambiar si es distinto (evita re-renders en bucle)
+      if (mounted && defaultSection && activeSection !== defaultSection) {
+        setActiveSection(defaultSection);
+      }
     })();
 
+    return () => { mounted = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   if (!user) {
     return (
@@ -63,19 +79,35 @@ export default function Dashboard() {
     );
   }
 
+  // Función para verificar si una sección está permitida
+  const isSectionAllowed = (section) => {
+    if (!userType) return false;
+
+    switch (section) {
+      case 'pacientes':
+        return userType === 'medico' || userType === 'gestor_casos';
+      case 'historia':
+      case 'plan':
+      case 'comunicacion':
+        return true; // Todos los tipos pueden ver estas secciones
+      default:
+        return false;
+    }
+  };
+
   return (
     <div className={styles.container}>
-      <Header onLogout={handleLogout} />
-      
+
       <div className={styles.mainLayout}>
         <Sidebar activeSection={activeSection} onNavigate={setActiveSection} />
-        
+
         <main className={styles.contentArea}>
           <div className={styles.contentWrapper}>
-            {activeSection === 'historia' && <Historia />}
-            {activeSection === 'plan' && <Planes />}
-            {activeSection === 'pacientes' && <Pacientes />}
-            {activeSection === 'comunicacion' && (
+            {/* Mostrar solo secciones permitidas */}
+            {activeSection === 'pacientes' && isSectionAllowed('pacientes') && <Pacientes />}
+            {activeSection === 'historia' && isSectionAllowed('historia') && <Historia />}
+            {activeSection === 'plan' && isSectionAllowed('plan') && <Planes />}
+            {activeSection === 'comunicacion' && isSectionAllowed('comunicacion') && (
               <section className={styles.comingSoonSection}>
                 <div className={styles.comingSoonIcon}>
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,6 +135,27 @@ export default function Dashboard() {
                 </div>
               </section>
             )}
+
+            {/* Mensaje si la sección no está permitida */}
+            {!isSectionAllowed(activeSection) && (
+              <section className={styles.accessDeniedSection}>
+                <div className={styles.accessDeniedIcon}>
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <h2 className={styles.accessDeniedTitle}>Acceso Restringido</h2>
+                <p className={styles.accessDeniedText}>
+                  No tienes permiso para acceder a esta sección.
+                </p>
+                <button
+                  className={styles.backButton}
+                  onClick={() => setActiveSection('historia')}
+                >
+                  Volver a Historia Clínica
+                </button>
+              </section>
+            )}
           </div>
         </main>
       </div>
@@ -122,13 +175,23 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Modales */}
-      <RegistroModal />
+      {/* Modales - Filtrar según permisos */}
+      {userType === 'medico' && (
+        <>
+          <RegistroModal />
+          <NuevoPacienteModal />
+          <AsignarGestorModal />
+          <EditHistoriaModal />
+          <EditPlanModal />
+
+        </>
+      )}
+
+      {/* Modales para gestor */}
+      {userType === 'gestor_casos' && (
+        <EditPresModal />
+      )}
       <CrearPlanModal />
-      <NuevoPacienteModal />
-      <AsignarGestorModal />
-      <EditPresModal />
-      <EditHistoriaModal />
       <ViewHistoriaModal />
       <ViewPlanModal />
     </div>

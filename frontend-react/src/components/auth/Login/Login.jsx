@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import styles from './Login.module.css';
+// src/components/auth/Login/Login.jsx
+import React, { useState, useContext } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import styles from "./Login.module.css";
+import { apiUrl } from "../../../utils/api";
+import { DashboardContext } from "../../../context/DashboardContext";
 
 export default function Login() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const API_LOGIN = 'http://localhost:3000/api/auth/login';
+  // Obtener funciones del contexto
+  const { login, showToast } = useContext(DashboardContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,9 +21,10 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch(API_LOGIN, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch(apiUrl("auth/login"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           email: username,
           nombre_usuario: username,
@@ -29,14 +34,14 @@ export default function Login() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error('Credenciales incorrectas');
+          throw new Error("Credenciales incorrectas");
         }
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
 
-      if (data.message === 'Login correcto') {
+      if (data.message === "Login correcto") {
         const userData = {
           id: data.user.id_usuario,
           email: data.user.email,
@@ -44,21 +49,34 @@ export default function Login() {
           nombre_usuario: data.user.nombre_usuario,
         };
 
-        localStorage.setItem('user', JSON.stringify(userData));
-        
-        // Mostrar mensaje de éxito y navegar
-        setMessage({ text: '✅ Login exitoso. Redirigiendo...', type: 'success' });
-        
+        // Actualizamos el contexto y localStorage desde login()
+        if (typeof login === "function") {
+          login(userData);
+        } else {
+          // fallback (por compatibilidad)
+          try {
+            localStorage.setItem("user", JSON.stringify(userData));
+          } catch (e) {
+            console.warn("No se pudo escribir localStorage", e);
+          }
+        }
+
+        // Mensaje y toast de éxito
+        setMessage({ text: "✅ Login exitoso. Redirigiendo...", type: "success" });
+        if (typeof showToast === "function") showToast("Login exitoso", "success", 2000);
+
+        // Pequeña espera para que el usuario vea el mensaje en pantalla
         setTimeout(() => {
-          navigate('/dashboard');
-        }, 1000);
-        
+          navigate("/dashboard");
+        }, 700);
       } else {
-        setMessage({ text: '❌ ' + (data.error || 'Error desconocido'), type: 'error' });
+        setMessage({ text: "❌ " + (data.error || "Error desconocido"), type: "error" });
+        if (typeof showToast === "function") showToast(data.error || "Error desconocido", "error");
       }
     } catch (error) {
-      console.error('Error:', error);
-      setMessage({ text: '❌ ' + error.message, type: 'error' });
+      console.error("Error:", error);
+      setMessage({ text: "❌ " + error.message, type: "error" });
+      if (typeof showToast === "function") showToast(error.message, "error");
     } finally {
       setLoading(false);
     }
@@ -109,9 +127,9 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className={`${styles.button} ${loading ? styles.loading : ''}`}
+            className={`${styles.button} ${loading ? styles.loading : ""}`}
           >
-            {loading ? 'Iniciando sesión...' : 'Entrar'}
+            {loading ? "Iniciando sesión..." : "Entrar"}
           </button>
 
           {message && (
@@ -121,7 +139,7 @@ export default function Login() {
           )}
 
           <p className={styles.footer}>
-            ¿No tienes cuenta?{' '}
+            ¿No tienes cuenta?{" "}
             <Link to="/register" className={styles.link}>
               Regístrate
             </Link>

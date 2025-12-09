@@ -1,16 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import styles from './Modal.module.css';
 
-/**
- * Modal genérico reutilizable
- * @param {Object} props
- * @param {boolean} props.open - Estado de visibilidad del modal
- * @param {Function} props.onClose - Función para cerrar el modal
- * @param {string} props.title - Título del modal (opcional)
- * @param {React.ReactNode} props.children - Contenido del modal
- * @param {string} props.size - Tamaño del modal: 'sm', 'md', 'lg' (opcional, default 'md')
- * @param {boolean} props.closeOnOverlayClick - Si se cierra al hacer clic fuera (default true)
- */
 export default function Modal({ 
   open, 
   onClose, 
@@ -21,44 +11,49 @@ export default function Modal({
 }) {
   const modalRef = useRef(null);
   const contentRef = useRef(null);
-
-  // Cerrar modal con Escape
+  
+  // Efecto solo para el Escape key
   useEffect(() => {
     if (!open) return;
-
-    const handleEscape = (e) => {
-      if (e.key === 'Escape') {
-        onClose?.();
-      }
-    };
-
-    document.addEventListener('keydown', handleEscape);
     
-    // Bloquear scroll del body
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') onClose?.();
+    };
+    
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [open, onClose]);
+  
+  // Efecto solo para el scroll y focus inicial
+  useEffect(() => {
+    if (!open) return;
+    
     document.body.style.overflow = 'hidden';
-
-    // Enfocar el modal cuando se abre
-    setTimeout(() => {
+    
+    // Solo enfocar al abrir
+    const timer = setTimeout(() => {
       const firstFocusable = contentRef.current?.querySelector(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
       );
-      firstFocusable?.focus();
-    }, 100);
-
+      if (firstFocusable && !firstFocusable.contains(document.activeElement)) {
+        firstFocusable.focus();
+      }
+    }, 10);
+    
     return () => {
-      document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = '';
+      clearTimeout(timer);
     };
-  }, [open, onClose]);
-
+  }, [open]); // Solo depende de open
+  
   if (!open) return null;
-
+  
   const handleOverlayClick = (e) => {
     if (closeOnOverlayClick && e.target === modalRef.current) {
       onClose?.();
     }
   };
-
+  
   return (
     <div 
       ref={modalRef}
@@ -89,7 +84,7 @@ export default function Modal({
             </svg>
           </button>
         </div>
-
+        
         <div className={styles.modalBody}>
           {children}
         </div>

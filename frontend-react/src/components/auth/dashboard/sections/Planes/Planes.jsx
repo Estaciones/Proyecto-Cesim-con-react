@@ -9,12 +9,18 @@ export default function Planes() {
     plans,
     loadPlanes,
     loading,
-    profile,
     selectedPatient,
     openModal,
     openViewPlan,
     openEditPlan,
     openCrearPlanWithPatient,
+    isPaciente,
+    canCreatePlan,
+    canEditPlan,
+    // <-- nuevos / necesarios para editar prescripciones desde gestor
+    canEditPrescripcion,
+    openEditPresWithId,
+    updatePrescripcion,
   } = useContext(DashboardContext);
 
   useEffect(() => {
@@ -23,24 +29,55 @@ export default function Planes() {
 
   const formatShortDate = (dateString) => {
     if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch (error) {
+      console.error('Error formateando fecha:', dateString, error);
+      return '';
+    }
   };
 
   const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
+    const statusStr = String(status || '').toLowerCase().trim();
+
+    switch (statusStr) {
       case 'activo':
-        return '#10b981';
-      case 'completado':
-        return '#3b82f6';
+      case 'active':
+        return 'bg-green-100 text-green-800 border border-green-200';
+      case 'pendiente':
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 border border-yellow-200';
+      case 'finalizado':
+      case 'completed':
+      case 'terminado':
+        return 'bg-gray-100 text-gray-800 border border-gray-200';
       case 'cancelado':
-        return '#ef4444';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800 border border-red-200';
       default:
-        return '#6b7280';
+        return 'bg-gray-100 text-gray-800 border border-gray-200';
+    }
+  };
+
+  // toggle cumplimiento (rápido) — usa updatePrescripcion del provider
+  const toggleCumplimiento = async (pres) => {
+    const presId = pres.id_prescripcion || pres.id;
+    try {
+      await updatePrescripcion({
+        presId,
+        descripcion: pres.descripcion || '',
+        observaciones: pres.observaciones || '',
+        cumplimiento: !pres.cumplimiento,
+      });
+      // updatePrescripcion ya recarga planes y muestra toast según el provider
+    } catch (err) {
+      // Si algo falla, updatePrescripcion ya muestra toast; aquí lo registramos
+      console.error('Error toggling cumplimiento:', err);
     }
   };
 
@@ -48,8 +85,10 @@ export default function Planes() {
     <section className={styles.container}>
       <div className={styles.header}>
         <div className={styles.titleSection}>
-          <h1 className={styles.title}>Planes de Tratamiento</h1>
-          {selectedPatient && (
+          <h1 className={styles.title}>
+            {isPaciente() ? 'Mis Planes de Tratamiento' : 'Planes de Tratamiento'}
+          </h1>
+          {selectedPatient && !isPaciente() && (
             <div className={styles.patientBadge}>
               <span className={styles.patientName}>
                 {selectedPatient.nombre} {selectedPatient.apellido}
@@ -60,7 +99,7 @@ export default function Planes() {
         </div>
 
         <div className={styles.actions}>
-          {profile?.tipo_usuario === 'medico' && (
+          {canCreatePlan() && (
             <Button
               variant="primary"
               onClick={() => {
@@ -93,8 +132,12 @@ export default function Planes() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
             <h3>Sin planes de tratamiento</h3>
-            <p>No hay planes de tratamiento registrados para este paciente.</p>
-            {profile?.tipo_usuario === 'medico' && (
+            <p>
+              {isPaciente()
+                ? 'Aún no tienes planes de tratamiento asignados.'
+                : 'No hay planes de tratamiento registrados para este paciente.'}
+            </p>
+            {canCreatePlan() && (
               <Button
                 variant="primary"
                 onClick={() => openModal('crearPlan')}
@@ -114,8 +157,7 @@ export default function Planes() {
                   <h3 className={styles.planTitle}>{plan.titulo}</h3>
                   {plan.estado && (
                     <span
-                      className={styles.statusBadge}
-                      style={{ backgroundColor: getStatusColor(plan.estado) }}
+                      className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(plan.estado)}`}
                     >
                       {plan.estado}
                     </span>
@@ -134,7 +176,7 @@ export default function Planes() {
                     </svg>
                     Ver
                   </Button>
-                  {profile?.tipo_usuario === 'medico' && (
+                  {canEditPlan() && (
                     <Button
                       variant="secondary"
                       size="small"
@@ -193,17 +235,30 @@ export default function Planes() {
                     </h4>
                     <div className={styles.prescriptionsList}>
                       {plan.prescripciones.slice(0, 3).map((pres, index) => (
-                        <div key={pres.id_prescripcion || index} className={styles.prescriptionItem}>
+                        <div key={pres.id_prescripcion || pres.id || index} className={styles.prescriptionItem}>
                           <div className={styles.prescriptionHeader}>
                             <strong className={styles.prescriptionDescription}>
                               {pres.descripcion || 'Sin descripción'}
                             </strong>
-                            {pres.cumplimiento && (
+                            {pres.cumplimiento !== undefined && (
                               <span className={styles.complianceBadge}>
                                 {pres.cumplimiento ? '✓ Cumplido' : '⏰ Pendiente'}
                               </span>
                             )}
                           </div>
+
+                          {/* mostrar observaciones si existen */}
+                          {pres.observaciones && (
+                            <div className={styles.prescriptionObservaciones}>
+                              <div className={styles.obsLabel}>Observaciones:</div>
+                              <div className={styles.obsText}>
+                                {pres.observaciones.length > 200
+                                  ? `${pres.observaciones.slice(0, 200)}...`
+                                  : pres.observaciones}
+                              </div>
+                            </div>
+                          )}
+
                           <div className={styles.prescriptionMeta}>
                             {pres.frecuencia && (
                               <span className={styles.prescriptionMetaItem}>
@@ -216,6 +271,46 @@ export default function Planes() {
                               </span>
                             )}
                           </div>
+
+                          {/* acciones para gestor: editar observaciones / toggle cumplimiento */}
+                          {canEditPrescripcion && canEditPrescripcion() && (
+                            <div className={styles.prescriptionActions}>
+                              <Button
+                                variant="secondary"
+                                size="small"
+                                onClick={() => openEditPresWithId(pres.id_prescripcion || pres.id)}
+                                className={styles.actionButton}
+                              >
+                                <svg className={styles.buttonIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Editar
+                              </Button>
+
+                              <Button
+                                variant="secondary"
+                                size="small"
+                                onClick={() => toggleCumplimiento(pres)}
+                                className={styles.actionButton}
+                              >
+                                {pres.cumplimiento ? (
+                                  <>
+                                    <svg className={styles.buttonIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6h.01M6 12h.01" />
+                                    </svg>
+                                    Marcar pendiente
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg className={styles.buttonIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Marcar cumplido
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       ))}
                       {plan.prescripciones.length > 3 && (

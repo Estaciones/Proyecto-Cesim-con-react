@@ -1,4 +1,4 @@
-// src/App.jsx
+// App.jsx corregido
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { DashboardProvider } from './context/DashboardProvider';
@@ -11,7 +11,7 @@ import DashboardLayout from './components/layout/DashboardLayout';
 import Login from './components/auth/Login/Login';
 import Register from './components/auth/Register/Register';
 
-// Dashboard principal
+// Secciones del dashboard
 import Dashboard from './components/auth/dashboard/Dashboard';
 
 // Importar estilos globales
@@ -33,8 +33,9 @@ function App() {
           </Route>
 
           {/* Rutas protegidas (dashboard) */}
-          <Route element={<DashboardLayout />}>
-            <Route path="/dashboard/*" element={<Dashboard />} />
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route index element={<Dashboard />} />
+            {/* Removemos las rutas específicas, ahora Dashboard maneja las secciones internamente */}
           </Route>
 
           {/* Redirección para rutas no definidas */}

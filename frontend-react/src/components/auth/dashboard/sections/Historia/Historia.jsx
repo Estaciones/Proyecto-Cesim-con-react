@@ -9,11 +9,13 @@ export default function Historia() {
     historia,
     loadHistoria,
     loading,
-    profile,
     selectedPatient,
     openModal,
     openViewHistoria,
     openEditHistoria,
+    openRegistroWithPatient,
+    isPaciente,
+    canEditHistoria,
   } = useContext(DashboardContext);
 
   useEffect(() => {
@@ -30,24 +32,14 @@ export default function Historia() {
     });
   };
 
-//   const formatDateTime = (dateString) => {
-//     if (!dateString) return '';
-//     const date = new Date(dateString);
-//     return date.toLocaleString('es-ES', {
-//       day: '2-digit',
-//       month: 'short',
-//       year: 'numeric',
-//       hour: '2-digit',
-//       minute: '2-digit',
-//     });
-//   };
-
   return (
     <section className={styles.container}>
       <div className={styles.header}>
         <div className={styles.titleSection}>
-          <h1 className={styles.title}>Historia Clínica</h1>
-          {selectedPatient && (
+          <h1 className={styles.title}>
+            {isPaciente() ? 'Mi Historia Clínica' : 'Historia Clínica'}
+          </h1>
+          {selectedPatient && !isPaciente() && (
             <div className={styles.patientBadge}>
               <span className={styles.patientName}>
                 {selectedPatient.nombre} {selectedPatient.apellido}
@@ -58,10 +50,17 @@ export default function Historia() {
         </div>
 
         <div className={styles.actions}>
-          {profile?.tipo_usuario === 'medico' && (
+          {canEditHistoria() && (
             <Button
               variant="primary"
-              onClick={() => openModal('registro')}
+              onClick={() => {
+                if (selectedPatient?.id_paciente) {
+                  // Usa la nueva función para abrir el modal con el paciente seleccionado
+                  openRegistroWithPatient(selectedPatient.id_paciente);
+                } else {
+                  openModal('registro');
+                }
+              }}
               className={styles.addButton}
             >
               <svg className={styles.addIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,7 +84,11 @@ export default function Historia() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             <h3>Sin registros</h3>
-            <p>No hay registros en la historia clínica para este paciente.</p>
+            <p>
+              {isPaciente()
+                ? 'Aún no hay registros en tu historia clínica.'
+                : 'No hay registros en la historia clínica para este paciente.'}
+            </p>
           </div>
         </Card>
       ) : (
@@ -107,7 +110,7 @@ export default function Historia() {
                     </svg>
                     Ver
                   </Button>
-                  {profile?.tipo_usuario === 'medico' && (
+                  {canEditHistoria() && (
                     <Button
                       variant="secondary"
                       size="small"

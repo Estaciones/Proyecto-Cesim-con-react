@@ -7,33 +7,55 @@ import styles from './Pacientes.module.css';
 export default function Pacientes() {
   const {
     patients,
+    profile,
     loadPatients,
     loading,
-    profile,
     selectPatient,
     openAsignarGestor,
     openCrearPlanWithPatient,
+    isMedico,
+    isPaciente,
+    openRegistroWithPatient,
+    canAssignGestor,
+    canCreatePlan,
   } = useContext(DashboardContext);
-
-  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadPatients();
   }, [loadPatients]);
 
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Si es paciente, no debería ver esta página (pero por si acaso)
+  if (isPaciente()) {
+    return (
+      <section className={styles.container}>
+        <div className={styles.accessDenied}>
+          <h2>Acceso restringido</h2>
+          <p>No tienes permiso para ver esta sección.</p>
+        </div>
+      </section>
+    );
+  }
+
+
   const filteredPatients = Array.isArray(patients)
     ? patients.filter((patient) => {
-        const searchText = `${patient.nombre || ''} ${patient.apellido || ''} ${patient.ci || ''} ${patient.email || ''}`.toLowerCase();
-        return searchText.includes(searchQuery.toLowerCase());
-      })
+      const searchText = `${patient.nombre || ''} ${patient.apellido || ''} ${patient.ci || ''} ${patient.email || ''}`.toLowerCase();
+      return searchText.includes(searchQuery.toLowerCase());
+    })
     : [];
 
   return (
     <section className={styles.container}>
       <div className={styles.header}>
         <div className={styles.titleSection}>
-          <h1 className={styles.title}>Mis Pacientes</h1>
-          <p className={styles.subtitle}>Gestiona y administra tus pacientes</p>
+          <h1 className={styles.title}>
+            {isMedico() ? 'Mis Pacientes' : 'Pacientes Asignados'}
+          </h1>
+          <p className={styles.subtitle}>
+            {isMedico() ? 'Gestiona y administra tus pacientes' : 'Pacientes bajo tu gestión'}
+          </p>
         </div>
 
         <div className={styles.actions}>
@@ -82,7 +104,9 @@ export default function Pacientes() {
             <p>
               {searchQuery
                 ? 'No hay pacientes que coincidan con tu búsqueda.'
-                : 'Comienza agregando nuevos pacientes a tu lista.'}
+                : isMedico()
+                  ? 'Comienza agregando nuevos pacientes a tu lista.'
+                  : 'Aún no tienes pacientes asignados.'}
             </p>
           </div>
         </Card>
@@ -159,32 +183,48 @@ export default function Pacientes() {
                     Ver detalles
                   </Button>
 
-                  {profile?.tipo_usuario === 'medico' && (
-                    <>
-                      <Button
-                        variant="secondary"
-                        size="small"
-                        onClick={() => openAsignarGestor(patient.id_paciente)}
-                        className={styles.actionButton}
-                      >
-                        <svg className={styles.buttonIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                        </svg>
-                        Asignar gestor
-                      </Button>
+                  {canAssignGestor() && (
+                    <Button
+                      variant="secondary"
+                      size="small"
+                      onClick={() => openAsignarGestor(patient.id_paciente)}
+                      className={styles.actionButton}
+                    >
+                      <svg className={styles.buttonIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                      </svg>
+                      Asignar gestor
+                    </Button>
+                  )}
 
-                      <Button
-                        variant="secondary"
-                        size="small"
-                        onClick={() => openCrearPlanWithPatient(patient.id_paciente)}
-                        className={styles.actionButton}
-                      >
-                        <svg className={styles.buttonIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Crear plan
-                      </Button>
-                    </>
+                  {canCreatePlan() && (
+                    <Button
+                      variant="secondary"
+                      size="small"
+                      onClick={() => openCrearPlanWithPatient(patient.id_paciente)}
+                      className={styles.actionButton}
+                    >
+                      <svg className={styles.buttonIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Crear plan
+                    </Button>
+                  )}
+                  {profile?.tipo_usuario === 'medico' && (
+                    <Button
+                      variant="secondary"
+                      size="small"
+                      onClick={() => {
+                        // Abrir modal de registro con el paciente seleccionado
+                        openRegistroWithPatient(patient.id_paciente);
+                      }}
+                      className={styles.actionButton}
+                    >
+                      <svg className={styles.buttonIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Nuevo Registro
+                    </Button>
                   )}
                 </div>
               </div>

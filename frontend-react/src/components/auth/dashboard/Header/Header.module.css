@@ -2,9 +2,12 @@
   background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
   color: white;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  position: sticky;
+  position: fixed; /* fijo al viewport */
   top: 0;
-  z-index: 100;
+  left: var(--sidebar-width); /* alineado con el sidebar */
+  right: 0;
+  height: var(--header-height);
+  z-index: 1000;
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -14,9 +17,15 @@
   justify-content: space-between;
   align-items: center;
   padding: 0 1.5rem;
-  height: 64px;
+  height: var(--header-height);
   max-width: 100%;
   margin: 0 auto;
+}
+
+@media (max-width: 640px) {
+  .header {
+    left: 0;
+  }
 }
 
 .left {
@@ -134,23 +143,23 @@
   .container {
     padding: 0 1rem;
   }
-  
+
   .title {
     font-size: 1.125rem;
   }
-  
+
   .logoutText {
     display: none;
   }
-  
+
   .logoutButton {
     padding: 0.5rem;
   }
-  
+
   .userDetails {
     display: none;
   }
-  
+
   .userInfo {
     padding: 0.25rem;
   }
@@ -160,7 +169,7 @@
   .badge {
     display: none;
   }
-  
+
   .title {
     font-size: 1rem;
   }

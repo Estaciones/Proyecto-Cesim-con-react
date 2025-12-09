@@ -4,26 +4,85 @@ import { DashboardContext } from '../../../context/DashboardContext';
 import styles from './RegistroModal.module.css';
 
 export default function RegistroModal() {
-  const { modals, closeModal, createRegistro, profile, showToast } = useContext(DashboardContext);
+  const { 
+    modals, 
+    closeModal, 
+    createRegistro, 
+    profile, 
+    patients, 
+    currentRegistroPacienteId,
+    selectedPatient,
+    showToast,
+    loadPatients
+  } = useContext(DashboardContext);
+  
   const open = modals.registro;
 
   const [formData, setFormData] = useState({
     titulo: '',
     descripcion: '',
-    tipo: 'general'
+    tipo: 'general',
+    id_paciente: ''
   });
+  
   const [submitting, setSubmitting] = useState(false);
+  const [patientsLoaded, setPatientsLoaded] = useState(false);
 
-  // Resetear formulario cuando se abre/cierra el modal
+  // Cargar pacientes si no están cargados cuando se abre el modal
+  useEffect(() => {
+    if (open && !profile?.id_paciente) {
+      const loadPatientsData = async () => {
+        try {
+          if (loadPatients && typeof loadPatients === 'function') {
+            await loadPatients();
+          }
+        } catch (error) {
+          console.error('Error al cargar pacientes:', error);
+          showToast('Error al cargar la lista de pacientes', 'error');
+        } finally {
+          setPatientsLoaded(true);
+        }
+      };
+      
+      loadPatientsData();
+    }
+  }, [open, profile, loadPatients, showToast]);
+
+  // Inicializar formulario cuando se abre el modal
   useEffect(() => {
     if (open) {
+      // Determinar el ID del paciente inicial
+      let initialPatientId = '';
+      
+      // Prioridad 1: currentRegistroPacienteId (si viene de un botón específico)
+      if (currentRegistroPacienteId) {
+        initialPatientId = currentRegistroPacienteId.toString();
+      }
+      // Prioridad 2: selectedPatient del contexto (si hay un paciente seleccionado)
+      else if (selectedPatient?.id_paciente) {
+        initialPatientId = selectedPatient.id_paciente.toString();
+      }
+      // Prioridad 3: profile.id_paciente (si el usuario es paciente)
+      else if (profile?.id_paciente) {
+        initialPatientId = profile.id_paciente.toString();
+      }
+
       setFormData({
         titulo: '',
         descripcion: '',
-        tipo: 'general'
+        tipo: 'general',
+        id_paciente: initialPatientId
       });
+
+      // Si el usuario es paciente, ya tenemos los datos
+      if (profile?.id_paciente) {
+        setPatientsLoaded(true);
+      }
+    } else {
+      // Resetear cuando se cierra el modal
+      setPatientsLoaded(false);
     }
-  }, [open]);
+  }, [open, currentRegistroPacienteId, selectedPatient, profile]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -36,14 +95,55 @@ export default function RegistroModal() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.titulo.trim() || !formData.descripcion.trim()) {
-      showToast('Por favor completa todos los campos', 'error');
+    if (!formData.titulo.trim()) {
+      showToast('El título del registro es obligatorio', 'error');
       return;
     }
 
-    const id_paciente = profile?.id_paciente;
+    if (!formData.descripcion.trim()) {
+      showToast('La descripción del registro es obligatoria', 'error');
+      return;
+    }
+
+    // Determinar el ID del paciente
+    let id_paciente = null;
+    
+    if (currentRegistroPacienteId) {
+      id_paciente = currentRegistroPacienteId;
+    } else if (formData.id_paciente) {
+      id_paciente = parseInt(formData.id_paciente);
+    } else if (selectedPatient?.id_paciente) {
+      id_paciente = selectedPatient.id_paciente;
+    } else if (profile?.id_paciente) {
+      id_paciente = profile.id_paciente;
+    }
+
     if (!id_paciente) {
-      showToast('No se pudo identificar al paciente', 'error');
+      showToast('Selecciona un paciente', 'error');
+      return;
+    }
+
+    // Obtener el CI del paciente
+    let ci = null;
+    
+    // Buscar el paciente en la lista para obtener el CI
+    if (Array.isArray(patients)) {
+      const patient = patients.find(p => p.id_paciente === id_paciente);
+      if (patient) {
+        ci = patient.ci;
+      }
+    }
+    
+    // Si no se encuentra en la lista, usar el CI del selectedPatient o profile
+    if (!ci && selectedPatient?.ci) {
+      ci = selectedPatient.ci;
+    }
+    if (!ci && profile?.ci) {
+      ci = profile.ci;
+    }
+
+    if (!ci) {
+      showToast('No se pudo identificar el CI del paciente', 'error');
       return;
     }
 
@@ -53,7 +153,8 @@ export default function RegistroModal() {
         titulo: formData.titulo,
         descripcion: formData.descripcion,
         tipo: formData.tipo,
-        id_paciente
+        id_paciente: id_paciente,
+        ci: ci
       });
       
       // El contexto ya maneja el cierre y muestra toast de éxito
@@ -65,6 +166,56 @@ export default function RegistroModal() {
     }
   };
 
+  // Filtrar pacientes disponibles
+  const availablePatients = Array.isArray(patients) 
+    ? patients.filter(p => 
+        !profile?.id_paciente || p.id_paciente === profile.id_paciente
+      )
+    : [];
+
+  // Verificar si estamos cargando pacientes
+  const isLoadingPatients = !profile?.id_paciente && !patientsLoaded;
+
+  // Obtener el paciente seleccionado para mostrar
+  const getSelectedPatientInfo = () => {
+    // Prioridad 1: currentRegistroPacienteId
+    if (currentRegistroPacienteId && Array.isArray(patients)) {
+      const patient = patients.find(p => p.id_paciente === currentRegistroPacienteId);
+      if (patient) {
+        return {
+          id: patient.id_paciente,
+          nombre: `${patient.nombre} ${patient.apellido}`,
+          ci: patient.ci
+        };
+      }
+    }
+    
+    // Prioridad 2: selectedPatient del contexto
+    if (selectedPatient) {
+      return {
+        id: selectedPatient.id_paciente,
+        nombre: `${selectedPatient.nombre} ${selectedPatient.apellido}`,
+        ci: selectedPatient.ci
+      };
+    }
+    
+    // Prioridad 3: paciente del profile
+    if (profile?.id_paciente && Array.isArray(patients)) {
+      const patient = patients.find(p => p.id_paciente === profile.id_paciente);
+      if (patient) {
+        return {
+          id: patient.id_paciente,
+          nombre: `${patient.nombre} ${patient.apellido}`,
+          ci: patient.ci
+        };
+      }
+    }
+    
+    return null;
+  };
+
+  const selectedPatientInfo = getSelectedPatientInfo();
+
   return (
     <Modal
       open={open}
@@ -73,6 +224,58 @@ export default function RegistroModal() {
       size="md"
     >
       <form onSubmit={handleSubmit} className={styles.form}>
+        {/* Información del paciente seleccionado */}
+        {selectedPatientInfo && (
+          <div className={styles.selectedPatientInfo}>
+            <div className={styles.patientBadge}>
+              <span className={styles.patientName}>
+                {selectedPatientInfo.nombre}
+              </span>
+              <span className={styles.patientCI}>CI: {selectedPatientInfo.ci}</span>
+              {currentRegistroPacienteId && (
+                <span className={styles.preselectedBadge}>Preseleccionado</span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Selector de paciente - solo visible si el usuario no es paciente y no hay paciente seleccionado */}
+        {!profile?.id_paciente && !selectedPatientInfo && (
+          <div className={styles.formGroup}>
+            <label htmlFor="id_paciente" className={styles.label}>
+              Paciente *
+            </label>
+            {isLoadingPatients ? (
+              <div className={styles.loadingPatients}>
+                <span className={styles.spinner}></span>
+                Cargando lista de pacientes...
+              </div>
+            ) : (
+              <select
+                id="id_paciente"
+                name="id_paciente"
+                value={formData.id_paciente}
+                onChange={handleInputChange}
+                className={styles.select}
+                required
+                disabled={submitting || availablePatients.length === 0}
+              >
+                <option value="">
+                  {availablePatients.length === 0 
+                    ? "No hay pacientes disponibles" 
+                    : "Selecciona un paciente"
+                  }
+                </option>
+                {availablePatients.map(patient => (
+                  <option key={patient.id_paciente} value={patient.id_paciente}>
+                    {patient.nombre} {patient.apellido} - CI: {patient.ci}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        )}
+
         <div className={styles.formGroup}>
           <label htmlFor="titulo" className={styles.label}>
             Título del Registro *
@@ -129,14 +332,6 @@ export default function RegistroModal() {
         </div>
 
         <div className={styles.formFooter}>
-          <div className={styles.patientInfo}>
-            {profile?.id_paciente && (
-              <span className={styles.patientTag}>
-                Paciente: {profile.nombre} {profile.apellido}
-              </span>
-            )}
-          </div>
-          
           <div className={styles.formActions}>
             <button
               type="button"
