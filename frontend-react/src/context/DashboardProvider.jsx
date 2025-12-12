@@ -2,10 +2,8 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { DashboardContext } from "./DashboardContext";
 import { apiUrl } from "../utils/api";
+import PatientService from "../services/patientService"
 
-/**
- * DashboardProvider (refactor para evitar renders múltiples y race conditions)
- */
 export function DashboardProvider({ children }) {
   // --- Estado inicial (intenta leer localStorage) ---
   const [user, setUser] = useState(() => {
@@ -440,30 +438,28 @@ export function DashboardProvider({ children }) {
     [loadPlanes, showToast, closeModal]
   );
 
-  const createPatient = useCallback(
-    async (patientData) => {
-      try {
-        const res = await fetch(apiUrl("pacientes"), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(patientData),
-        });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || `Error ${res.status}`);
-        }
-        await loadPatients();
-        showToast("Paciente creado y asignado", "success");
-        closeModal("nuevoPaciente");
-      } catch (err) {
-        console.error(err);
-        showToast(err.message || "Error al crear paciente", "error");
-        throw err;
-      }
-    },
-    [loadPatients, showToast, closeModal]
-  );
+// EN DashboardProvider.jsx (REMPLAZAR ESTA FUNCIÓN)
+const createPatient = useCallback(
+  async (patientData) => {
+    try {
+      // ANTES:
+      // const res = await fetch(apiUrl("pacientes"), {...});
+      
+      // DESPUÉS:
+      const result = await PatientService.create(patientData);
+      
+      await loadPatients();
+      showToast("Paciente creado y asignado", "success");
+      closeModal("nuevoPaciente");
+      return result; // Puedes retornar el resultado si lo necesitas
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || "Error al crear paciente", "error");
+      throw err;
+    }
+  },
+  [loadPatients, showToast, closeModal]
+);
 
   const assignGestor = useCallback(
     async ({ id_gestor, id_paciente }) => {
