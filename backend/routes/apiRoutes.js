@@ -1,51 +1,47 @@
 // backend/routes/apiRoutes.js
-import express from 'express';
-import {
-  getProfile,
-  getHistoria,
-  postHistoria,
-  patchHistoria,
-  getPlanes,
-  postPlanTratamiento,
-  patchPlanTratamiento,
-  getPacientes,
-  getPrescripcion,
-  patchPrescripcion,
-  getGestores,
-  postAsignarGestor,
-  createPatient
-} from '../controllers/apiController.js';
+import express from "express"
+import * as controllers from "../controllers/apiControllers.js"
 
-const router = express.Router();
+const router = express.Router()
 
 // profile
-router.get('/profile', getProfile);
+router.get("/profile", controllers.getProfile)
+router.patch("/profile/:id", controllers.updateProfile)
 
-// historia_clinica
-router.get('/historia', getHistoria);
-router.post('/historia', postHistoria);
-router.patch('/historia/:id', patchHistoria);
+// Pacientes
+router.get("/pacientes", controllers.getPacientes)
+router.get("/pacientes/:id", controllers.getPacienteById)
+router.post("/pacientes", controllers.createPatient)
+router.patch("/pacientes/:id", controllers.updatePatient)
+router.delete("/pacientes/:id", controllers.deletePatient)
 
-// plan_tratamiento
-router.get('/plan_tratamiento', getPlanes);
-router.post('/plan_tratamiento', postPlanTratamiento);
-router.patch('/plan_tratamiento/:id', patchPlanTratamiento);
+// Historia Clínica
+router.get("/historia", controllers.getHistoria)
+router.get("/historia/:id", controllers.getHistoriaById)
+router.post("/historia", controllers.postHistoria)
+router.patch("/historia/:id", controllers.patchHistoria)
+router.delete("/historia/:id", controllers.deleteHistoria)
 
-// prescripcion
-router.get('/prescripcion/:id', getPrescripcion);
-router.patch('/prescripcion/:id', patchPrescripcion);
+// Planes de Tratamiento
+router.get("/planes", controllers.getPlanes)
+router.get("/planes/:id", controllers.getPlanById)
+router.post("/planes", controllers.postPlanTratamiento)
+router.patch("/planes/:id", controllers.patchPlanTratamiento)
+router.delete("/planes/:id", controllers.deletePlanTratamiento)
 
-// pacientes
-router.get('/pacientes', getPacientes);
+// Prescripciones
+router.get("/prescripciones/:id", controllers.getPrescripcion)
+router.post("/prescripciones", controllers.createPrescripcion)
+router.patch("/prescripciones/:id", controllers.patchPrescripcion)
+router.delete("/prescripciones/:id", controllers.deletePrescripcion)
 
+// Gestores
+router.get("/gestores", controllers.getGestores)
+router.get("/gestores/:id", controllers.getGestorById)
+router.post("/gestores", controllers.createGestor)
+router.patch("/gestores/:id", controllers.updateGestor)
+router.delete("/gestores/:id", controllers.deleteGestor)
+router.post("/asignar-gestor", controllers.postAsignarGestor)
+router.delete("/asignar-gestor", controllers.deleteAsignacionGestor)
 
-// gestores
-router.get('/gestores', getGestores);
-
-// asignar gestor
-router.post('/asignar_gestor', postAsignarGestor);
-
-// crear paciente + asignar a medico
-router.post('/pacientes', createPatient);
-
-export default router;
+export default router

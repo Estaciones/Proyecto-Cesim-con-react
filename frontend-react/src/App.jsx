@@ -1,24 +1,24 @@
 // App.jsx corregido
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { DashboardProvider } from './context/DashboardProvider';
+import React from "react"
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+import { DashboardProvider } from "./context/DashboardProvider"
 
 // Layouts
-import AuthLayout from './components/layout/AuthLayout';
-import DashboardLayout from './components/layout/DashboardLayout';
+import AuthLayout from "./components/layout/AuthLayout"
+import DashboardLayout from "./components/layout/DashboardLayout"
 
 // Páginas de autenticación
-import Login from './components/auth/Login/Login';
-import Register from './components/auth/Register/Register';
+import Login from "./components/auth/Login/Login"
+import Register from "./components/auth/Register/Register"
 
 // Secciones del dashboard
-import Dashboard from './components/auth/dashboard/Dashboard';
+import Dashboard from "./components/auth/dashboard/Dashboard"
 
 // Importar estilos globales
-import './styles/index.css';
-import './styles/variables.css';
-import './styles/reset.css';
-import './styles/utilities.css';
+import "./styles/index.css"
+import "./styles/variables.css"
+import "./styles/reset.css"
+import "./styles/utilities.css"
 
 function App() {
   return (
@@ -43,7 +43,7 @@ function App() {
         </Routes>
       </BrowserRouter>
     </DashboardProvider>
-  );
+  )
 }
 
-export default App;
+export default App
