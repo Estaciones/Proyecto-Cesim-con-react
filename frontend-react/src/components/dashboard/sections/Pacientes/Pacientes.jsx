@@ -1,33 +1,95 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { DashboardContext } from '../../../../../context/DashboardContext';
-import Button from '../../../../ui/Button/Button';
-import Card from '../../../../ui/Card/Card';
+// src/components/dashboard/sections/Pacientes/Pacientes.jsx
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useAuthContext } from '../../../../context/AuthContext';
+import { useModal } from '../../../../hooks/useModal';
+import Button from '../../../ui/Button/Button';
+import Card from '../../../ui/Card/Card';
 import styles from './Pacientes.module.css';
 
-export default function Pacientes() {
-  const {
-    patients,
-    profile,
-    loadPatients,
-    loading,
-    selectPatient,
-    openAsignarGestor,
-    openCrearPlanWithPatient,
-    isMedico,
-    isPaciente,
-    openRegistroWithPatient,
-    canAssignGestor,
-    canCreatePlan,
-  } = useContext(DashboardContext);
+const PacientesService = {
+  async fetchPatients() {
+    try {
+      const response = await fetch('/api/pacientes', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) throw new Error('Error al cargar pacientes');
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching patients:', error);
+      throw error;
+    }
+  }
+};
 
+export default function Pacientes({ onSelectPatient }) {
+  const [patients, setPatients] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const { profile } = useAuthContext();
+  const { 
+    openAsignarGestor, 
+    openCrearPlanWithPatient, 
+    openRegistroWithPatient 
+  } = useModal();
+
+  // Función para cargar pacientes - memorizada
+  const loadPatients = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await PacientesService.fetchPatients();
+      setPatients(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error loading patients:', error);
+      setPatients([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Efecto para cargar datos
   useEffect(() => {
     loadPatients();
   }, [loadPatients]);
 
-  const [searchQuery, setSearchQuery] = useState('');
+  // Helpers memorizados
+  const isPaciente = useMemo(() => profile?.tipo_usuario === 'paciente', [profile]);
+  const isMedico = useMemo(() => profile?.tipo_usuario === 'medico', [profile]);
+  const canAssignGestor = useMemo(() => isMedico, [isMedico]);
+  const canCreatePlan = useMemo(() => isMedico, [isMedico]);
 
-  // Si es paciente, no debería ver esta página (pero por si acaso)
-  if (isPaciente()) {
+  // Handlers memorizados
+  const handleSearchChange = useCallback((e) => {
+    setSearchQuery(e.target.value);
+  }, []);
+
+  const handleClearSearch = useCallback(() => {
+    setSearchQuery('');
+  }, []);
+
+  const handleSelectPatient = useCallback((patient) => {
+    if (onSelectPatient) {
+      onSelectPatient({
+        id_paciente: patient.id_paciente,
+        ci: patient.ci,
+        nombre: patient.nombre,
+        apellido: patient.apellido,
+      });
+    }
+  }, [onSelectPatient]);
+
+  // Filtrar pacientes
+  const filteredPatients = useMemo(() => {
+    if (!Array.isArray(patients)) return [];
+    
+    return patients.filter((patient) => {
+      const searchText = `${patient.nombre || ''} ${patient.apellido || ''} ${patient.ci || ''} ${patient.email || ''}`.toLowerCase();
+      return searchText.includes(searchQuery.toLowerCase());
+    });
+  }, [patients, searchQuery]);
+
+  if (isPaciente) {
     return (
       <section className={styles.container}>
         <div className={styles.accessDenied}>
@@ -38,23 +100,15 @@ export default function Pacientes() {
     );
   }
 
-
-  const filteredPatients = Array.isArray(patients)
-    ? patients.filter((patient) => {
-      const searchText = `${patient.nombre || ''} ${patient.apellido || ''} ${patient.ci || ''} ${patient.email || ''}`.toLowerCase();
-      return searchText.includes(searchQuery.toLowerCase());
-    })
-    : [];
-
   return (
     <section className={styles.container}>
       <div className={styles.header}>
         <div className={styles.titleSection}>
           <h1 className={styles.title}>
-            {isMedico() ? 'Mis Pacientes' : 'Pacientes Asignados'}
+            {isMedico ? 'Mis Pacientes' : 'Pacientes Asignados'}
           </h1>
           <p className={styles.subtitle}>
-            {isMedico() ? 'Gestiona y administra tus pacientes' : 'Pacientes bajo tu gestión'}
+            {isMedico ? 'Gestiona y administra tus pacientes' : 'Pacientes bajo tu gestión'}
           </p>
         </div>
 
@@ -67,12 +121,12 @@ export default function Pacientes() {
               type="text"
               placeholder="Buscar por nombre, CI o email..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
               className={styles.searchInput}
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery('')}
+                onClick={handleClearSearch}
                 className={styles.clearButton}
                 aria-label="Limpiar búsqueda"
               >
@@ -84,7 +138,6 @@ export default function Pacientes() {
           </div>
         </div>
       </div>
-
       {loading ? (
         <div className={styles.loading}>
           <div className={styles.spinner}></div>
@@ -94,7 +147,7 @@ export default function Pacientes() {
         <Card className={styles.emptyCard}>
           <div className={styles.emptyState}>
             <svg className={styles.emptyIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
             <h3>
               {searchQuery
@@ -104,7 +157,7 @@ export default function Pacientes() {
             <p>
               {searchQuery
                 ? 'No hay pacientes que coincidan con tu búsqueda.'
-                : isMedico()
+                : isMedico
                   ? 'Comienza agregando nuevos pacientes a tu lista.'
                   : 'Aún no tienes pacientes asignados.'}
             </p>
@@ -166,14 +219,7 @@ export default function Pacientes() {
                   <Button
                     variant="primary"
                     size="small"
-                    onClick={() =>
-                      selectPatient({
-                        id_paciente: patient.id_paciente,
-                        ci: patient.ci,
-                        nombre: patient.nombre,
-                        apellido: patient.apellido,
-                      })
-                    }
+                    onClick={() => handleSelectPatient(patient)}
                     className={styles.actionButton}
                   >
                     <svg className={styles.buttonIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -183,7 +229,7 @@ export default function Pacientes() {
                     Ver detalles
                   </Button>
 
-                  {canAssignGestor() && (
+                  {canAssignGestor && (
                     <Button
                       variant="secondary"
                       size="small"
@@ -197,7 +243,7 @@ export default function Pacientes() {
                     </Button>
                   )}
 
-                  {canCreatePlan() && (
+                  {canCreatePlan && (
                     <Button
                       variant="secondary"
                       size="small"
@@ -210,14 +256,11 @@ export default function Pacientes() {
                       Crear plan
                     </Button>
                   )}
-                  {profile?.tipo_usuario === 'medico' && (
+                  {isMedico && (
                     <Button
                       variant="secondary"
                       size="small"
-                      onClick={() => {
-                        // Abrir modal de registro con el paciente seleccionado
-                        openRegistroWithPatient(patient.id_paciente);
-                      }}
+                      onClick={() => openRegistroWithPatient(patient.id_paciente)}
                       className={styles.actionButton}
                     >
                       <svg className={styles.buttonIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">

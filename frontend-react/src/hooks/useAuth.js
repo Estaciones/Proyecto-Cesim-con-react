@@ -1,276 +1,105 @@
-import { useState, useEffect, useCallback } from "react"
-import { useNavigate } from "react-router-dom"
+// src/hooks/useAuth.js
+import { useState, useCallback, useEffect } from "react"
+import { AuthService } from "../services/authService"
 
-/**
- * Hook personalizado para manejar la autenticación
- * @returns {Object} Estado y funciones de autenticación
- */
+
 export function useAuth() {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const navigate = useNavigate()
-
-  const API_URL = "http://localhost:3000/api"
-
-  const checkAuth = useCallback(async () => {
+  const [user, setUser] = useState(() => {
     try {
-      setLoading(true)
-      const storedUser = localStorage.getItem("user")
+      const raw = localStorage.getItem("user")
+      return raw ? JSON.parse(raw) : null
+    } catch {
+      return null
+    }
+  })
 
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser)
+  const [profile, setProfile] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
-        // Verificar token en el servidor (si es necesario)
-        const response = await fetch(`${API_URL}/auth/verify`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${parsedUser.token}`,
-            "Content-Type": "application/json"
-          }
-        })
+  const login = useCallback(async (credentials = {}) => {
+    setLoading(true)
+    try {
+      // Aceptar { identifier, password } como contrato frontal
+      const identifier = (credentials.identifier ?? "").toString().trim()
+      const password = credentials.password
 
-        if (response.ok) {
-          setUser(parsedUser)
-        } else {
-          // Token inválido, limpiar sesión
-          localStorage.removeItem("user")
+      if (!identifier || !password) {
+        throw new Error("Faltan credenciales")
+      }
+
+      // Construcción mínima del payload: dejamos que AuthService haga la conversión
+      // (pero podríamos decidir aquí también). Pasamos exactamente { identifier, password }
+      const data = await AuthService.login({ identifier, password })
+
+      // Extraer el user del response { message, user }
+      const userData = data.user
+
+      localStorage.setItem("user", JSON.stringify(userData))
+      setUser(userData)
+      setError(null)
+
+      return userData
+    } catch (err) {
+      setError(err.message)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const logout = useCallback(() => {
+    AuthService.logout()
+    setUser(null)
+    setProfile(null)
+  }, [])
+
+  const loadProfile = useCallback(async () => {
+    if (!user) return
+    setLoading(true)
+    try {
+      const userId = user.id_usuario ?? user.id
+      const profileData = await AuthService.getProfile(userId)
+      setProfile(profileData)
+      setError(null)
+    } catch (err) {
+      setError(err.message)
+      setProfile({
+        id_usuario: user.id_usuario ?? user.id,
+        email: user.email,
+        nombre_usuario: user.nombre_usuario,
+        tipo_usuario: user.tipo_usuario ?? user.tipo
+      })
+    } finally {
+      setLoading(false)
+    }
+  }, [user])
+
+  // Sincronización entre pestañas
+  useEffect(() => {
+    function handleStorage(e) {
+      if (e.key === "user") {
+        try {
+          const newVal = e.newValue ? JSON.parse(e.newValue) : null
+          setUser(newVal)
+        } catch {
           setUser(null)
         }
       }
-    } catch (error) {
-      console.error("Error verificando autenticación:", error)
-      setUser(null)
-    } finally {
-      setLoading(false)
-    }
-  }, [API_URL])
-  // Verificar autenticación al cargar
-  
-  useEffect(() => {
-    checkAuth()
-  }, [checkAuth])
-
-  /**
-   * Verifica si hay una sesión activa
-   */
-
-  /**
-   * Iniciar sesión
-   * @param {Object} credentials - Credenciales del usuario
-   * @param {string} credentials.email - Email del usuario
-   * @param {string} credentials.password - Contraseña
-   */
-  const login = async (credentials) => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          email: credentials.email,
-          nombre_usuario: credentials.email,
-          password: credentials.password
-        })
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || "Error al iniciar sesión")
-      }
-
-      if (data.message === "Login correcto") {
-        const userData = {
-          id: data.user.id_usuario,
-          email: data.user.email,
-          tipo: data.user.tipo_usuario,
-          nombre_usuario: data.user.nombre_usuario,
-          token: data.token,
-          profile: data.user
-        }
-
-        localStorage.setItem("user", JSON.stringify(userData))
-        setUser(userData)
-
-        return { success: true, user: userData }
-      } else {
-        throw new Error(data.error || "Error en la autenticación")
-      }
-    } catch (error) {
-      setError(error.message)
-      return { success: false, error: error.message }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  /**
-   * Registrar nuevo usuario
-   * @param {Object} userData - Datos del usuario
-   */
-  const register = async (userData) => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(userData)
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || "Error al registrar usuario")
-      }
-
-      return { success: true, data }
-    } catch (error) {
-      setError(error.message)
-      return { success: false, error: error.message }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  /**
-   * Cerrar sesión
-   */
-  const logout = () => {
-    localStorage.removeItem("user")
-    setUser(null)
-    setError(null)
-    navigate("/login")
-  }
-
-  /**
-   * Actualizar perfil del usuario
-   * @param {Object} profileData - Datos del perfil a actualizar
-   */
-  const updateProfile = async (profileData) => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      const storedUser = JSON.parse(localStorage.getItem("user"))
-
-      const response = await fetch(`${API_URL}/users/profile`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${storedUser.token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(profileData)
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || "Error al actualizar perfil")
-      }
-
-      // Actualizar usuario en localStorage
-      const updatedUser = {
-        ...storedUser,
-        profile: { ...storedUser.profile, ...data.user }
-      }
-      localStorage.setItem("user", JSON.stringify(updatedUser))
-      setUser(updatedUser)
-
-      return { success: true, user: updatedUser }
-    } catch (error) {
-      setError(error.message)
-      return { success: false, error: error.message }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  /**
-   * Cambiar contraseña
-   * @param {Object} passwords - Contraseñas actual y nueva
-   */
-  const changePassword = async (passwords) => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      const storedUser = JSON.parse(localStorage.getItem("user"))
-
-      const response = await fetch(`${API_URL}/auth/change-password`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${storedUser.token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(passwords)
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || "Error al cambiar contraseña")
-      }
-
-      return { success: true, message: data.message }
-    } catch (error) {
-      setError(error.message)
-      return { success: false, error: error.message }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  /**
-   * Verificar permisos del usuario
-   * @param {Array|string} requiredRoles - Roles o permisos requeridos
-   */
-  const hasPermission = (requiredRoles) => {
-    if (!user) return false
-
-    if (Array.isArray(requiredRoles)) {
-      return requiredRoles.includes(user.tipo)
     }
 
-    return user.tipo === requiredRoles
-  }
-
-  /**
-   * Obtener token de autenticación
-   */
-  const getToken = () => {
-    const storedUser = localStorage.getItem("user")
-    return storedUser ? JSON.parse(storedUser).token : null
-  }
+    window.addEventListener("storage", handleStorage)
+    return () => window.removeEventListener("storage", handleStorage)
+  }, [])
 
   return {
-    // Estado
     user,
+    profile,
     loading,
     error,
-    isAuthenticated: !!user,
-
-    // Funciones
     login,
-    register,
     logout,
-    updateProfile,
-    changePassword,
-    checkAuth,
-    hasPermission,
-    getToken,
-
-    // Setters
-    setError
+    loadProfile,
+    setUser
   }
 }
-
-export default useAuth

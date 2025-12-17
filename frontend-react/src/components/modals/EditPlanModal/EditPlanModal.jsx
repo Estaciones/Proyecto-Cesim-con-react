@@ -1,188 +1,134 @@
-import React, { useContext, useEffect, useState } from 'react';
-import Modal from '../Modal/Modal';
-import { DashboardContext } from '../../../context/DashboardContext';
-import styles from './EditPlanModal.module.css';
+// src/components/modals/EditPlanModal/EditPlanModal.jsx
+import React, { useEffect, useState } from "react"
+import Modal from "../Modal/Modal"
+import { useModal } from "../../../hooks/useModal"
+import { usePlans } from "../../../hooks/usePlans"
+import { useToast } from "../../../hooks/useToast"
+import styles from "./EditPlanModal.module.css"
 
 export default function EditPlanModal() {
-  const { 
-    modals, 
-    closeModal, 
-    currentEditPlan, 
-    updatePlan,
-    showToast 
-  } = useContext(DashboardContext);
-  
-  const open = modals.editPlan;
+  const { modals, closeModal, modalData } = useModal()
+  const { updatePlan } = usePlans()
+  const { showToast } = useToast()
+
+  const open = modals.editPlan
+  const { currentEditPlan } = modalData
 
   const [formData, setFormData] = useState({
-    planId: '',
-    titulo: '',
-    descripcion: '',
-    estado: 'activo',
-    fecha_fin: ''
-  });
-  
-  const [submitting, setSubmitting] = useState(false);
-  const [fechaInicioDisplay, setFechaInicioDisplay] = useState('');
+    planId: "",
+    titulo: "",
+    descripcion: "",
+    fecha_inicio: "",
+    estado: "activo",
+    resumen_egreso: ""
+  })
 
-  // Actualizar formulario cuando cambia currentEditPlan o se abre el modal
+  const [submitting, setSubmitting] = useState(false)
+
   useEffect(() => {
     if (open && currentEditPlan) {
-      const formatDateForInput = (dateString) => {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toISOString().split('T')[0];
-      };
-
-      const formatDateForDisplay = (dateString) => {
-        if (!dateString) return 'No disponible';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('es-ES', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric'
-        });
-      };
-
       setFormData({
-        planId: currentEditPlan.id_plan || currentEditPlan.id || '',
-        titulo: currentEditPlan.titulo || '',
-        descripcion: currentEditPlan.descripcion || '',
-        estado: currentEditPlan.estado || 'activo',
-        fecha_fin: formatDateForInput(currentEditPlan.fecha_fin)
-      });
-
-      setFechaInicioDisplay(formatDateForDisplay(currentEditPlan.fecha_inicio));
+        planId: currentEditPlan.id_plan || currentEditPlan.id || "",
+        titulo: currentEditPlan.titulo || "",
+        descripcion: currentEditPlan.descripcion || "",
+        fecha_inicio: currentEditPlan.fecha_inicio
+          ? new Date(currentEditPlan.fecha_inicio).toISOString().split("T")[0]
+          : "",
+        estado: currentEditPlan.estado || "activo",
+        resumen_egreso: currentEditPlan.resumen_egreso || ""
+      })
     } else {
       setFormData({
-        planId: '',
-        titulo: '',
-        descripcion: '',
-        estado: 'activo',
-        fecha_fin: ''
-      });
-      setFechaInicioDisplay('');
+        planId: "",
+        titulo: "",
+        descripcion: "",
+        fecha_inicio: "",
+        estado: "activo",
+        resumen_egreso: ""
+      })
     }
-  }, [open, currentEditPlan]);
+  }, [open, currentEditPlan])
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
+    const { name, value } = e.target
+    setFormData((prev) => ({
       ...prev,
       [name]: value
-    }));
-  };
+    }))
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Validaciones
+    e.preventDefault()
+
     if (!formData.titulo.trim()) {
-      showToast('El título es obligatorio', 'error');
-      return;
+      showToast("El título es obligatorio", "error")
+      return
     }
 
     if (!formData.descripcion.trim()) {
-      showToast('La descripción es obligatoria', 'error');
-      return;
+      showToast("La descripción es obligatoria", "error")
+      return
+    }
+
+    if (!formData.fecha_inicio) {
+      showToast("La fecha de inicio es obligatoria", "error")
+      return
     }
 
     if (!formData.planId) {
-      showToast('No se pudo identificar el plan', 'error');
-      return;
+      showToast("No se pudo identificar el plan", "error")
+      return
     }
 
-    if (formData.fecha_fin && currentEditPlan?.fecha_inicio) {
-      const fechaFin = new Date(formData.fecha_fin);
-      const fechaInicio = new Date(currentEditPlan.fecha_inicio);
-      
-      if (fechaFin < fechaInicio) {
-        showToast('La fecha de fin no puede ser anterior a la fecha de inicio', 'error');
-        return;
-      }
-    }
-
-    setSubmitting(true);
+    setSubmitting(true)
     try {
-      await updatePlan({
-        planId: formData.planId,
+      await updatePlan(formData.planId, {
         titulo: formData.titulo,
         descripcion: formData.descripcion,
+        fecha_inicio: formData.fecha_inicio,
         estado: formData.estado,
-        fecha_fin: formData.fecha_fin || null
-        // No enviamos médico_ci, paciente_ci, ni fecha_inicio ya que no son editables
-      });
-      // El contexto ya maneja el cierre y toast de éxito
+        resumen_egreso: formData.resumen_egreso
+      })
+
+      showToast("Plan actualizado", "success")
+      closeModal("editPlan")
     } catch (error) {
-      console.error('Error actualizando plan:', error);
-      // El contexto ya maneja el error
+      console.error("Error actualizando plan:", error)
+      showToast(error.message || "Error al actualizar el plan", "error")
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
-  };
+  }
 
   const getPlanInfo = () => {
-    if (!currentEditPlan) return null;
-    
-    const fechaActualizacion = currentEditPlan.ultima_actualizacion 
-      ? new Date(currentEditPlan.ultima_actualizacion).toLocaleString() 
-      : 'No disponible';
-    
-    return { fechaActualizacion };
-  };
+    if (!currentEditPlan) return null
 
-  const planInfo = getPlanInfo();
+    const fechaCreacion = currentEditPlan.fecha_creacion
+      ? new Date(currentEditPlan.fecha_creacion).toLocaleString()
+      : "No disponible"
 
-  const getEstadoLabel = (estado) => {
-    const estados = {
-      'activo': 'Activo',
-      'completado': 'Completado',
-      'cancelado': 'Cancelado',
-      'pendiente': 'Pendiente'
-    };
-    
-    return estados[estado] || estado || 'No especificado';
-  };
+    return { fechaCreacion }
+  }
+
+  const planInfo = getPlanInfo()
 
   return (
     <Modal
       open={open}
-      onClose={() => closeModal('editPlan')}
+      onClose={() => closeModal("editPlan")}
       title="Editar Plan de Tratamiento"
-      size="lg"
-    >
+      size="lg">
       <form onSubmit={handleSubmit} className={styles.form}>
         {planInfo && (
           <div className={styles.planInfo}>
-            <div className={styles.infoGrid}>
-              {currentEditPlan?.medico_ci && (
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>Médico responsable:</span>
-                  <span className={styles.infoValue}>{currentEditPlan.medico_ci}</span>
-                </div>
-              )}
-              
-              {currentEditPlan?.paciente_ci && (
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>Paciente:</span>
-                  <span className={styles.infoValue}>{currentEditPlan.paciente_ci}</span>
-                </div>
-              )}
-              
-              <div className={styles.infoItem}>
-                <span className={styles.infoLabel}>Fecha de inicio:</span>
-                <span className={styles.infoValue}>{fechaInicioDisplay}</span>
-              </div>
-              
-              <div className={styles.infoItem}>
-                <span className={styles.infoLabel}>Última actualización:</span>
-                <span className={styles.infoValue}>{planInfo.fechaActualizacion}</span>
-              </div>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>Creado:</span>
+              <span className={styles.infoValue}>{planInfo.fechaCreacion}</span>
             </div>
           </div>
         )}
 
-        <div className={styles.formRow}>
+        <div className={styles.formGrid}>
           <div className={styles.formGroup}>
             <label htmlFor="titulo" className={styles.label}>
               Título del Plan *
@@ -193,7 +139,23 @@ export default function EditPlanModal() {
               name="titulo"
               value={formData.titulo}
               onChange={handleInputChange}
-              placeholder="Ej: Plan de tratamiento cardiovascular"
+              placeholder="Título del plan de tratamiento"
+              className={styles.input}
+              required
+              disabled={submitting}
+            />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor="fecha_inicio" className={styles.label}>
+              Fecha de Inicio *
+            </label>
+            <input
+              type="date"
+              id="fecha_inicio"
+              name="fecha_inicio"
+              value={formData.fecha_inicio}
+              onChange={handleInputChange}
               className={styles.input}
               required
               disabled={submitting}
@@ -202,7 +164,7 @@ export default function EditPlanModal() {
 
           <div className={styles.formGroup}>
             <label htmlFor="estado" className={styles.label}>
-              Estado del Plan
+              Estado *
             </label>
             <select
               id="estado"
@@ -210,85 +172,74 @@ export default function EditPlanModal() {
               value={formData.estado}
               onChange={handleInputChange}
               className={styles.select}
-              disabled={submitting}
-            >
+              required
+              disabled={submitting}>
               <option value="activo">Activo</option>
               <option value="pendiente">Pendiente</option>
               <option value="completado">Completado</option>
               <option value="cancelado">Cancelado</option>
             </select>
-            <div className={styles.estadoInfo}>
-              Estado actual: <span className={styles.estadoActual}>{getEstadoLabel(formData.estado)}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.formRow}>
-          <div className={styles.formGroup}>
-            <label htmlFor="fecha_fin" className={styles.label}>
-              Fecha de fin (opcional)
-            </label>
-            <input
-              type="date"
-              id="fecha_fin"
-              name="fecha_fin"
-              value={formData.fecha_fin}
-              onChange={handleInputChange}
-              className={styles.input}
-              disabled={submitting}
-              min={currentEditPlan?.fecha_inicio ? new Date(currentEditPlan.fecha_inicio).toISOString().split('T')[0] : undefined}
-            />
-            <div className={styles.dateInfo}>
-              {fechaInicioDisplay && (
-                <span>Fecha de inicio: {fechaInicioDisplay}</span>
-              )}
-            </div>
           </div>
         </div>
 
         <div className={styles.formGroup}>
           <label htmlFor="descripcion" className={styles.label}>
-            Descripción del Plan *
+            Descripción Detallada *
           </label>
           <textarea
             id="descripcion"
             name="descripcion"
             value={formData.descripcion}
             onChange={handleInputChange}
-            placeholder="Describe el plan de tratamiento, incluyendo objetivos, medicamentos, procedimientos, etc."
+            placeholder="Descripción detallada del plan..."
             className={styles.textarea}
             rows={8}
             required
             disabled={submitting}
           />
-          <div className={styles.charCount}>
-            <span>{formData.descripcion.length} caracteres</span>
-          </div>
         </div>
+
+        {formData.estado === "completado" && (
+          <div className={styles.formGroup}>
+            <label htmlFor="resumen_egreso" className={styles.label}>
+              Resumen de Egreso
+            </label>
+            <textarea
+              id="resumen_egreso"
+              name="resumen_egreso"
+              value={formData.resumen_egreso}
+              onChange={handleInputChange}
+              placeholder="Resumen del egreso o finalización del tratamiento..."
+              className={styles.textarea}
+              rows={4}
+              disabled={submitting}
+            />
+          </div>
+        )}
 
         <div className={styles.formActions}>
           <button
             type="button"
-            onClick={() => closeModal('editPlan')}
+            onClick={() => closeModal("editPlan")}
             className={styles.cancelButton}
-            disabled={submitting}
-          >
+            disabled={submitting}>
             Cancelar
           </button>
           <button
             type="submit"
             className={styles.submitButton}
-            disabled={submitting}
-          >
+            disabled={submitting}>
             {submitting ? (
               <>
                 <span className={styles.spinner}></span>
                 Guardando cambios...
               </>
-            ) : 'Guardar Cambios'}
+            ) : (
+              "Guardar Cambios"
+            )}
           </button>
         </div>
       </form>
     </Modal>
-  );
+  )
 }

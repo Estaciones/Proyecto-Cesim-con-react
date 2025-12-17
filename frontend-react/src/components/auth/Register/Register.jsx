@@ -1,9 +1,12 @@
+// src/components/auth/Register/Register.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useToast } from '../../../hooks/useToast';
 import styles from './Register.module.css';
 
 export default function Register() {
   const navigate = useNavigate();
+  const { showToast } = useToast(); // Usar hook de toast
   const API_URL = 'http://localhost:3000/api/auth/register';
 
   // Estados del formulario
@@ -148,6 +151,7 @@ export default function Register() {
 
       if (res.ok) {
         showMessage('✅ Registro exitoso. Redirigiendo al login...', 'success');
+        showToast('Registro exitoso', 'success', 1500);
         
         // Resetear formulario
         setFormData({
@@ -168,18 +172,22 @@ export default function Register() {
       } else {
         if (res.status === 400) {
           showMessage('❌ ' + (json.error || 'Datos inválidos'), 'error');
+          showToast(json.error || 'Datos inválidos', 'error');
         } else if (res.status === 409) {
           showMessage('❌ ' + (json.error || 'El email o nombre de usuario ya existe'), 'error');
+          showToast(json.error || 'El email o nombre de usuario ya existe', 'error');
           if (json.error && json.error.toLowerCase().includes('email')) {
             setEmailErrorVisible(true);
           }
         } else {
           showMessage('❌ ' + (json.error || 'Error del servidor'), 'error');
+          showToast(json.error || 'Error del servidor', 'error');
         }
       }
     } catch (err) {
       console.error('Error al conectar al backend:', err);
       showMessage('❌ No se pudo conectar con el servidor. ¿Está corriendo?', 'error');
+      showToast('No se pudo conectar con el servidor', 'error');
     } finally {
       setSubmitting(false);
     }

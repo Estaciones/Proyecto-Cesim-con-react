@@ -1,30 +1,36 @@
-// src/services/patientService.js (ACTUALIZADO)
-import api from "./api"
+// src/services/patientService.js
+import { api } from '../utils/api';
 
-const PatientService = {
-  // Obtener todos los pacientes
+export const PatientService = {
   getAll: async (params = {}) => {
-    let url = "pacientes"
-    const queryParams = new URLSearchParams()
-
-    if (params.medico_id) queryParams.append("medico_id", params.medico_id)
-    if (params.gestor_id) queryParams.append("gestor_id", params.gestor_id)
-
-    const queryString = queryParams.toString()
-    if (queryString) url += `?${queryString}`
-
-    return api.get(url)
+    // params puede ser { medico_id, gestor_id } o vacío
+    const queryString = new URLSearchParams(params).toString();
+    const path = queryString ? `pacientes?${queryString}` : 'pacientes';
+    return api.get(path);
   },
 
-  // Crear paciente
+  getById: async (id) => {
+    return api.get(`pacientes/${id}`);
+  },
+
   create: async (patientData) => {
-    return api.post("pacientes", patientData)
+    return api.post('pacientes', patientData);
   },
 
-  // Asignar gestor
-  assignGestor: async (id_gestor, id_paciente) => {
-    return api.post("asignar_gestor", { id_gestor, id_paciente })
-  }
-}
+  update: async (id, patientData) => {
+    return api.patch(`pacientes/${id}`, patientData);
+  },
 
-export default PatientService
+  delete: async (id) => {
+    return api.delete(`pacientes/${id}`);
+  },
+
+  // Otras funciones específicas de pacientes
+  getGestores: async () => {
+    return api.get('gestores');
+  },
+
+  assignGestor: async (data) => {
+    return api.post('asignar_gestor', data);
+  },
+};

@@ -1,33 +1,90 @@
-import React, { useContext, useEffect } from 'react';
-import { DashboardContext } from '../../../../../context/DashboardContext';
-import Button from '../../../../ui/Button/Button';
-import Card from '../../../../ui/Card/Card';
+// src/components/dashboard/sections/Planes/Planes.jsx
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useAuthContext } from '../../../../context/AuthContext';
+import { useModal } from '../../../../hooks/useModal';
+import Button from '../../../ui/Button/Button';
+import Card from '../../../ui/Card/Card';
 import styles from './Planes.module.css';
 
-export default function Planes() {
-  const {
-    plans,
-    loadPlanes,
-    loading,
-    selectedPatient,
-    openModal,
-    openViewPlan,
-    openEditPlan,
-    openCrearPlanWithPatient,
-    isPaciente,
-    canCreatePlan,
-    canEditPlan,
-    // <-- nuevos / necesarios para editar prescripciones desde gestor
-    canEditPrescripcion,
-    openEditPresWithId,
-    updatePrescripcion,
-  } = useContext(DashboardContext);
+const PlanesService = {
+  async fetchPlans(params) {
+    try {
+      const queryString = params ? `?${new URLSearchParams(params)}` : '';
+      const response = await fetch(`/api/planes${queryString}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) throw new Error('Error al cargar planes');
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching plans:', error);
+      throw error;
+    }
+  },
 
+  async updatePrescription(presId, data) {
+    try {
+      const response = await fetch(`/api/prescripciones/${presId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) throw new Error('Error al actualizar prescripción');
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating prescription:', error);
+      throw error;
+    }
+  }
+};
+
+export default function Planes({ selectedPatient }) {
+  const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const { profile } = useAuthContext();
+  const { 
+    openModal, 
+    openViewPlan, 
+    openEditPlan, 
+    openEditPres, 
+    openCrearPlanWithPatient 
+  } = useModal();
+
+  // Función para cargar planes - memorizada
+  const loadPlans = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = {};
+      if (selectedPatient?.ci) {
+        params.ci = selectedPatient.ci;
+      } else if (selectedPatient?.id_paciente) {
+        params.id_paciente = selectedPatient.id_paciente;
+      } else if (profile?.tipo_usuario === 'paciente') {
+        if (profile.ci) params.ci = profile.ci;
+        else if (profile.id_paciente) params.id_paciente = profile.id_paciente;
+      }
+      
+      const data = await PlanesService.fetchPlans(params);
+      setPlans(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error loading plans:', error);
+      setPlans([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedPatient, profile]);
+
+  // Efecto para cargar datos
   useEffect(() => {
-    loadPlanes();
-  }, [loadPlanes]);
+    loadPlans();
+  }, [loadPlans]);
 
-  const formatShortDate = (dateString) => {
+  // Helper functions memorizadas
+  const formatShortDate = useCallback((dateString) => {
     if (!dateString) return '';
     try {
       const date = new Date(dateString);
@@ -40,9 +97,9 @@ export default function Planes() {
       console.error('Error formateando fecha:', dateString, error);
       return '';
     }
-  };
+  }, []);
 
-  const getStatusColor = (status) => {
+  const getStatusColor = useCallback((status) => {
     const statusStr = String(status || '').toLowerCase().trim();
 
     switch (statusStr) {
@@ -62,33 +119,50 @@ export default function Planes() {
       default:
         return 'bg-gray-100 text-gray-800 border border-gray-200';
     }
-  };
+  }, []);
 
-  // toggle cumplimiento (rápido) — usa updatePrescripcion del provider
-  const toggleCumplimiento = async (pres) => {
+  // Handlers memorizados
+  const handleCrearPlan = useCallback(() => {
+    if (selectedPatient?.id_paciente) {
+      openCrearPlanWithPatient(selectedPatient.id_paciente);
+    } else {
+      openModal('crearPlan');
+    }
+  }, [selectedPatient, openCrearPlanWithPatient, openModal]);
+
+  const toggleCumplimiento = useCallback(async (pres) => {
     const presId = pres.id_prescripcion || pres.id;
     try {
-      await updatePrescripcion({
-        presId,
+      await PlanesService.updatePrescription(presId, {
         descripcion: pres.descripcion || '',
         observaciones: pres.observaciones || '',
         cumplimiento: !pres.cumplimiento,
       });
-      // updatePrescripcion ya recarga planes y muestra toast según el provider
+      // Recargar planes después de actualizar
+      loadPlans();
     } catch (err) {
-      // Si algo falla, updatePrescripcion ya muestra toast; aquí lo registramos
-      console.error('Error toggling cumplimiento:', err);
+      console.error('Error al actualizar prescripción:', err);
     }
-  };
+  }, [loadPlans]);
+
+  const isPaciente = useMemo(() => profile?.tipo_usuario === 'paciente', [profile]);
+  const isMedico = useMemo(() => profile?.tipo_usuario === 'medico', [profile]);
+  const isGestor = useMemo(() => 
+    profile?.tipo_usuario === 'gestor' || profile?.tipo_usuario === 'gestor_casos', 
+    [profile]
+  );
+  const canCreatePlan = useMemo(() => isMedico, [isMedico]);
+  const canEditPlan = useMemo(() => isMedico, [isMedico]);
+  const canEditPrescripcion = useMemo(() => isGestor, [isGestor]);
 
   return (
     <section className={styles.container}>
       <div className={styles.header}>
         <div className={styles.titleSection}>
           <h1 className={styles.title}>
-            {isPaciente() ? 'Mis Planes de Tratamiento' : 'Planes de Tratamiento'}
+            {isPaciente ? 'Mis Planes de Tratamiento' : 'Planes de Tratamiento'}
           </h1>
-          {selectedPatient && !isPaciente() && (
+          {selectedPatient && !isPaciente && (
             <div className={styles.patientBadge}>
               <span className={styles.patientName}>
                 {selectedPatient.nombre} {selectedPatient.apellido}
@@ -99,17 +173,12 @@ export default function Planes() {
         </div>
 
         <div className={styles.actions}>
-          {canCreatePlan() && (
+          {canCreatePlan && (
             <Button
               variant="primary"
-              onClick={() => {
-                if (selectedPatient?.id_paciente) {
-                  openCrearPlanWithPatient(selectedPatient.id_paciente);
-                } else {
-                  openModal('crearPlan');
-                }
-              }}
+              onClick={handleCrearPlan}
               className={styles.addButton}
+              disabled={loading}
             >
               <svg className={styles.addIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -125,7 +194,7 @@ export default function Planes() {
           <div className={styles.spinner}></div>
           <p>Cargando planes de tratamiento...</p>
         </div>
-      ) : !plans || plans.length === 0 ? (
+      ) : plans.length === 0 ? (
         <Card className={styles.emptyCard}>
           <div className={styles.emptyState}>
             <svg className={styles.emptyIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -133,11 +202,11 @@ export default function Planes() {
             </svg>
             <h3>Sin planes de tratamiento</h3>
             <p>
-              {isPaciente()
+              {isPaciente
                 ? 'Aún no tienes planes de tratamiento asignados.'
                 : 'No hay planes de tratamiento registrados para este paciente.'}
             </p>
-            {canCreatePlan() && (
+            {canCreatePlan && (
               <Button
                 variant="primary"
                 onClick={() => openModal('crearPlan')}
@@ -176,7 +245,7 @@ export default function Planes() {
                     </svg>
                     Ver
                   </Button>
-                  {canEditPlan() && (
+                  {canEditPlan && (
                     <Button
                       variant="secondary"
                       size="small"
@@ -247,7 +316,6 @@ export default function Planes() {
                             )}
                           </div>
 
-                          {/* mostrar observaciones si existen */}
                           {pres.observaciones && (
                             <div className={styles.prescriptionObservaciones}>
                               <div className={styles.obsLabel}>Observaciones:</div>
@@ -272,13 +340,12 @@ export default function Planes() {
                             )}
                           </div>
 
-                          {/* acciones para gestor: editar observaciones / toggle cumplimiento */}
-                          {canEditPrescripcion && canEditPrescripcion() && (
+                          {canEditPrescripcion && (
                             <div className={styles.prescriptionActions}>
                               <Button
                                 variant="secondary"
                                 size="small"
-                                onClick={() => openEditPresWithId(pres.id_prescripcion || pres.id)}
+                                onClick={() => openEditPres(pres)}
                                 className={styles.actionButton}
                               >
                                 <svg className={styles.buttonIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">

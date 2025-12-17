@@ -1,232 +1,228 @@
-import React, { useState, useContext, useEffect } from 'react';
-import Modal from '../Modal/Modal';
-import { DashboardContext } from '../../../context/DashboardContext';
-import styles from './CrearPlanModal.module.css';
+// src/components/modals/CrearPlanModal/CrearPlanModal.jsx
+import React, { useState, useEffect } from "react"
+import Modal from "../Modal/Modal"
+import { useModal } from "../../../hooks/useModal"
+import { usePlans } from "../../../hooks/usePlans"
+import { useToast } from "../../../hooks/useToast"
+import { useAuthContext } from "../../../context/AuthContext"
+import { usePatients } from "../../../hooks/usePatients"
+import styles from "./CrearPlanModal.module.css"
 
 export default function CrearPlanModal() {
-  const { 
-    modals, 
-    closeModal, 
-    createPlan, 
-    profile, 
-    patients, 
-    currentCrearPlanPacienteId,
-    showToast,
-    loadPatients // Añadimos loadPatients del contexto si existe
-  } = useContext(DashboardContext);
-  
-  const open = modals.crearPlan;
+  const { modals, closeModal, modalData } = useModal()
+  const { createPlan } = usePlans()
+  const { profile } = useAuthContext()
+  const { patients, fetchPatients } = usePatients()
+  const { showToast } = useToast()
+
+  const open = modals.crearPlan
+  const { currentCrearPlanPacienteId } = modalData
 
   const [formData, setFormData] = useState({
-    titulo: '',
-    descripcion: '',
-    fecha_inicio: '',
-    id_paciente: '',
+    titulo: "",
+    descripcion: "",
+    fecha_inicio: "",
+    id_paciente: "",
     prescripciones: []
-  });
-  
+  })
+
   const [prescripcionForm, setPrescripcionForm] = useState({
-    tipo: '',
-    descripcion: '',
-    frecuencia: '',
-    duracion: ''
-  });
-  
-  const [submitting, setSubmitting] = useState(false);
-  const [patientsLoaded, setPatientsLoaded] = useState(false);
+    tipo: "",
+    descripcion: "",
+    frecuencia: "",
+    duracion: ""
+  })
+
+  const [submitting, setSubmitting] = useState(false)
+  const [patientsLoaded, setPatientsLoaded] = useState(false)
 
   // Cargar pacientes si no están cargados cuando se abre el modal
   useEffect(() => {
     if (open && !profile?.id_paciente) {
       const loadPatientsData = async () => {
         try {
-          if (loadPatients && typeof loadPatients === 'function') {
-            await loadPatients();
-          }
+          await fetchPatients()
         } catch (error) {
-          console.error('Error al cargar pacientes:', error);
-          showToast('Error al cargar la lista de pacientes', 'error');
+          console.error("Error al cargar pacientes:", error)
+          showToast("Error al cargar la lista de pacientes", "error")
         } finally {
-          setPatientsLoaded(true);
+          setPatientsLoaded(true)
         }
-      };
-      
-      loadPatientsData();
+      }
+
+      loadPatientsData()
     }
-  }, [open, profile, loadPatients, showToast]);
+  }, [open, profile, fetchPatients, showToast])
 
   // Inicializar formulario cuando se abre el modal
   useEffect(() => {
     if (open) {
-      const today = new Date().toISOString().split('T')[0];
-      
-      let initialPatientId = '';
+      const today = new Date().toISOString().split("T")[0]
+
+      let initialPatientId = ""
       if (currentCrearPlanPacienteId) {
-        initialPatientId = currentCrearPlanPacienteId.toString();
+        initialPatientId = currentCrearPlanPacienteId.toString()
       } else if (profile?.id_paciente) {
-        initialPatientId = profile.id_paciente.toString();
+        initialPatientId = profile.id_paciente.toString()
       }
 
       setFormData({
-        titulo: '',
-        descripcion: '',
+        titulo: "",
+        descripcion: "",
         fecha_inicio: today,
         id_paciente: initialPatientId,
         prescripciones: []
-      });
+      })
 
       setPrescripcionForm({
-        tipo: '',
-        descripcion: '',
-        frecuencia: '',
-        duracion: ''
-      });
-      
-      // Si el usuario es paciente, ya tenemos los datos
+        tipo: "",
+        descripcion: "",
+        frecuencia: "",
+        duracion: ""
+      })
+
       if (profile?.id_paciente) {
-        setPatientsLoaded(true);
+        setPatientsLoaded(true)
       }
     } else {
-      // Resetear cuando se cierra el modal
-      setPatientsLoaded(false);
+      setPatientsLoaded(false)
     }
-  }, [open, currentCrearPlanPacienteId, profile]);
+  }, [open, currentCrearPlanPacienteId, profile])
 
   const handleFormChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
+    const { name, value } = e.target
+    setFormData((prev) => ({
       ...prev,
       [name]: value
-    }));
-  };
+    }))
+  }
 
   const handlePrescripcionChange = (e) => {
-    const { name, value } = e.target;
-    setPrescripcionForm(prev => ({
+    const { name, value } = e.target
+    setPrescripcionForm((prev) => ({
       ...prev,
       [name]: value
-    }));
-  };
+    }))
+  }
 
   const addPrescripcion = () => {
     if (!prescripcionForm.descripcion.trim() || !prescripcionForm.tipo) {
-      showToast('Completa al menos el tipo y descripción de la prescripción', 'warning');
-      return;
+      showToast(
+        "Completa al menos el tipo y descripción de la prescripción",
+        "warning"
+      )
+      return
     }
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       prescripciones: [
         ...prev.prescripciones,
         { ...prescripcionForm, id: Date.now() }
       ]
-    }));
+    }))
 
     setPrescripcionForm({
-      tipo: '',
-      descripcion: '',
-      frecuencia: '',
-      duracion: ''
-    });
-  };
+      tipo: "",
+      descripcion: "",
+      frecuencia: "",
+      duracion: ""
+    })
+  }
 
   const removePrescripcion = (index) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       prescripciones: prev.prescripciones.filter((_, i) => i !== index)
-    }));
-  };
+    }))
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
 
-    // Validaciones básicas
     if (!formData.titulo.trim()) {
-      showToast('El título del plan es obligatorio', 'error');
-      return;
+      showToast("El título del plan es obligatorio", "error")
+      return
     }
 
     if (!formData.descripcion.trim()) {
-      showToast('La descripción del plan es obligatoria', 'error');
-      return;
+      showToast("La descripción del plan es obligatoria", "error")
+      return
     }
 
     if (!formData.fecha_inicio) {
-      showToast('La fecha de inicio es obligatoria', 'error');
-      return;
+      showToast("La fecha de inicio es obligatoria", "error")
+      return
     }
 
-    let id_paciente = null;
-    
-    // Determinar el ID del paciente
+    let id_paciente = null
+
     if (currentCrearPlanPacienteId) {
-      id_paciente = currentCrearPlanPacienteId;
+      id_paciente = currentCrearPlanPacienteId
     } else if (formData.id_paciente) {
-      id_paciente = parseInt(formData.id_paciente);
+      id_paciente = parseInt(formData.id_paciente)
     } else if (profile?.id_paciente) {
-      id_paciente = profile.id_paciente;
+      id_paciente = profile.id_paciente
     }
 
     if (!id_paciente) {
-      showToast('Selecciona un paciente', 'error');
-      return;
+      showToast("Selecciona un paciente", "error")
+      return
     }
 
-    // Validar fecha
-    const fechaInicio = new Date(formData.fecha_inicio);
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    
+    const fechaInicio = new Date(formData.fecha_inicio)
+    const hoy = new Date()
+    hoy.setHours(0, 0, 0, 0)
+
     if (fechaInicio < hoy) {
-      showToast('La fecha de inicio no puede ser anterior a hoy', 'error');
-      return;
+      showToast("La fecha de inicio no puede ser anterior a hoy", "error")
+      return
     }
 
-    // Validar prescripciones
     if (formData.prescripciones.length === 0) {
-      showToast('Debe agregar al menos una prescripción', 'error');
-      return;
+      showToast("Debe agregar al menos una prescripción", "error")
+      return
     }
 
-    setSubmitting(true);
+    setSubmitting(true)
     try {
       await createPlan({
         titulo: formData.titulo,
         descripcion: formData.descripcion,
         fecha_inicio: formData.fecha_inicio,
         id_paciente: id_paciente,
-        prescripciones: formData.prescripciones.map(p => ({
+        prescripciones: formData.prescripciones.map((p) => ({
           tipo: p.tipo,
           descripcion: p.descripcion,
           frecuencia: p.frecuencia,
           duracion: p.duracion
         }))
-      });
+      })
+
+      showToast("Plan creado", "success")
+      closeModal("crearPlan")
     } catch (error) {
-      console.error('Error al crear plan:', error);
-      // El contexto ya maneja el error con showToast
+      console.error("Error al crear plan:", error)
+      showToast(error.message || "Error al crear el plan", "error")
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
-  };
+  }
 
-  // Filtrar pacientes disponibles
-  const availablePatients = Array.isArray(patients) 
-    ? patients.filter(p => 
-        !profile?.id_paciente || p.id_paciente === profile.id_paciente
+  const availablePatients = Array.isArray(patients)
+    ? patients.filter(
+        (p) => !profile?.id_paciente || p.id_paciente === profile.id_paciente
       )
-    : [];
+    : []
 
-  // Verificar si estamos cargando pacientes
-  const isLoadingPatients = !profile?.id_paciente && !patientsLoaded;
+  const isLoadingPatients = !profile?.id_paciente && !patientsLoaded
 
   return (
     <Modal
       open={open}
-      onClose={() => closeModal('crearPlan')}
+      onClose={() => closeModal("crearPlan")}
       title="Crear Plan de Tratamiento"
-      size="lg"
-    >
+      size="lg">
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.formGrid}>
           <div className={styles.formGroup}>
@@ -259,12 +255,11 @@ export default function CrearPlanModal() {
               className={styles.input}
               required
               disabled={submitting}
-              min={new Date().toISOString().split('T')[0]}
+              min={new Date().toISOString().split("T")[0]}
             />
           </div>
         </div>
 
-        {/* Selector de paciente - solo visible si el usuario no es paciente */}
         {!profile?.id_paciente && (
           <div className={styles.formGroup}>
             <label htmlFor="id_paciente" className={styles.label}>
@@ -274,7 +269,11 @@ export default function CrearPlanModal() {
               <div className={styles.preselectedPatient}>
                 <input
                   type="text"
-                  value={availablePatients.find(p => p.id_paciente === currentCrearPlanPacienteId)?.nombre || 'Paciente seleccionado'}
+                  value={
+                    availablePatients.find(
+                      (p) => p.id_paciente === currentCrearPlanPacienteId
+                    )?.nombre || "Paciente seleccionado"
+                  }
                   readOnly
                   className={styles.input}
                 />
@@ -295,16 +294,16 @@ export default function CrearPlanModal() {
                     onChange={handleFormChange}
                     className={styles.select}
                     required
-                    disabled={submitting || availablePatients.length === 0}
-                  >
+                    disabled={submitting || availablePatients.length === 0}>
                     <option value="">
-                      {availablePatients.length === 0 
-                        ? "No hay pacientes disponibles" 
-                        : "Selecciona un paciente"
-                      }
+                      {availablePatients.length === 0
+                        ? "No hay pacientes disponibles"
+                        : "Selecciona un paciente"}
                     </option>
-                    {availablePatients.map(patient => (
-                      <option key={patient.id_paciente} value={patient.id_paciente}>
+                    {availablePatients.map((patient) => (
+                      <option
+                        key={patient.id_paciente}
+                        value={patient.id_paciente}>
                         {patient.nombre} {patient.apellido} - CI: {patient.ci}
                       </option>
                     ))}
@@ -332,10 +331,11 @@ export default function CrearPlanModal() {
           />
         </div>
 
-        {/* Sección de Prescripciones */}
         <div className={styles.prescripcionesSection}>
           <div className={styles.sectionHeader}>
-            <h3 className={styles.sectionTitle}>Prescripciones / Indicaciones</h3>
+            <h3 className={styles.sectionTitle}>
+              Prescripciones / Indicaciones
+            </h3>
             <span className={styles.prescripcionesCount}>
               {formData.prescripciones.length} añadidas
             </span>
@@ -353,8 +353,7 @@ export default function CrearPlanModal() {
                   value={prescripcionForm.tipo}
                   onChange={handlePrescripcionChange}
                   className={styles.select}
-                  disabled={submitting}
-                >
+                  disabled={submitting}>
                   <option value="">Selecciona tipo</option>
                   <option value="Tratamiento">Tratamiento</option>
                   <option value="Indicacion">Indicación</option>
@@ -365,7 +364,9 @@ export default function CrearPlanModal() {
               </div>
 
               <div className={styles.formGroup}>
-                <label htmlFor="prescripcion-frecuencia" className={styles.label}>
+                <label
+                  htmlFor="prescripcion-frecuencia"
+                  className={styles.label}>
                   Frecuencia
                 </label>
                 <input
@@ -398,7 +399,9 @@ export default function CrearPlanModal() {
             </div>
 
             <div className={styles.formGroup}>
-              <label htmlFor="prescripcion-descripcion" className={styles.label}>
+              <label
+                htmlFor="prescripcion-descripcion"
+                className={styles.label}>
                 Descripción *
               </label>
               <textarea
@@ -417,13 +420,15 @@ export default function CrearPlanModal() {
               type="button"
               onClick={addPrescripcion}
               className={styles.addPrescripcionButton}
-              disabled={submitting || !prescripcionForm.descripcion.trim() || !prescripcionForm.tipo}
-            >
+              disabled={
+                submitting ||
+                !prescripcionForm.descripcion.trim() ||
+                !prescripcionForm.tipo
+              }>
               + Añadir Prescripción
             </button>
           </div>
 
-          {/* Lista de prescripciones añadidas */}
           {formData.prescripciones.length > 0 && (
             <div className={styles.prescripcionesList}>
               {formData.prescripciones.map((pres, index) => (
@@ -435,17 +440,27 @@ export default function CrearPlanModal() {
                       onClick={() => removePrescripcion(index)}
                       className={styles.removeButton}
                       disabled={submitting}
-                      aria-label="Eliminar prescripción"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                        <path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      aria-label="Eliminar prescripción">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 14 14"
+                        fill="none">
+                        <path
+                          d="M1 1L13 13M13 1L1 13"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                        />
                       </svg>
                     </button>
                   </div>
                   <p className={styles.prescripcionDesc}>{pres.descripcion}</p>
                   {(pres.frecuencia || pres.duracion) && (
                     <div className={styles.prescripcionMeta}>
-                      {pres.frecuencia && <span>Frecuencia: {pres.frecuencia}</span>}
+                      {pres.frecuencia && (
+                        <span>Frecuencia: {pres.frecuencia}</span>
+                      )}
                       {pres.duracion && <span>Duración: {pres.duracion}</span>}
                     </div>
                   )}
@@ -456,7 +471,10 @@ export default function CrearPlanModal() {
 
           {formData.prescripciones.length === 0 && (
             <div className={styles.noPrescripciones}>
-              <p>No hay prescripciones añadidas. Agrega al menos una prescripción para continuar.</p>
+              <p>
+                No hay prescripciones añadidas. Agrega al menos una prescripción
+                para continuar.
+              </p>
             </div>
           )}
         </div>
@@ -465,28 +483,32 @@ export default function CrearPlanModal() {
           <div className={styles.formActions}>
             <button
               type="button"
-              onClick={() => closeModal('crearPlan')}
+              onClick={() => closeModal("crearPlan")}
               className={styles.cancelButton}
-              disabled={submitting}
-            >
+              disabled={submitting}>
               Cancelar
             </button>
             <button
               type="submit"
               className={styles.submitButton}
               disabled={submitting || formData.prescripciones.length === 0}
-              title={formData.prescripciones.length === 0 ? 'Agrega al menos una prescripción' : ''}
-            >
+              title={
+                formData.prescripciones.length === 0
+                  ? "Agrega al menos una prescripción"
+                  : ""
+              }>
               {submitting ? (
                 <>
                   <span className={styles.spinner}></span>
                   Creando Plan...
                 </>
-              ) : `Crear Plan (${formData.prescripciones.length} prescripciones)`}
+              ) : (
+                `Crear Plan (${formData.prescripciones.length} prescripciones)`
+              )}
             </button>
           </div>
         </div>
       </form>
     </Modal>
-  );
+  )
 }

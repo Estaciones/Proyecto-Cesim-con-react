@@ -1,94 +1,327 @@
-import React, { useEffect, useRef } from 'react';
-import styles from './Modal.module.css';
+// src/components/modals/RegistroModal/RegistroModal.jsx
+import React, { useState, useEffect } from "react"
+import Modal from "../Modal/Modal"
+import { useModal } from "../../../hooks/useModal"
+import { useHistory } from "../../../hooks/useHistory"
+import { useToast } from "../../../hooks/useToast"
+import { useAuthContext } from "../../../context/AuthContext"
+import { usePatients } from "../../../hooks/usePatients"
+import styles from "./Modal.module.css"
 
-export default function Modal({ 
-  open, 
-  onClose, 
-  title, 
-  children, 
-  size = 'md',
-  closeOnOverlayClick = true 
-}) {
-  const modalRef = useRef(null);
-  const contentRef = useRef(null);
-  
-  // Efecto solo para el Escape key
+export default function RegistroModal() {
+  const { modals, closeModal, modalData } = useModal()
+  const { createRegistro } = useHistory()
+  const { showToast } = useToast()
+  const { profile } = useAuthContext()
+  const { patients, fetchPatients } = usePatients()
+
+  const open = modals.registro
+  const { currentRegistroPacienteId } = modalData
+
+  const [formData, setFormData] = useState({
+    titulo: "",
+    descripcion: "",
+    tipo: "general",
+    id_paciente: ""
+  })
+
+  const [submitting, setSubmitting] = useState(false)
+  const [patientsLoaded, setPatientsLoaded] = useState(false)
+
+  // Cargar pacientes si no están cargados cuando se abre el modal
   useEffect(() => {
-    if (!open) return;
-    
-    const handleEscape = (e) => {
-      if (e.key === 'Escape') onClose?.();
-    };
-    
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [open, onClose]);
-  
-  // Efecto solo para el scroll y focus inicial
-  useEffect(() => {
-    if (!open) return;
-    
-    document.body.style.overflow = 'hidden';
-    
-    // Solo enfocar al abrir
-    const timer = setTimeout(() => {
-      const firstFocusable = contentRef.current?.querySelector(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-      if (firstFocusable && !firstFocusable.contains(document.activeElement)) {
-        firstFocusable.focus();
+    if (open && !profile?.id_paciente) {
+      const loadPatientsData = async () => {
+        try {
+          await fetchPatients()
+        } catch (error) {
+          console.error("Error al cargar pacientes:", error)
+          showToast("Error al cargar la lista de pacientes", "error")
+        } finally {
+          setPatientsLoaded(true)
+        }
       }
-    }, 10);
-    
-    return () => {
-      document.body.style.overflow = '';
-      clearTimeout(timer);
-    };
-  }, [open]); // Solo depende de open
-  
-  if (!open) return null;
-  
-  const handleOverlayClick = (e) => {
-    if (closeOnOverlayClick && e.target === modalRef.current) {
-      onClose?.();
+
+      loadPatientsData()
     }
-  };
-  
+  }, [open, profile, fetchPatients, showToast])
+
+  // Inicializar formulario cuando se abre el modal
+  useEffect(() => {
+    if (open) {
+      let initialPatientId = ""
+
+      if (currentRegistroPacienteId) {
+        initialPatientId = currentRegistroPacienteId.toString()
+      } else if (profile?.id_paciente) {
+        initialPatientId = profile.id_paciente.toString()
+      }
+
+      setFormData({
+        titulo: "",
+        descripcion: "",
+        tipo: "general",
+        id_paciente: initialPatientId
+      })
+
+      if (profile?.id_paciente) {
+        setPatientsLoaded(true)
+      }
+    } else {
+      setPatientsLoaded(false)
+    }
+  }, [open, currentRegistroPacienteId, profile])
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+    if (!formData.titulo.trim()) {
+      showToast("El título del registro es obligatorio", "error")
+      return
+    }
+
+    if (!formData.descripcion.trim()) {
+      showToast("La descripción del registro es obligatoria", "error")
+      return
+    }
+
+    let id_paciente = null
+
+    if (currentRegistroPacienteId) {
+      id_paciente = currentRegistroPacienteId
+    } else if (formData.id_paciente) {
+      id_paciente = parseInt(formData.id_paciente)
+    } else if (profile?.id_paciente) {
+      id_paciente = profile.id_paciente
+    }
+
+    if (!id_paciente) {
+      showToast("Selecciona un paciente", "error")
+      return
+    }
+
+    let ci = null
+
+    if (Array.isArray(patients)) {
+      const patient = patients.find((p) => p.id_paciente === id_paciente)
+      if (patient) {
+        ci = patient.ci
+      }
+    }
+
+    if (!ci && profile?.ci) {
+      ci = profile.ci
+    }
+
+    if (!ci) {
+      showToast("No se pudo identificar el CI del paciente", "error")
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      await createRegistro({
+        titulo: formData.titulo,
+        descripcion: formData.descripcion,
+        tipo: formData.tipo,
+        id_paciente: id_paciente,
+        ci: ci
+      })
+
+      showToast("Registro guardado", "success")
+      closeModal("registro")
+    } catch (error) {
+      console.error("Error al crear registro:", error)
+      showToast(error.message || "Error al guardar el registro", "error")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const availablePatients = Array.isArray(patients)
+    ? patients.filter(
+        (p) => !profile?.id_paciente || p.id_paciente === profile.id_paciente
+      )
+    : []
+
+  const isLoadingPatients = !profile?.id_paciente && !patientsLoaded
+
+  const getSelectedPatientInfo = () => {
+    if (currentRegistroPacienteId && Array.isArray(patients)) {
+      const patient = patients.find(
+        (p) => p.id_paciente === currentRegistroPacienteId
+      )
+      if (patient) {
+        return {
+          id: patient.id_paciente,
+          nombre: `${patient.nombre} ${patient.apellido}`,
+          ci: patient.ci
+        }
+      }
+    }
+
+    if (profile?.id_paciente && Array.isArray(patients)) {
+      const patient = patients.find(
+        (p) => p.id_paciente === profile.id_paciente
+      )
+      if (patient) {
+        return {
+          id: patient.id_paciente,
+          nombre: `${patient.nombre} ${patient.apellido}`,
+          ci: patient.ci
+        }
+      }
+    }
+
+    return null
+  }
+
+  const selectedPatientInfo = getSelectedPatientInfo()
+
   return (
-    <div 
-      ref={modalRef}
-      className={styles.modalOverlay}
-      onClick={handleOverlayClick}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={title ? "modal-title" : undefined}
-    >
-      <div 
-        ref={contentRef}
-        className={`${styles.modalContent} ${styles[size]}`}
-      >
-        <div className={styles.modalHeader}>
-          {title && (
-            <h2 id="modal-title" className={styles.modalTitle}>
-              {title}
-            </h2>
-          )}
-          <button
-            type="button"
-            className={styles.closeButton}
-            onClick={onClose}
-            aria-label="Cerrar modal"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </button>
+    <Modal
+      open={open}
+      onClose={() => closeModal("registro")}
+      title="Nuevo Registro Clínico"
+      size="md">
+      <form onSubmit={handleSubmit} className={styles.form}>
+        {selectedPatientInfo && (
+          <div className={styles.selectedPatientInfo}>
+            <div className={styles.patientBadge}>
+              <span className={styles.patientName}>
+                {selectedPatientInfo.nombre}
+              </span>
+              <span className={styles.patientCI}>
+                CI: {selectedPatientInfo.ci}
+              </span>
+              {currentRegistroPacienteId && (
+                <span className={styles.preselectedBadge}>Preseleccionado</span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {!profile?.id_paciente && !selectedPatientInfo && (
+          <div className={styles.formGroup}>
+            <label htmlFor="id_paciente" className={styles.label}>
+              Paciente *
+            </label>
+            {isLoadingPatients ? (
+              <div className={styles.loadingPatients}>
+                <span className={styles.spinner}></span>
+                Cargando lista de pacientes...
+              </div>
+            ) : (
+              <select
+                id="id_paciente"
+                name="id_paciente"
+                value={formData.id_paciente}
+                onChange={handleInputChange}
+                className={styles.select}
+                required
+                disabled={submitting || availablePatients.length === 0}>
+                <option value="">
+                  {availablePatients.length === 0
+                    ? "No hay pacientes disponibles"
+                    : "Selecciona un paciente"}
+                </option>
+                {availablePatients.map((patient) => (
+                  <option key={patient.id_paciente} value={patient.id_paciente}>
+                    {patient.nombre} {patient.apellido} - CI: {patient.ci}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        )}
+
+        <div className={styles.formGroup}>
+          <label htmlFor="titulo" className={styles.label}>
+            Título del Registro *
+          </label>
+          <input
+            type="text"
+            id="titulo"
+            name="titulo"
+            value={formData.titulo}
+            onChange={handleInputChange}
+            placeholder="Ej: Consulta inicial, Evaluación, Seguimiento"
+            className={styles.input}
+            required
+            disabled={submitting}
+          />
         </div>
-        
-        <div className={styles.modalBody}>
-          {children}
+
+        <div className={styles.formGroup}>
+          <label htmlFor="tipo" className={styles.label}>
+            Tipo de Registro
+          </label>
+          <select
+            id="tipo"
+            name="tipo"
+            value={formData.tipo}
+            onChange={handleInputChange}
+            className={styles.select}
+            disabled={submitting}>
+            <option value="general">General</option>
+            <option value="consulta">Consulta</option>
+            <option value="evaluacion">Evaluación</option>
+            <option value="seguimiento">Seguimiento</option>
+            <option value="tratamiento">Tratamiento</option>
+            <option value="diagnostico">Diagnóstico</option>
+          </select>
         </div>
-      </div>
-    </div>
-  );
+
+        <div className={styles.formGroup}>
+          <label htmlFor="descripcion" className={styles.label}>
+            Descripción Detallada *
+          </label>
+          <textarea
+            id="descripcion"
+            name="descripcion"
+            value={formData.descripcion}
+            onChange={handleInputChange}
+            placeholder="Describe el registro clínico en detalle..."
+            className={styles.textarea}
+            rows={6}
+            required
+            disabled={submitting}
+          />
+        </div>
+
+        <div className={styles.formFooter}>
+          <div className={styles.formActions}>
+            <button
+              type="button"
+              onClick={() => closeModal("registro")}
+              className={styles.cancelButton}
+              disabled={submitting}>
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className={styles.submitButton}
+              disabled={submitting}>
+              {submitting ? (
+                <>
+                  <span className={styles.spinner}></span>
+                  Guardando...
+                </>
+              ) : (
+                "Guardar Registro"
+              )}
+            </button>
+          </div>
+        </div>
+      </form>
+    </Modal>
+  )
 }

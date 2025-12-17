@@ -1,77 +1,84 @@
-import React, { useContext } from 'react';
-import Modal from '../Modal/Modal';
-import { DashboardContext } from '../../../context/DashboardContext';
-import styles from './ViewPlanModal.module.css';
+// src/components/modals/ViewPlanModal/ViewPlanModal.jsx
+import React from "react"
+import Modal from "../Modal/Modal"
+import { useModal } from "../../../hooks/useModal"
+import styles from "./ViewPlanModal.module.css"
 
 export default function ViewPlanModal() {
-  const { 
-    modals, 
-    closeModal, 
-    currentViewPlan 
-  } = useContext(DashboardContext);
-  
-  const open = modals.viewPlan;
-  const plan = open ? currentViewPlan : null;
+  const { modals, closeModal, modalData } = useModal()
+
+  const open = modals.viewPlan
+  const { currentViewPlan } = modalData
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'No disponible';
-    
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-  };
+    if (!dateString) return "No disponible"
+
+    const date = new Date(dateString)
+    return date.toLocaleDateString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    })
+  }
 
   const getEstadoLabel = (estado) => {
     const estados = {
-      'activo': 'Activo',
-      'completado': 'Completado',
-      'cancelado': 'Cancelado',
-      'pendiente': 'Pendiente'
-    };
-    
-    return estados[estado] || estado || 'No especificado';
-  };
+      activo: "Activo",
+      completado: "Completado",
+      cancelado: "Cancelado",
+      pendiente: "Pendiente"
+    }
+
+    return estados[estado] || estado || "No especificado"
+  }
 
   const getEstadoClass = (estado) => {
     switch (estado) {
-      case 'activo': return styles.estadoActivo;
-      case 'completado': return styles.estadoCompletado;
-      case 'cancelado': return styles.estadoCancelado;
-      default: return styles.estadoPendiente;
+      case "activo":
+        return styles.estadoActivo
+      case "completado":
+        return styles.estadoCompletado
+      case "cancelado":
+        return styles.estadoCancelado
+      default:
+        return styles.estadoPendiente
     }
-  };
+  }
 
-  if (!plan) return null;
+  if (!currentViewPlan) return null
 
   return (
     <Modal
       open={open}
-      onClose={() => closeModal('viewPlan')}
-      title={plan.titulo || 'Plan de Tratamiento'}
-      size="lg"
-    >
+      onClose={() => closeModal("viewPlan")}
+      title={currentViewPlan.titulo || "Plan de Tratamiento"}
+      size="lg">
       <div className={styles.content}>
         <div className={styles.planHeader}>
           <div className={styles.headerContent}>
             <div className={styles.planStatus}>
-              <span className={`${styles.estadoBadge} ${getEstadoClass(plan.estado)}`}>
-                {getEstadoLabel(plan.estado)}
+              <span
+                className={`${styles.estadoBadge} ${getEstadoClass(
+                  currentViewPlan.estado
+                )}`}>
+                {getEstadoLabel(currentViewPlan.estado)}
               </span>
             </div>
-            
+
             <div className={styles.planDates}>
               <div className={styles.dateItem}>
                 <span className={styles.dateLabel}>Fecha de inicio:</span>
-                <span className={styles.dateValue}>{formatDate(plan.fecha_inicio)}</span>
+                <span className={styles.dateValue}>
+                  {formatDate(currentViewPlan.fecha_inicio)}
+                </span>
               </div>
-              
-              {plan.fecha_fin && (
+
+              {currentViewPlan.fecha_fin && (
                 <div className={styles.dateItem}>
                   <span className={styles.dateLabel}>Fecha de fin:</span>
-                  <span className={styles.dateValue}>{formatDate(plan.fecha_fin)}</span>
+                  <span className={styles.dateValue}>
+                    {formatDate(currentViewPlan.fecha_fin)}
+                  </span>
                 </div>
               )}
             </div>
@@ -80,32 +87,40 @@ export default function ViewPlanModal() {
 
         <div className={styles.metadata}>
           <div className={styles.metaGrid}>
-            {plan.medico_ci && (
+            {currentViewPlan.medico_ci && (
               <div className={styles.metaItem}>
                 <span className={styles.metaLabel}>Médico responsable:</span>
-                <span className={styles.metaValue}>{plan.medico_ci}</span>
+                <span className={styles.metaValue}>
+                  {currentViewPlan.medico_ci}
+                </span>
               </div>
             )}
-            
-            {plan.paciente_ci && (
+
+            {currentViewPlan.paciente_ci && (
               <div className={styles.metaItem}>
                 <span className={styles.metaLabel}>Paciente:</span>
-                <span className={styles.metaValue}>{plan.paciente_ci}</span>
+                <span className={styles.metaValue}>
+                  {currentViewPlan.paciente_ci}
+                </span>
               </div>
             )}
-            
-            {plan.creado_por && (
+
+            {currentViewPlan.creado_por && (
               <div className={styles.metaItem}>
                 <span className={styles.metaLabel}>Creado por:</span>
-                <span className={styles.metaValue}>{plan.creado_por}</span>
+                <span className={styles.metaValue}>
+                  {currentViewPlan.creado_por}
+                </span>
               </div>
             )}
-            
-            {plan.ultima_actualizacion && (
+
+            {currentViewPlan.ultima_actualizacion && (
               <div className={styles.metaItem}>
                 <span className={styles.metaLabel}>Última actualización:</span>
                 <span className={styles.metaValue}>
-                  {new Date(plan.ultima_actualizacion).toLocaleString()}
+                  {new Date(
+                    currentViewPlan.ultima_actualizacion
+                  ).toLocaleString()}
                 </span>
               </div>
             )}
@@ -115,9 +130,9 @@ export default function ViewPlanModal() {
         <div className={styles.descriptionSection}>
           <h3 className={styles.sectionTitle}>Descripción del Plan</h3>
           <div className={styles.descriptionContent}>
-            {plan.descripcion ? (
+            {currentViewPlan.descripcion ? (
               <div className={styles.descriptionText}>
-                {plan.descripcion.split('\n').map((line, index) => (
+                {currentViewPlan.descripcion.split("\n").map((line, index) => (
                   <p key={index} className={styles.descriptionParagraph}>
                     {line}
                   </p>
@@ -133,24 +148,42 @@ export default function ViewPlanModal() {
 
         <div className={styles.prescripcionesSection}>
           <h3 className={styles.sectionTitle}>
-            Prescripciones ({Array.isArray(plan.prescripciones) ? plan.prescripciones.length : 0})
+            Prescripciones (
+            {Array.isArray(currentViewPlan.prescripciones)
+              ? currentViewPlan.prescripciones.length
+              : 0}
+            )
           </h3>
-          
-          {Array.isArray(plan.prescripciones) && plan.prescripciones.length > 0 ? (
+
+          {Array.isArray(currentViewPlan.prescripciones) &&
+          currentViewPlan.prescripciones.length > 0 ? (
             <div className={styles.prescripcionesList}>
-              {plan.prescripciones.map((pres, index) => (
-                <div key={pres.id_prescripcion || pres.id || index} className={styles.prescripcionItem}>
+              {currentViewPlan.prescripciones.map((pres, index) => (
+                <div
+                  key={pres.id_prescripcion || pres.id || index}
+                  className={styles.prescripcionItem}>
                   <div className={styles.prescripcionHeader}>
-                    <span className={styles.prescripcionIndex}>#{index + 1}</span>
-                    <span className={styles.prescripcionType}>{pres.tipo || 'Prescripción'}</span>
-                    <span className={`${styles.prescripcionStatus} ${pres.cumplimiento ? styles.statusCumplido : styles.statusPendiente}`}>
-                      {pres.cumplimiento ? 'Cumplido' : 'Pendiente'}
+                    <span className={styles.prescripcionIndex}>
+                      #{index + 1}
+                    </span>
+                    <span className={styles.prescripcionType}>
+                      {pres.tipo || "Prescripción"}
+                    </span>
+                    <span
+                      className={`${styles.prescripcionStatus} ${
+                        pres.cumplimiento
+                          ? styles.statusCumplido
+                          : styles.statusPendiente
+                      }`}>
+                      {pres.cumplimiento ? "Cumplido" : "Pendiente"}
                     </span>
                   </div>
-                  
+
                   <div className={styles.prescripcionContent}>
-                    <p className={styles.prescripcionDescription}>{pres.descripcion}</p>
-                    
+                    <p className={styles.prescripcionDescription}>
+                      {pres.descripcion}
+                    </p>
+
                     {(pres.frecuencia || pres.duracion) && (
                       <div className={styles.prescripcionMeta}>
                         {pres.frecuencia && (
@@ -159,7 +192,7 @@ export default function ViewPlanModal() {
                             <span>{pres.frecuencia}</span>
                           </div>
                         )}
-                        
+
                         {pres.duracion && (
                           <div className={styles.metaItem}>
                             <span className={styles.metaIcon}>⏱️</span>
@@ -168,7 +201,7 @@ export default function ViewPlanModal() {
                         )}
                       </div>
                     )}
-                    
+
                     {pres.observaciones && (
                       <div className={styles.prescripcionObservaciones}>
                         <strong>Observaciones:</strong> {pres.observaciones}
@@ -187,13 +220,12 @@ export default function ViewPlanModal() {
 
         <div className={styles.actions}>
           <button
-            onClick={() => closeModal('viewPlan')}
-            className={styles.closeButton}
-          >
+            onClick={() => closeModal("viewPlan")}
+            className={styles.closeButton}>
             Cerrar
           </button>
         </div>
       </div>
     </Modal>
-  );
+  )
 }

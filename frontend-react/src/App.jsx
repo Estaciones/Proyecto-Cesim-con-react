@@ -1,7 +1,9 @@
-// App.jsx corregido
+// src/App.jsx - Versión Simplificada
 import React from "react"
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
-import { DashboardProvider } from "./context/DashboardProvider"
+
+// Providers
+import { AuthProvider } from "./context/AuthContext"
 
 // Layouts
 import AuthLayout from "./components/layout/AuthLayout"
@@ -11,8 +13,8 @@ import DashboardLayout from "./components/layout/DashboardLayout"
 import Login from "./components/auth/Login/Login"
 import Register from "./components/auth/Register/Register"
 
-// Secciones del dashboard
-import Dashboard from "./components/auth/dashboard/Dashboard"
+// Dashboard
+import Dashboard from "./components/dashboard/Dashboard"
 
 // Importar estilos globales
 import "./styles/index.css"
@@ -22,7 +24,7 @@ import "./styles/utilities.css"
 
 function App() {
   return (
-    <DashboardProvider>
+    <AuthProvider>
       <BrowserRouter>
         <Routes>
           {/* Rutas públicas (autenticación) */}
@@ -33,16 +35,15 @@ function App() {
           </Route>
 
           {/* Rutas protegidas (dashboard) */}
-          <Route path="/dashboard" element={<DashboardLayout />}>
-            <Route index element={<Dashboard />} />
-            {/* Removemos las rutas específicas, ahora Dashboard maneja las secciones internamente */}
+          <Route element={<DashboardLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
           </Route>
 
           {/* Redirección para rutas no definidas */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
-    </DashboardProvider>
+    </AuthProvider>
   )
 }
 

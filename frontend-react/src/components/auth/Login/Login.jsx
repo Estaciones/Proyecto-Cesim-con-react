@@ -1,86 +1,39 @@
-// src/components/auth/Login/Login.jsx
-import React, { useState, useContext } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import styles from "./Login.module.css";
-import { apiUrl } from "../../../utils/api";
-import { DashboardContext } from "../../../context/DashboardContext";
+import React, { useState } from "react"
+import { useNavigate, Link } from "react-router-dom"
+import { useAuth } from "../../../hooks/useAuth"
+import { useToast } from "../../../hooks/useToast"
+import styles from "./Login.module.css"
 
 export default function Login() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [message, setMessage] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
-  // Obtener funciones del contexto
-  const { login, showToast } = useContext(DashboardContext);
+  const { login } = useAuth()
+  const { showToast } = useToast()
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setMessage(null);
-    setLoading(true);
+    e.preventDefault()
+    setMessage(null)
+    setLoading(true)
 
     try {
-      const response = await fetch(apiUrl("auth/login"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          email: username,
-          nombre_usuario: username,
-          password: password,
-        }),
-      });
+      // Usar identifier en lugar de 'email' para que el hook/service lo normalice
+      await login({ identifier: username.trim(), password })
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error("Credenciales incorrectas");
-        }
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-
-      if (data.message === "Login correcto") {
-        const userData = {
-          id: data.user.id_usuario,
-          email: data.user.email,
-          tipo: data.user.tipo_usuario,
-          nombre_usuario: data.user.nombre_usuario,
-        };
-
-        // Actualizamos el contexto y localStorage desde login()
-        if (typeof login === "function") {
-          login(userData);
-        } else {
-          // fallback (por compatibilidad)
-          try {
-            localStorage.setItem("user", JSON.stringify(userData));
-          } catch (e) {
-            console.warn("No se pudo escribir localStorage", e);
-          }
-        }
-
-        // Mensaje y toast de éxito
-        setMessage({ text: "✅ Login exitoso. Redirigiendo...", type: "success" });
-        if (typeof showToast === "function") showToast("Login exitoso", "success", 2000);
-
-        // Pequeña espera para que el usuario vea el mensaje en pantalla
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 700);
-      } else {
-        setMessage({ text: "❌ " + (data.error || "Error desconocido"), type: "error" });
-        if (typeof showToast === "function") showToast(data.error || "Error desconocido", "error");
-      }
+      setMessage({ text: "✅ Login exitoso. Redirigiendo...", type: "success" })
+      showToast("Login exitoso", "success", 2000)
+      setTimeout(() => navigate("/dashboard"), 700)
     } catch (error) {
-      console.error("Error:", error);
-      setMessage({ text: "❌ " + error.message, type: "error" });
-      if (typeof showToast === "function") showToast(error.message, "error");
+      console.error("Login error:", error)
+      setMessage({ text: "❌ " + (error.message || "Error desconocido"), type: "error" })
+      showToast(error.message || "Error desconocido", "error")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className={styles.container}>
@@ -127,8 +80,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className={`${styles.button} ${loading ? styles.loading : ""}`}
-          >
+            className={`${styles.button} ${loading ? styles.loading : ""}`}>
             {loading ? "Iniciando sesión..." : "Entrar"}
           </button>
 
@@ -147,5 +99,5 @@ export default function Login() {
         </form>
       </div>
     </div>
-  );
+  )
 }

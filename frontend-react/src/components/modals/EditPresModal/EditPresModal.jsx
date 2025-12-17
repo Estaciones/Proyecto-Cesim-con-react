@@ -1,113 +1,112 @@
-import React, { useContext, useEffect, useState } from 'react';
-import Modal from '../Modal/Modal';
-import { DashboardContext } from '../../../context/DashboardContext';
-import styles from './EditPresModal.module.css';
+// src/components/modals/EditPresModal/EditPresModal.jsx
+import React, { useEffect, useState } from "react"
+import Modal from "../Modal/Modal"
+import { useModal } from "../../../hooks/useModal"
+import { usePlans } from "../../../hooks/usePlans"
+import { useToast } from "../../../hooks/useToast"
+import styles from "./EditPresModal.module.css"
 
 export default function EditPresModal() {
-  const { 
-    modals, 
-    closeModal, 
-    currentEditPres, 
-    updatePrescripcion,
-    showToast 
-  } = useContext(DashboardContext);
-  
-  const open = modals.editPres;
+  const { modals, closeModal, modalData } = useModal()
+  const { updatePrescription } = usePlans()
+  const { showToast } = useToast()
+
+  const open = modals.editPres
+  const { currentEditPres } = modalData
 
   const [formData, setFormData] = useState({
-    presId: '',
-    descripcion: '',
-    observaciones: '',
-    cumplimiento: 'false',
-    frecuencia: '',
-    duracion: ''
-  });
-  
-  const [submitting, setSubmitting] = useState(false);
+    presId: "",
+    descripcion: "",
+    observaciones: "",
+    cumplimiento: "false",
+    frecuencia: "",
+    duracion: ""
+  })
 
-  // Actualizar formulario cuando cambia currentEditPres
+  const [submitting, setSubmitting] = useState(false)
+
   useEffect(() => {
     if (open && currentEditPres) {
       setFormData({
-        presId: currentEditPres.id_prescripcion || currentEditPres.id || '',
-        descripcion: currentEditPres.descripcion || '',
-        observaciones: currentEditPres.observaciones || '',
-        cumplimiento: currentEditPres.cumplimiento ? 'true' : 'false',
-        frecuencia: currentEditPres.frecuencia || '',
-        duracion: currentEditPres.duracion || ''
-      });
+        presId: currentEditPres.id_prescripcion || currentEditPres.id || "",
+        descripcion: currentEditPres.descripcion || "",
+        observaciones: currentEditPres.observaciones || "",
+        cumplimiento: currentEditPres.cumplimiento ? "true" : "false",
+        frecuencia: currentEditPres.frecuencia || "",
+        duracion: currentEditPres.duracion || ""
+      })
     } else {
       setFormData({
-        presId: '',
-        descripcion: '',
-        observaciones: '',
-        cumplimiento: 'false',
-        frecuencia: '',
-        duracion: ''
-      });
+        presId: "",
+        descripcion: "",
+        observaciones: "",
+        cumplimiento: "false",
+        frecuencia: "",
+        duracion: ""
+      })
     }
-  }, [open, currentEditPres]);
+  }, [open, currentEditPres])
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
+    const { name, value } = e.target
+    setFormData((prev) => ({
       ...prev,
       [name]: value
-    }));
-  };
+    }))
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    
+    e.preventDefault()
+
     if (!formData.descripcion.trim()) {
-      showToast('La descripción es obligatoria', 'error');
-      return;
+      showToast("La descripción es obligatoria", "error")
+      return
     }
 
     if (!formData.presId) {
-      showToast('No se pudo identificar la prescripción', 'error');
-      return;
+      showToast("No se pudo identificar la prescripción", "error")
+      return
     }
 
-    setSubmitting(true);
+    setSubmitting(true)
     try {
-      await updatePrescripcion({
-        presId: formData.presId,
+      await updatePrescription(formData.presId, {
         descripcion: formData.descripcion,
         observaciones: formData.observaciones,
-        cumplimiento: formData.cumplimiento === 'true',
+        cumplimiento: formData.cumplimiento === "true",
         frecuencia: formData.frecuencia,
         duracion: formData.duracion
-      });
-      // El contexto ya maneja el cierre y toast de éxito
+      })
+
+      showToast("Prescripción actualizada", "success")
+      closeModal("editPres")
     } catch (error) {
-      console.error('Error actualizando prescripción:', error);
-      // El contexto ya maneja el error
+      console.error("Error actualizando prescripción:", error)
+      showToast(error.message || "Error al actualizar la prescripción", "error")
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
-  };
+  }
 
   const getPrescripcionInfo = () => {
-    if (!currentEditPres) return null;
-    
-    const tipo = currentEditPres.tipo || 'No especificado';
-    const fechaCreacion = currentEditPres.fecha_creacion 
-      ? new Date(currentEditPres.fecha_creacion).toLocaleDateString() 
-      : 'No disponible';
-    
-    return { tipo, fechaCreacion };
-  };
+    if (!currentEditPres) return null
 
-  const presInfo = getPrescripcionInfo();
+    const tipo = currentEditPres.tipo || "No especificado"
+    const fechaCreacion = currentEditPres.fecha_creacion
+      ? new Date(currentEditPres.fecha_creacion).toLocaleDateString()
+      : "No disponible"
+
+    return { tipo, fechaCreacion }
+  }
+
+  const presInfo = getPrescripcionInfo()
 
   return (
     <Modal
       open={open}
-      onClose={() => closeModal('editPres')}
+      onClose={() => closeModal("editPres")}
       title="Editar Prescripción"
-      size="md"
-    >
+      size="md">
       <form onSubmit={handleSubmit} className={styles.form}>
         {presInfo && (
           <div className={styles.presInfo}>
@@ -197,7 +196,7 @@ export default function EditPresModal() {
                 type="radio"
                 name="cumplimiento"
                 value="true"
-                checked={formData.cumplimiento === 'true'}
+                checked={formData.cumplimiento === "true"}
                 onChange={handleInputChange}
                 disabled={submitting}
                 className={styles.radioInput}
@@ -205,13 +204,13 @@ export default function EditPresModal() {
               <span className={styles.radioCustom}></span>
               <span className={styles.radioText}>Cumplido</span>
             </label>
-            
+
             <label className={styles.radioLabel}>
               <input
                 type="radio"
                 name="cumplimiento"
                 value="false"
-                checked={formData.cumplimiento === 'false'}
+                checked={formData.cumplimiento === "false"}
                 onChange={handleInputChange}
                 disabled={submitting}
                 className={styles.radioInput}
@@ -225,26 +224,26 @@ export default function EditPresModal() {
         <div className={styles.formActions}>
           <button
             type="button"
-            onClick={() => closeModal('editPres')}
+            onClick={() => closeModal("editPres")}
             className={styles.cancelButton}
-            disabled={submitting}
-          >
+            disabled={submitting}>
             Cancelar
           </button>
           <button
             type="submit"
             className={styles.submitButton}
-            disabled={submitting}
-          >
+            disabled={submitting}>
             {submitting ? (
               <>
                 <span className={styles.spinner}></span>
                 Guardando...
               </>
-            ) : 'Guardar Cambios'}
+            ) : (
+              "Guardar Cambios"
+            )}
           </button>
         </div>
       </form>
     </Modal>
-  );
+  )
 }
