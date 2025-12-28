@@ -36,12 +36,29 @@ export default function Historia({ selectedPatient }) {
 
   useEffect(() => {
     const controller = new AbortController()
+
+    // Determinar si hay parámetros válidos antes de llamar
+    const hasParams =
+      selectedPatient?.ci ||
+      selectedPatient?.id_paciente ||
+      (profile?.tipo_usuario === "paciente" &&
+        (profile.ci || profile.id_paciente))
+
+    if (!hasParams) {
+      // no hacemos fetch (ej. medico que no ha seleccionado paciente)
+      setTimeout(() => {
+        // opcional: limpiar historia si quieres
+      }, 0)
+      return () => controller.abort()
+    }
+
     load(controller.signal).catch((err) => {
       if (err?.name !== "AbortError")
         console.error("Error loading historia:", err)
     })
+
     return () => controller.abort()
-  }, [load])
+  }, [load, selectedPatient, profile])
 
   const formatShortDate = useCallback((dateString) => {
     if (!dateString) return ""

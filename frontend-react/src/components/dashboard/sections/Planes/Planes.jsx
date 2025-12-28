@@ -30,14 +30,37 @@ export default function Planes({ selectedPatient }) {
   // carga inicial con abort controller
   useEffect(() => {
     const params = buildParams()
-    // Solo hacer fetch si hay parámetros válidos
+
+    // Si no hay parámetros y el usuario es médico o gestor, intentar filtrar por id de usuario
     if (!params.ci && !params.id_paciente) {
-      // Si no hay parámetros, no hacemos la llamada
+      if (profile?.tipo_usuario === "medico") {
+        params.medico_id = profile.id_usuario
+      } else if (
+        profile?.tipo_usuario === "gestor_casos" ||
+        (typeof profile?.tipo_usuario === "string" &&
+          profile.tipo_usuario.includes("gestor"))
+      ) {
+        params.gestor_id = profile.id_usuario
+      } else {
+        // si es paciente y no hay params, no hacemos fetch
+        if (profile?.tipo_usuario === "paciente") {
+          // si no hay info de paciente (improbable), no fetch
+          return
+        }
+      }
+    }
+
+    // Si aún no hay parámetros válidos, no llamamos
+    if (
+      !params.ci &&
+      !params.id_paciente &&
+      !params.medico_id &&
+      !params.gestor_id
+    ) {
       return
     }
 
     const controller = new AbortController()
-    // Llamada con signal: le decimos al hook que NO reutilice la promesa existente
     fetchPlans(params, { signal: controller.signal }).catch((err) => {
       if (err && err.name === "AbortError") {
         console.log("Planes.jsx - fetch aborted (expected in dev StrictMode)")
@@ -46,10 +69,8 @@ export default function Planes({ selectedPatient }) {
       }
     })
 
-    return () => {
-      controller.abort()
-    }
-  }, [fetchPlans, buildParams])
+    return () => controller.abort()
+  }, [fetchPlans, buildParams, profile])
 
   const handleViewPlan = (plan) => {
     openModal("viewPlan", { currentViewPlan: plan })

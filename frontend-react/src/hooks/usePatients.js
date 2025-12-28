@@ -23,7 +23,6 @@ export function usePatients() {
       { params, hasSignal: !!options.signal }
     )
 
-    // Sólo reusar petición en curso si el caller NO pasó un signal explícito.
     if (inFlightRef.current && !options.signal) {
       console.log("🔒 usePatients.fetchPatients - petición ya en curso (reuso)")
       return inFlightRef.current
@@ -34,7 +33,23 @@ export function usePatients() {
       setError(null)
       try {
         const data = await serviceRef.current.getAll(params, options)
-        setPatients(Array.isArray(data) ? data : [])
+        console.log("usePatients.fetchPatients - respuesta raw:", data)
+
+        let arr = []
+        if (Array.isArray(data)) arr = data
+        else if (data && Array.isArray(data.data)) arr = data.data
+        else if (data && Array.isArray(data.pacientes)) arr = data.pacientes
+        else if (data && Array.isArray(data.results)) arr = data.results
+        else if (data && Array.isArray(data.items)) arr = data.items
+        else {
+          console.warn(
+            "usePatients.fetchPatients - payload inesperado, se normaliza a []",
+            data
+          )
+          arr = []
+        }
+
+        setPatients(arr)
         return data
       } catch (err) {
         if (err && err.name === "AbortError") {
@@ -46,14 +61,11 @@ export function usePatients() {
         throw err
       } finally {
         setLoading(false)
-        // important: limpiar inFlight solo aquí para que la promesa no quede pegada
         inFlightRef.current = null
       }
     })()
 
-    // Guardar la promesa para posible reuso (solo cuando caller NO pasa signal)
     if (!options.signal) inFlightRef.current = promise
-
     return promise
   }, [])
 

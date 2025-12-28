@@ -1,3 +1,4 @@
+// src/components/dashboard/sections/Pacientes/Pacientes.jsx
 import React, { useEffect, useCallback, useMemo } from "react"
 import { useAuthContext } from "../../../../context/AuthContext"
 import { useModal } from "../../../../hooks/useModal"
@@ -17,11 +18,45 @@ export default function Pacientes({ onSelectPatient }) {
   // hook centralizado
   const { patients, loading, error, fetchPatients } = usePatients()
 
-  // carga inicial con abort controller
+  // Construir params según tipo de usuario
+  const buildParams = useCallback(() => {
+    const params = {}
+    const tipo = profile?.tipo_usuario
+    const idUsuario = profile?.id_usuario
+
+    if (!tipo) return params
+
+    if (tipo === "medico") {
+      // Backend debería filtrar por medico_id
+      if (idUsuario) params.medico_id = idUsuario
+    } else if (
+      tipo === "gestor_casos" ||
+      (typeof tipo === "string" && tipo.includes("gestor"))
+    ) {
+      if (idUsuario) params.gestor_id = idUsuario
+    } else {
+      // otros tipos no deberían acceder a esta vista (ya lo manejas)
+    }
+
+    return params
+  }, [profile])
+
+  // carga inicial con abort controller (ahora con params)
   useEffect(() => {
     const controller = new AbortController()
-    // Llamada con signal: le decimos al hook que NO reutilice la promesa existente
-    fetchPatients({}, { signal: controller.signal }).catch((err) => {
+    const params = buildParams()
+
+    // Si no hay parámetros (ej. perfil no listo), intentamos reintentar más tarde.
+    // Pero si perfil indica que no debe ver pacientes, no hacemos la llamada.
+    if (!profile?.tipo_usuario) {
+      // esperar hasta que profile esté disponible
+      return
+    }
+
+    // Si el usuario no puede ver pacientes, no llamar
+    if (profile?.tipo_usuario === "paciente") return
+
+    fetchPatients(params, { signal: controller.signal }).catch((err) => {
       if (err && err.name === "AbortError") {
         console.log(
           "Pacientes.jsx - fetch aborted (expected in dev StrictMode)"
@@ -31,10 +66,8 @@ export default function Pacientes({ onSelectPatient }) {
       }
     })
 
-    return () => {
-      controller.abort()
-    }
-  }, [fetchPatients])
+    return () => controller.abort()
+  }, [fetchPatients, buildParams, profile])
 
   const isPaciente = useMemo(
     () => profile?.tipo_usuario === "paciente",
@@ -48,7 +81,7 @@ export default function Pacientes({ onSelectPatient }) {
     (patient) => {
       if (onSelectPatient) {
         onSelectPatient({
-          id_paciente: patient.id_paciente,
+          id_paciente: patient.id_paciente || patient.id,
           ci: patient.ci,
           nombre: patient.nombre,
           apellido: patient.apellido,
@@ -151,7 +184,9 @@ export default function Pacientes({ onSelectPatient }) {
       ) : (
         <div className={styles.grid}>
           {filteredPatients.map((patient) => (
-            <Card key={patient.id_paciente} className={styles.patientCard}>
+            <Card
+              key={patient.id_paciente || patient.id}
+              className={styles.patientCard}>
               <div className={styles.cardHeader}>
                 <div className={styles.avatar}>
                   {patient.nombre?.charAt(0) || "P"}
@@ -205,7 +240,9 @@ export default function Pacientes({ onSelectPatient }) {
                     <Button
                       variant="secondary"
                       size="small"
-                      onClick={() => openAsignarGestor(patient.id_paciente)}
+                      onClick={() =>
+                        openAsignarGestor(patient.id_paciente || patient.id)
+                      }
                       className={styles.actionButton}>
                       Asignar gestor
                     </Button>
@@ -216,7 +253,9 @@ export default function Pacientes({ onSelectPatient }) {
                       variant="secondary"
                       size="small"
                       onClick={() =>
-                        openCrearPlanWithPatient(patient.id_paciente)
+                        openCrearPlanWithPatient(
+                          patient.id_paciente || patient.id
+                        )
                       }
                       className={styles.actionButton}>
                       Crear plan
@@ -228,7 +267,9 @@ export default function Pacientes({ onSelectPatient }) {
                       variant="secondary"
                       size="small"
                       onClick={() =>
-                        openRegistroWithPatient(patient.id_paciente)
+                        openRegistroWithPatient(
+                          patient.id_paciente || patient.id
+                        )
                       }
                       className={styles.actionButton}>
                       Nuevo Registro

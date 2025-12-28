@@ -11,8 +11,25 @@ export function useHistory() {
     setError(null)
     try {
       const data = await HistoryService.getAll(params, options)
-      // normalizar a array (backend puede devolver objeto o array)
-      setHistoria(Array.isArray(data) ? data : [])
+      console.log("useHistory.fetchHistoria - respuesta raw:", data)
+
+      // Normalización robusta: acepta array directo o wrappers comunes
+      let arr = []
+      if (Array.isArray(data)) arr = data
+      else if (data && Array.isArray(data.data)) arr = data.data
+      else if (data && Array.isArray(data.historia)) arr = data.historia
+      else if (data && Array.isArray(data.results)) arr = data.results
+      else if (data && Array.isArray(data.items)) arr = data.items
+      else {
+        // Si la respuesta es un objeto vacío o distinto, mantén arreglo vacío pero loggea
+        console.warn(
+          "useHistory.fetchHistoria - payload inesperado, se normaliza a []",
+          data
+        )
+        arr = []
+      }
+
+      setHistoria(arr)
       return data
     } catch (err) {
       if (err && err.name === "AbortError") {

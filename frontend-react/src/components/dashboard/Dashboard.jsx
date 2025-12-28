@@ -1,3 +1,4 @@
+// src/components/dashboard/Dashboard.jsx
 import React, { useEffect, useState, useCallback, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuthContext } from "../../context/AuthContext"
@@ -23,27 +24,91 @@ export default function Dashboard() {
 
   const handleLogout = useCallback(() => {
     logout()
+    // limpiar selección al cerrar sesión
+    setSelectedPatient(null)
     navigate("/login")
   }, [logout, navigate])
 
   // Determinar userType - priorizar profile, luego user
   const userType = useMemo(() => {
-    console.log("Dashboard - user:", user)
-    console.log("Dashboard - profile:", profile)
-
     if (profile?.tipo_usuario) return profile.tipo_usuario
     if (user?.tipo_usuario) return user.tipo_usuario
     if (user?.tipo) return user.tipo
     return null
   }, [user, profile])
 
-  console.log("Dashboard - userType determinado:", userType)
+  // Si cambia el tipo de usuario, limpiar selección y re-inicializar
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSelectedPatient(null)
+    setInitialized(false)
+  }, [userType])
 
-  // Memoizar isSectionAllowed
+  // Inicializar dashboard
+  useEffect(() => {
+    if (!user) {
+      navigate("/login")
+      return
+    }
+
+    if (initialized) return
+
+    let mounted = true
+    const initializeDashboard = () => {
+      try {
+        let defaultSection = "historia"
+        if (userType === "medico" || userType === "gestor_casos") {
+          defaultSection = "pacientes"
+        } else if (userType === "paciente") {
+          defaultSection = "historia"
+        }
+
+        if (mounted) {
+          setActiveSection((curr) =>
+            curr !== defaultSection ? defaultSection : curr
+          )
+        }
+
+        // Si el usuario es paciente, autoseleccionar su propio perfil como paciente
+        if (mounted && userType === "paciente") {
+          const p = {
+            id_paciente:
+              profile?.id_paciente ||
+              profile?.id_usuario ||
+              user?.id_usuario ||
+              user?.id,
+            ci: profile?.ci || null,
+            nombre:
+              profile?.nombre || profile?.persona_nombre || user?.nombre || "",
+            apellido: profile?.apellido || "",
+            email: profile?.email || user?.email || ""
+          }
+          setSelectedPatient(p)
+        }
+
+        if (mounted) setInitialized(true)
+      } catch (err) {
+        console.error("Dashboard - Error inicializando:", err)
+        if (mounted) {
+          showToast("Error inicializando dashboard", "error")
+          setInitialized(true)
+        }
+      }
+    }
+
+    // pequeña espera para asegurar que profile esté listo
+    const t = setTimeout(initializeDashboard, 50)
+
+    return () => {
+      mounted = false
+      clearTimeout(t)
+    }
+  }, [user, userType, profile, initialized, navigate, showToast])
+
+  // Restricciones de acceso a secciones
   const isSectionAllowed = useCallback(
     (section) => {
       if (!userType) return false
-
       switch (section) {
         case "pacientes":
           return userType === "medico" || userType === "gestor_casos"
@@ -58,10 +123,7 @@ export default function Dashboard() {
     [userType]
   )
 
-  // Memoizar el contenido de la sección activa
   const activeSectionContent = useMemo(() => {
-    console.log("Dashboard - Renderizando sección:", activeSection)
-
     if (!userType) {
       return (
         <div className={styles.loadingContainer}>
@@ -92,7 +154,6 @@ export default function Dashboard() {
       )
     }
 
-    // Mensaje si la sección no está permitida
     if (!isSectionAllowed(activeSection)) {
       return (
         <section className={styles.accessDeniedSection}>
@@ -104,67 +165,6 @@ export default function Dashboard() {
 
     return null
   }, [activeSection, isSectionAllowed, selectedPatient, userType])
-
-  // Inicializar dashboard - CORREGIDO
-  useEffect(() => {
-    console.log("Dashboard - Efecto de inicialización, user:", user)
-
-    if (!user) {
-      console.log("Dashboard - No hay usuario, redirigiendo a login")
-      navigate("/login")
-      return
-    }
-
-    if (initialized) {
-      console.log("Dashboard - Ya inicializado")
-      return
-    }
-
-    let mounted = true
-
-    const initializeDashboard = () => {
-      try {
-        console.log("Dashboard - Inicializando con userType:", userType)
-
-        // Determinar sección predeterminada basada en el tipo de usuario
-        let defaultSection = "historia"
-
-        if (userType === "medico" || userType === "gestor_casos") {
-          defaultSection = "pacientes"
-        } else if (userType === "paciente") {
-          defaultSection = "historia"
-        }
-
-        console.log("Dashboard - Sección predeterminada:", defaultSection)
-
-        if (mounted && activeSection !== defaultSection) {
-          console.log("Dashboard - Cambiando sección a:", defaultSection)
-          setActiveSection(defaultSection)
-        }
-
-        if (mounted) {
-          console.log("Dashboard - Marcando como inicializado")
-          setInitialized(true)
-        }
-      } catch (err) {
-        console.error("Dashboard - Error inicializando:", err)
-        if (mounted) {
-          showToast("Error inicializando dashboard", "error")
-          setInitialized(true) // Marcar como inicializado para evitar loop
-        }
-      }
-    }
-
-    // Pequeño delay para asegurar que el userType esté disponible
-    const timer = setTimeout(() => {
-      initializeDashboard()
-    }, 100)
-
-    return () => {
-      mounted = false
-      clearTimeout(timer)
-    }
-  }, [user, userType, activeSection, navigate, showToast, initialized])
 
   // Mostrar loading si no hay usuario
   if (!user) {
@@ -183,7 +183,12 @@ export default function Dashboard() {
       <div className={styles.mainLayout}>
         <Sidebar
           activeSection={activeSection}
-          onNavigate={setActiveSection}
+          onNavigate={(sec) => {
+            setActiveSection(sec)
+            // Si navega a Historia o Plan sin paciente seleccionado y es médico,
+            // no se selecciona nada (pero se pueden mostrar vacíos hasta seleccionar)
+            // Si quiere que al hacer click en paciente se cambie la sección, manejalo desde Pacientes.onSelectPatient
+          }}
           userType={userType}
           onLogout={handleLogout}
           profile={profile}
@@ -201,7 +206,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Modales */}
+      {/* Modales (omitidos/externos) */}
       <RegistroModal />
     </div>
   )
