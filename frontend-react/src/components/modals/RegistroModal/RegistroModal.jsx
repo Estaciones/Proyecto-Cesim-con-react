@@ -1,5 +1,5 @@
-// src/components/modals/RegistroModal/RegistroModal.jsx
-import React, { useState, useEffect } from "react"
+// src/components/RegistroModal/RegistroModal.jsx
+import React, { useState, useEffect, useCallback, useRef } from "react"
 import Modal from "../Modal/Modal"
 import { useModal } from "../../../hooks/useModal"
 import { useHistory } from "../../../hooks/useHistory"
@@ -8,12 +8,47 @@ import { useAuthContext } from "../../../context/AuthContext"
 import { usePatients } from "../../../hooks/usePatients"
 import styles from "./RegistroModal.module.css"
 
+// 🔴 CONTADOR DE RENDERS (para la parte interna)
+let renderCountInner = 0
+
+// Wrapper: solo decide si montar el modal o no.
+// IMPORTANTE: este wrapper **no** importa/llama hooks pesados,
+// solo lee si el modal está abierto y, si no, evita montar el contenido.
 export default function RegistroModal() {
+  const { modals } = useModal()
+  const open = !!modals.registro
+
+  // Si el modal está cerrado no montamos el contenido (evita que se invoquen hooks)
+  if (!open) return null
+
+  // Solo cuando open === true montamos el contenido real
+  return <RegistroModalInner />
+}
+
+function RegistroModalInner() {
+  renderCountInner++
+  console.log(`🔵 RegistroModalInner - RENDER #${renderCountInner}`)
+
+  // Circuit breaker (solo en DEV)
+  if (renderCountInner > 200) {
+    console.error(
+      "🚨 RegistroModalInner: posible bucle de renders (circuit breaker)"
+    )
+    renderCountInner = 0
+  }
+
+  // Ahora sí: hooks de negocio (solo se ejecutan cuando el modal está abierto)
   const { modals, closeModal, modalData } = useModal()
   const { createRegistro } = useHistory()
   const { showToast } = useToast()
   const { profile } = useAuthContext()
   const { patients, fetchPatients } = usePatients()
+
+  console.log("🔵 RegistroModalInner - props:", {
+    modalsRegistro: modals.registro,
+    profileId: profile?.id_paciente,
+    patientsCount: patients?.length || 0
+  })
 
   const open = modals.registro
   const { currentRegistroPacienteId } = modalData
@@ -28,109 +63,97 @@ export default function RegistroModal() {
   const [submitting, setSubmitting] = useState(false)
   const [patientsLoaded, setPatientsLoaded] = useState(false)
 
-  // Cargar pacientes si no están cargados cuando se abre el modal
-  useEffect(() => {
-    if (open && !profile?.id_paciente) {
-      const loadPatientsData = async () => {
-        try {
-          await fetchPatients()
-        } catch (error) {
-          console.error("Error al cargar pacientes:", error)
-          showToast("Error al cargar la lista de pacientes", "error")
-        } finally {
-          setPatientsLoaded(true)
-        }
-      }
+  // Ref para evitar llamadas concurrentes a loadPatientsData
+  const loadInFlightRef = useRef(false)
 
-      loadPatientsData()
+  const loadPatientsData = useCallback(async () => {
+    console.log("🔄 RegistroModalInner.loadPatientsData - INICIO")
+    if (loadInFlightRef.current) {
+      console.log("🔒 loadPatientsData - ya hay una carga en curso, saliendo")
+      return
     }
-  }, [open, profile, fetchPatients, showToast])
+    loadInFlightRef.current = true
 
-  // Inicializar formulario cuando se abre el modal
+    try {
+      await fetchPatients()
+      console.log("✅ loadPatientsData - fetchPatients completado")
+      setPatientsLoaded(true)
+    } catch (error) {
+      console.error("❌ loadPatientsData - ERROR:", error)
+      showToast("Error al cargar la lista de pacientes", "error")
+    } finally {
+      loadInFlightRef.current = false
+      console.log("🏁 loadPatientsData - FIN")
+    }
+  }, [fetchPatients, showToast])
+
+  // Efecto: cargar pacientes si hace falta (y solo cuando el modal está abierto)
   useEffect(() => {
-    if (open) {
-      // Determinar el ID del paciente inicial
-      let initialPatientId = ""
+    console.log("🎯 useEffect carga pacientes - ejecutando check")
+    const shouldLoad = open && !profile?.id_paciente && !patientsLoaded
+    console.log({
+      open,
+      profileId: profile?.id_paciente,
+      patientsLoaded,
+      shouldLoad
+    })
+    if (shouldLoad) loadPatientsData()
+  }, [open, profile?.id_paciente, patientsLoaded, loadPatientsData])
 
-      // Prioridad 1: currentRegistroPacienteId (si viene de un botón específico)
+  // Efecto: inicializar formulario al abrir/ cerrar modal
+  useEffect(() => {
+    console.log("🎯 useEffect inicialización modal - ejecutando")
+    if (open) {
+      let initialPatientId = ""
       if (currentRegistroPacienteId) {
         initialPatientId = currentRegistroPacienteId.toString()
-      }
-      // Prioridad 2: profile.id_paciente (si el usuario es paciente)
-      else if (profile?.id_paciente) {
+      } else if (profile?.id_paciente) {
         initialPatientId = profile.id_paciente.toString()
       }
-
       setFormData({
         titulo: "",
         descripcion: "",
         tipo: "general",
         id_paciente: initialPatientId
       })
-
-      // Si el usuario es paciente, ya tenemos los datos
-      if (profile?.id_paciente) {
-        setPatientsLoaded(true)
-      }
+      if (profile?.id_paciente) setPatientsLoaded(true)
     } else {
-      // Resetear cuando se cierra el modal
       setPatientsLoaded(false)
     }
   }, [open, currentRegistroPacienteId, profile])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }))
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-
     if (!formData.titulo.trim()) {
       showToast("El título del registro es obligatorio", "error")
       return
     }
-
     if (!formData.descripcion.trim()) {
       showToast("La descripción del registro es obligatoria", "error")
       return
     }
 
-    // Determinar el ID del paciente
     let id_paciente = null
-
-    if (currentRegistroPacienteId) {
-      id_paciente = currentRegistroPacienteId
-    } else if (formData.id_paciente) {
-      id_paciente = parseInt(formData.id_paciente)
-    } else if (profile?.id_paciente) {
-      id_paciente = profile.id_paciente
-    }
+    if (currentRegistroPacienteId) id_paciente = currentRegistroPacienteId
+    else if (formData.id_paciente) id_paciente = parseInt(formData.id_paciente)
+    else if (profile?.id_paciente) id_paciente = profile.id_paciente
 
     if (!id_paciente) {
       showToast("Selecciona un paciente", "error")
       return
     }
 
-    // Obtener el CI del paciente
     let ci = null
-
-    // Buscar el paciente en la lista para obtener el CI
     if (Array.isArray(patients)) {
       const patient = patients.find((p) => p.id_paciente === id_paciente)
-      if (patient) {
-        ci = patient.ci
-      }
+      if (patient) ci = patient.ci
     }
-
-    // Si no se encuentra en la lista, usar el CI del profile
-    if (!ci && profile?.ci) {
-      ci = profile.ci
-    }
-
+    if (!ci && profile?.ci) ci = profile.ci
     if (!ci) {
       showToast("No se pudo identificar el CI del paciente", "error")
       return
@@ -142,33 +165,28 @@ export default function RegistroModal() {
         titulo: formData.titulo,
         descripcion: formData.descripcion,
         tipo: formData.tipo,
-        id_paciente: id_paciente,
-        ci: ci
+        id_paciente,
+        ci
       })
-
       showToast("Registro guardado", "success")
       closeModal("registro")
-    } catch (error) {
-      console.error("Error al crear registro:", error)
-      showToast(error.message || "Error al guardar el registro", "error")
+    } catch (err) {
+      console.error("❌ Error creando registro:", err)
+      showToast(err.message || "Error al guardar el registro", "error")
     } finally {
       setSubmitting(false)
     }
   }
 
-  // Filtrar pacientes disponibles
   const availablePatients = Array.isArray(patients)
     ? patients.filter(
         (p) => !profile?.id_paciente || p.id_paciente === profile.id_paciente
       )
     : []
 
-  // Verificar si estamos cargando pacientes
   const isLoadingPatients = !profile?.id_paciente && !patientsLoaded
 
-  // Obtener el paciente seleccionado para mostrar
   const getSelectedPatientInfo = () => {
-    // Prioridad 1: currentRegistroPacienteId
     if (currentRegistroPacienteId && Array.isArray(patients)) {
       const patient = patients.find(
         (p) => p.id_paciente === currentRegistroPacienteId
@@ -181,8 +199,6 @@ export default function RegistroModal() {
         }
       }
     }
-
-    // Prioridad 2: paciente del profile
     if (profile?.id_paciente && Array.isArray(patients)) {
       const patient = patients.find(
         (p) => p.id_paciente === profile.id_paciente
@@ -195,11 +211,17 @@ export default function RegistroModal() {
         }
       }
     }
-
     return null
   }
 
   const selectedPatientInfo = getSelectedPatientInfo()
+
+  // Limpiar contador al desmontar (solo inner)
+  useEffect(() => {
+    return () => {
+      renderCountInner = 0
+    }
+  }, [])
 
   return (
     <Modal
@@ -208,7 +230,6 @@ export default function RegistroModal() {
       title="Nuevo Registro Clínico"
       size="md">
       <form onSubmit={handleSubmit} className={styles.form}>
-        {/* Información del paciente seleccionado */}
         {selectedPatientInfo && (
           <div className={styles.selectedPatientInfo}>
             <div className={styles.patientBadge}>
@@ -225,7 +246,6 @@ export default function RegistroModal() {
           </div>
         )}
 
-        {/* Selector de paciente - solo visible si el usuario no es paciente y no hay paciente seleccionado */}
         {!profile?.id_paciente && !selectedPatientInfo && (
           <div className={styles.formGroup}>
             <label htmlFor="id_paciente" className={styles.label}>
@@ -329,8 +349,7 @@ export default function RegistroModal() {
               disabled={submitting}>
               {submitting ? (
                 <>
-                  <span className={styles.spinner}></span>
-                  Guardando...
+                  <span className={styles.spinner}></span>Guardando...
                 </>
               ) : (
                 "Guardar Registro"

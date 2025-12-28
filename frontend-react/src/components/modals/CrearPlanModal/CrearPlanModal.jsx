@@ -1,5 +1,4 @@
-// src/components/modals/CrearPlanModal/CrearPlanModal.jsx
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import Modal from "../Modal/Modal"
 import { useModal } from "../../../hooks/useModal"
 import { usePlans } from "../../../hooks/usePlans"
@@ -36,23 +35,24 @@ export default function CrearPlanModal() {
   const [submitting, setSubmitting] = useState(false)
   const [patientsLoaded, setPatientsLoaded] = useState(false)
 
-  // Cargar pacientes si no están cargados cuando se abre el modal
+  // CORRECCIÓN: Memoizar loadPatientsData
+  const loadPatientsData = useCallback(async () => {
+    try {
+      await fetchPatients()
+    } catch (error) {
+      console.error("Error al cargar pacientes:", error)
+      showToast("Error al cargar la lista de pacientes", "error")
+    } finally {
+      setPatientsLoaded(true)
+    }
+  }, [fetchPatients, showToast])
+
+  // CORRECCIÓN: Solo dependencias necesarias
   useEffect(() => {
     if (open && !profile?.id_paciente) {
-      const loadPatientsData = async () => {
-        try {
-          await fetchPatients()
-        } catch (error) {
-          console.error("Error al cargar pacientes:", error)
-          showToast("Error al cargar la lista de pacientes", "error")
-        } finally {
-          setPatientsLoaded(true)
-        }
-      }
-
       loadPatientsData()
     }
-  }, [open, profile, fetchPatients, showToast])
+  }, [open, profile?.id_paciente, loadPatientsData])
 
   // Inicializar formulario cuando se abre el modal
   useEffect(() => {

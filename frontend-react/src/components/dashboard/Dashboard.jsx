@@ -1,77 +1,172 @@
-// src/components/dashboard/Dashboard.jsx
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useCallback, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuthContext } from "../../context/AuthContext"
 import { useToast } from "../../hooks/useToast"
 import Sidebar from "./Sidebar/Sidebar"
+import Header from "./Header/Header"
 import Historia from "./sections/Historia/Historia"
 import Planes from "./sections/Planes/Planes"
 import Pacientes from "./sections/Pacientes/Pacientes"
 
-// Modales refactorizados
+// Modales
 import RegistroModal from "../modals/RegistroModal/RegistroModal"
-import CrearPlanModal from "../modals/CrearPlanModal/CrearPlanModal"
-import NuevoPacienteModal from "../modals/NuevoPacienteModal/NuevoPacienteModal"
-import AsignarGestorModal from "../modals/AsignarGestorModal/AsignarGestorModal"
-import EditPresModal from "../modals/EditPresModal/EditPresModal"
-import EditHistoriaModal from "../modals/EditHistoriaModal/EditHistoriaModal"
-import ViewHistoriaModal from "../modals/ViewHistoriaModal/ViewHistoriaModal"
-import ViewPlanModal from "../modals/ViewPlanModal/ViewPlanModal"
-import EditPlanModal from "../modals/EditPlanModal/EditPlanModal"
 
 import styles from "./Dashboard.module.css"
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { user, profile, loadProfile, logout } = useAuthContext()
+  const { user, profile, logout } = useAuthContext()
   const { toast, showToast } = useToast()
   const [activeSection, setActiveSection] = useState("historia")
   const [selectedPatient, setSelectedPatient] = useState(null)
+  const [initialized, setInitialized] = useState(false)
 
+  const handleLogout = useCallback(() => {
+    logout()
+    navigate("/login")
+  }, [logout, navigate])
+
+  // Determinar userType - priorizar profile, luego user
+  const userType = useMemo(() => {
+    console.log("Dashboard - user:", user)
+    console.log("Dashboard - profile:", profile)
+
+    if (profile?.tipo_usuario) return profile.tipo_usuario
+    if (user?.tipo_usuario) return user.tipo_usuario
+    if (user?.tipo) return user.tipo
+    return null
+  }, [user, profile])
+
+  console.log("Dashboard - userType determinado:", userType)
+
+  // Memoizar isSectionAllowed
+  const isSectionAllowed = useCallback(
+    (section) => {
+      if (!userType) return false
+
+      switch (section) {
+        case "pacientes":
+          return userType === "medico" || userType === "gestor_casos"
+        case "historia":
+        case "plan":
+        case "comunicacion":
+          return true
+        default:
+          return false
+      }
+    },
+    [userType]
+  )
+
+  // Memoizar el contenido de la sección activa
+  const activeSectionContent = useMemo(() => {
+    console.log("Dashboard - Renderizando sección:", activeSection)
+
+    if (!userType) {
+      return (
+        <div className={styles.loadingContainer}>
+          <div className={styles.spinner}></div>
+          <p>Determinando tipo de usuario...</p>
+        </div>
+      )
+    }
+
+    if (activeSection === "pacientes" && isSectionAllowed("pacientes")) {
+      return <Pacientes onSelectPatient={setSelectedPatient} />
+    }
+
+    if (activeSection === "historia" && isSectionAllowed("historia")) {
+      return <Historia selectedPatient={selectedPatient} />
+    }
+
+    if (activeSection === "plan" && isSectionAllowed("plan")) {
+      return <Planes selectedPatient={selectedPatient} />
+    }
+
+    if (activeSection === "comunicacion" && isSectionAllowed("comunicacion")) {
+      return (
+        <section className={styles.comingSoonSection}>
+          <h2>Comunicación</h2>
+          <p>Esta sección estará disponible próximamente.</p>
+        </section>
+      )
+    }
+
+    // Mensaje si la sección no está permitida
+    if (!isSectionAllowed(activeSection)) {
+      return (
+        <section className={styles.accessDeniedSection}>
+          <h2>Acceso Restringido</h2>
+          <p>No tienes permiso para acceder a esta sección.</p>
+        </section>
+      )
+    }
+
+    return null
+  }, [activeSection, isSectionAllowed, selectedPatient, userType])
+
+  // Inicializar dashboard - CORREGIDO
   useEffect(() => {
+    console.log("Dashboard - Efecto de inicialización, user:", user)
+
     if (!user) {
+      console.log("Dashboard - No hay usuario, redirigiendo a login")
       navigate("/login")
+      return
+    }
+
+    if (initialized) {
+      console.log("Dashboard - Ya inicializado")
       return
     }
 
     let mounted = true
 
-    ;(async () => {
+    const initializeDashboard = () => {
       try {
-        if (!profile) {
-          await loadProfile()
+        console.log("Dashboard - Inicializando con userType:", userType)
+
+        // Determinar sección predeterminada basada en el tipo de usuario
+        let defaultSection = "historia"
+
+        if (userType === "medico" || userType === "gestor_casos") {
+          defaultSection = "pacientes"
+        } else if (userType === "paciente") {
+          defaultSection = "historia"
+        }
+
+        console.log("Dashboard - Sección predeterminada:", defaultSection)
+
+        if (mounted && activeSection !== defaultSection) {
+          console.log("Dashboard - Cambiando sección a:", defaultSection)
+          setActiveSection(defaultSection)
+        }
+
+        if (mounted) {
+          console.log("Dashboard - Marcando como inicializado")
+          setInitialized(true)
         }
       } catch (err) {
-        console.error("Error cargando perfil:", err)
-        showToast("Error cargando perfil", "error")
+        console.error("Dashboard - Error inicializando:", err)
+        if (mounted) {
+          showToast("Error inicializando dashboard", "error")
+          setInitialized(true) // Marcar como inicializado para evitar loop
+        }
       }
+    }
 
-      const type = (profile && profile.tipo_usuario) || user.tipo
-      let defaultSection = "historia"
-      if (
-        type === "medico" ||
-        (typeof type === "string" && type.includes("gestor"))
-      ) {
-        defaultSection = "pacientes"
-      } else if (type === "paciente") {
-        defaultSection = "historia"
-      }
-
-      if (mounted && defaultSection && activeSection !== defaultSection) {
-        setActiveSection(defaultSection)
-      }
-    })()
+    // Pequeño delay para asegurar que el userType esté disponible
+    const timer = setTimeout(() => {
+      initializeDashboard()
+    }, 100)
 
     return () => {
       mounted = false
+      clearTimeout(timer)
     }
-  }, [user, profile, activeSection, loadProfile, navigate, showToast])
+  }, [user, userType, activeSection, navigate, showToast, initialized])
 
-  const handleLogout = () => {
-    logout()
-    navigate("/login")
-  }
-
+  // Mostrar loading si no hay usuario
   if (!user) {
     return (
       <div className={styles.loadingContainer}>
@@ -81,25 +176,10 @@ export default function Dashboard() {
     )
   }
 
-  const userType = user?.tipo || profile?.tipo_usuario
-
-  const isSectionAllowed = (section) => {
-    if (!userType) return false
-
-    switch (section) {
-      case "pacientes":
-        return userType === "medico" || userType === "gestor_casos"
-      case "historia":
-      case "plan":
-      case "comunicacion":
-        return true
-      default:
-        return false
-    }
-  }
-
   return (
     <div className={styles.container}>
+      <Header onLogout={handleLogout} />
+
       <div className={styles.mainLayout}>
         <Sidebar
           activeSection={activeSection}
@@ -110,111 +190,19 @@ export default function Dashboard() {
         />
 
         <main className={styles.contentArea}>
-          <div className={styles.contentWrapper}>
-            {activeSection === "pacientes" && isSectionAllowed("pacientes") && (
-              <Pacientes onSelectPatient={setSelectedPatient} />
-            )}
-            {activeSection === "historia" && isSectionAllowed("historia") && (
-              <Historia selectedPatient={selectedPatient} />
-            )}
-            {activeSection === "plan" && isSectionAllowed("plan") && (
-              <Planes selectedPatient={selectedPatient} />
-            )}
-            {activeSection === "comunicacion" &&
-              isSectionAllowed("comunicacion") && (
-                <section className={styles.comingSoonSection}>
-                  <div className={styles.comingSoonIcon}>
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                      />
-                    </svg>
-                  </div>
-                  <h2 className={styles.comingSoonTitle}>Comunicación</h2>
-                  <p className={styles.comingSoonText}>
-                    La funcionalidad de comunicación estará disponible
-                    próximamente. Estamos trabajando para integrar mensajería y
-                    notificaciones en tiempo real.
-                  </p>
-                  <div className={styles.featureList}>
-                    <div className={styles.featureItem}>
-                      <span className={styles.featureIcon}>💬</span>
-                      <span className={styles.featureText}>
-                        Mensajería instantánea
-                      </span>
-                    </div>
-                    <div className={styles.featureItem}>
-                      <span className={styles.featureIcon}>🔔</span>
-                      <span className={styles.featureText}>
-                        Notificaciones push
-                      </span>
-                    </div>
-                    <div className={styles.featureItem}>
-                      <span className={styles.featureIcon}>📧</span>
-                      <span className={styles.featureText}>
-                        Correos automatizados
-                      </span>
-                    </div>
-                  </div>
-                </section>
-              )}
-
-            {/* Mensaje si la sección no está permitida */}
-            {!isSectionAllowed(activeSection) && (
-              <section className={styles.accessDeniedSection}>
-                <div className={styles.accessDeniedIcon}>
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                    />
-                  </svg>
-                </div>
-                <h2 className={styles.accessDeniedTitle}>Acceso Restringido</h2>
-                <p className={styles.accessDeniedText}>
-                  No tienes permiso para acceder a esta sección.
-                </p>
-                <button
-                  className={styles.backButton}
-                  onClick={() => setActiveSection("historia")}>
-                  Volver a Historia Clínica
-                </button>
-              </section>
-            )}
-          </div>
+          <div className={styles.contentWrapper}>{activeSectionContent}</div>
         </main>
       </div>
 
       {/* Toast Notifications */}
       {toast && (
         <div className={`${styles.toast} ${styles[toast.type]}`}>
-          <div className={styles.toastIcon}>
-            {toast.type === "success" && "✓"}
-            {toast.type === "error" && "✗"}
-            {toast.type === "info" && "ℹ"}
-            {toast.type === "warning" && "⚠"}
-          </div>
-          <div className={styles.toastContent}>
-            <p className={styles.toastMessage}>{toast.text}</p>
-          </div>
+          <span>{toast.message}</span>
         </div>
       )}
 
       {/* Modales */}
       <RegistroModal />
-      <CrearPlanModal />
-      <NuevoPacienteModal />
-      <AsignarGestorModal />
-      <EditPresModal />
-      <EditHistoriaModal />
-      <ViewHistoriaModal />
-      <ViewPlanModal />
-      <EditPlanModal />
     </div>
   )
 }

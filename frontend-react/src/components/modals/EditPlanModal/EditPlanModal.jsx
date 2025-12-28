@@ -1,4 +1,3 @@
-// src/components/modals/EditPlanModal/EditPlanModal.jsx
 import React, { useEffect, useState } from "react"
 import Modal from "../Modal/Modal"
 import { useModal } from "../../../hooks/useModal"

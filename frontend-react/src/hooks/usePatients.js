@@ -1,94 +1,136 @@
-// src/hooks/usePatients.js
-import { useState, useCallback } from 'react';
-import { PatientService } from '../services/patientService';
+import { useState, useCallback, useRef, useEffect } from "react"
+import { PatientService } from "../services/patientService"
+
+let hookCallCount = 0
+let fetchPatientsCallCount = 0
 
 export function usePatients() {
-  const [patients, setPatients] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  hookCallCount++
+  console.log(`🟡 usePatients - HOOK LLAMADO #${hookCallCount}`)
 
-  const fetchPatients = useCallback(async (params = {}) => {
-    setLoading(true);
-    try {
-      const data = await PatientService.getAll(params);
-      setPatients(data);
-      return data;
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    } finally {
-      setLoading(false);
+  const [patients, setPatients] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  const serviceRef = useRef(PatientService)
+  // inFlightRef guarda la promesa de la llamada *cuando es deduplicable*
+  const inFlightRef = useRef(null)
+
+  const fetchPatients = useCallback(async (params = {}, options = {}) => {
+    fetchPatientsCallCount++
+    console.log(
+      `🔄 usePatients.fetchPatients - LLAMADA #${fetchPatientsCallCount}`,
+      { params, hasSignal: !!options.signal }
+    )
+
+    // Sólo reusar petición en curso si el caller NO pasó un signal explícito.
+    if (inFlightRef.current && !options.signal) {
+      console.log("🔒 usePatients.fetchPatients - petición ya en curso (reuso)")
+      return inFlightRef.current
     }
-  }, []);
+
+    const promise = (async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const data = await serviceRef.current.getAll(params, options)
+        setPatients(Array.isArray(data) ? data : [])
+        return data
+      } catch (err) {
+        if (err && err.name === "AbortError") {
+          console.log("usePatients.fetchPatients - aborted")
+          return null
+        }
+        console.error("❌ usePatients.fetchPatients - ERROR:", err)
+        setError(err?.message || String(err))
+        throw err
+      } finally {
+        setLoading(false)
+        // important: limpiar inFlight solo aquí para que la promesa no quede pegada
+        inFlightRef.current = null
+      }
+    })()
+
+    // Guardar la promesa para posible reuso (solo cuando caller NO pasa signal)
+    if (!options.signal) inFlightRef.current = promise
+
+    return promise
+  }, [])
 
   const createPatient = useCallback(async (patientData) => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const newPatient = await PatientService.create(patientData);
-      setPatients(prev => [...prev, newPatient]);
-      return newPatient;
+      const newPatient = await serviceRef.current.create(patientData)
+      setPatients((prev) => [...prev, newPatient])
+      return newPatient
     } catch (err) {
-      setError(err.message);
-      throw err;
+      setError(err?.message || String(err))
+      throw err
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
+  }, [])
 
   const updatePatient = useCallback(async (id, patientData) => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const updatedPatient = await PatientService.update(id, patientData);
-      setPatients(prev => prev.map(p => p.id_paciente === id ? updatedPatient : p));
-      return updatedPatient;
+      const updated = await serviceRef.current.update(id, patientData)
+      setPatients((prev) =>
+        prev.map((p) => (p.id_paciente === id ? updated : p))
+      )
+      return updated
     } catch (err) {
-      setError(err.message);
-      throw err;
+      setError(err?.message || String(err))
+      throw err
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
+  }, [])
 
   const deletePatient = useCallback(async (id) => {
-    setLoading(true);
+    setLoading(true)
     try {
-      await PatientService.delete(id);
-      setPatients(prev => prev.filter(p => p.id_paciente !== id));
+      await serviceRef.current.delete(id)
+      setPatients((prev) => prev.filter((p) => p.id_paciente !== id))
     } catch (err) {
-      setError(err.message);
-      throw err;
+      setError(err?.message || String(err))
+      throw err
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
+  }, [])
 
   const assignGestor = useCallback(async (data) => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const result = await PatientService.assignGestor(data);
-      // Después de asignar, recargar la lista de pacientes
-      await fetchPatients();
-      return result;
+      const result = await serviceRef.current.assignGestor(data)
+      return result
     } catch (err) {
-      setError(err.message);
-      throw err;
+      setError(err?.message || String(err))
+      throw err
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [fetchPatients]);
+  }, [])
 
-  const fetchGestores = useCallback(async () => {
-    setLoading(true);
+  const fetchGestores = useCallback(async (options = {}) => {
+    setLoading(true)
     try {
-      const data = await PatientService.getGestores();
-      return data;
+      const data = await serviceRef.current.getGestores(options)
+      return data
     } catch (err) {
-      setError(err.message);
-      throw err;
+      setError(err?.message || String(err))
+      throw err
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
+  }, [])
+
+  useEffect(() => {
+    console.log("🎯 usePatients - EFECTO DE MONTAJE (hook creado)")
+    return () =>
+      console.log("🧹 usePatients - EFECTO DE DESMONTAJE (hook destruido)")
+  }, [])
 
   return {
     patients,
@@ -99,6 +141,6 @@ export function usePatients() {
     updatePatient,
     deletePatient,
     assignGestor,
-    fetchGestores,
-  };
+    fetchGestores
+  }
 }

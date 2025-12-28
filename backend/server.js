@@ -24,7 +24,7 @@ app.use(express.json())
 app.use("/api/auth", authRoutes)
 app.use("/api", apiRoutes)
 
-const PORT = process.env.PORT || 3000
+const PORT = 4000
 app.listen(PORT, () => {
   console.log(`Servidor escuchando en el puerto ${PORT}`)
 })

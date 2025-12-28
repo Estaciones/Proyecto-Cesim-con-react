@@ -1,51 +1,57 @@
 import { api } from "../utils/api"
 
-// ligera util para detectar email
-function isProbablyEmail(value) {
-  if (!value || typeof value !== "string") return false
-  const trimmed = value.trim()
-  if (!trimmed.includes("@")) return false
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)
-}
-
 export const AuthService = {
   login: async (credentials) => {
-    // credentials puede ser: { identifier, password } o { email, password } o { nombre_usuario, password }
-    const identifier = credentials.identifier
-    const email = credentials.email
-    const nombre_usuario = credentials.nombre_usuario
-    const username = credentials.username
-    const password = credentials.password
+    try {
+      console.log("AuthService.login - Credenciales:", credentials)
 
-    if (!password) throw new Error("Faltan credenciales")
+      // La API backend espera {nombre_usuario, password} o {email, password}
+      // Como recibimos 'identifier' que puede ser email o username,
+      // debemos determinar qué es
+      const { identifier, password } = credentials
 
-    let payload = {}
+      // Determinar si identifier es email o username
+      const isEmail = identifier.includes("@")
 
-    if (identifier) {
-      if (isProbablyEmail(identifier)) {
-        payload.email = identifier.trim().toLowerCase()
-      } else {
-        payload.nombre_usuario = identifier.trim()
+      // Construir el payload según lo que sea
+      const payload = {
+        password,
+        ...(isEmail ? { email: identifier } : { nombre_usuario: identifier })
       }
-    } else if (email || nombre_usuario || username) {
-      if (email) payload.email = email.trim().toLowerCase()
-      if (nombre_usuario) payload.nombre_usuario = nombre_usuario.trim()
-      if (username && !payload.nombre_usuario)
-        payload.nombre_usuario = username.trim()
-    } else {
-      throw new Error("Faltan credenciales")
+
+      console.log("AuthService.login - Payload a enviar:", payload)
+
+      const response = await api.post("auth/login", payload)
+      console.log("AuthService.login - Respuesta:", response)
+
+      return response
+    } catch (error) {
+      console.error("AuthService.login - Error:", error)
+      throw error
     }
-
-    payload.password = password
-
-    return api.post("auth/login", payload)
   },
 
-  logout: async () => {
+  logout: () => {
+    // Limpiar localStorage
     localStorage.removeItem("user")
+    localStorage.removeItem("profile")
+    localStorage.removeItem("token")
+    return Promise.resolve()
   },
 
   getProfile: async (userId) => {
-    return api.get(`profile?id=${encodeURIComponent(userId)}`)
+    try {
+      console.log("AuthService.getProfile - userId:", userId)
+      const response = await api.get(`profile?id=${userId}`)
+      console.log("AuthService.getProfile - Respuesta:", response)
+      return response
+    } catch (error) {
+      console.error("AuthService.getProfile - Error:", error)
+      throw error
+    }
+  },
+
+  register: (userData) => {
+    return api.post("auth/register", userData)
   }
 }

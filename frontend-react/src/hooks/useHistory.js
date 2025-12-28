@@ -1,66 +1,75 @@
-// src/hooks/useHistory.js
-import { useState, useCallback } from 'react';
-import { HistoryService } from '../services/historyService';
+import { useState, useCallback } from "react"
+import { HistoryService } from "../services/historyService"
 
 export function useHistory() {
-  const [historia, setHistoria] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [historia, setHistoria] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
-  const fetchHistoria = useCallback(async (params = {}) => {
-    setLoading(true);
+  const fetchHistoria = useCallback(async (params = {}, options = {}) => {
+    setLoading(true)
+    setError(null)
     try {
-      const data = await HistoryService.getAll(params);
-      setHistoria(data);
-      return data;
+      const data = await HistoryService.getAll(params, options)
+      // normalizar a array (backend puede devolver objeto o array)
+      setHistoria(Array.isArray(data) ? data : [])
+      return data
     } catch (err) {
-      setError(err.message);
-      throw err;
+      if (err && err.name === "AbortError") {
+        console.log("useHistory.fetchHistoria - aborted")
+        return null
+      }
+      console.error("useHistory.fetchHistoria - ERROR", err)
+      setError(err?.message || String(err))
+      throw err
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
+  }, [])
 
+  // resto de CRUD (opcional: si quieres que acepten options, los podemos añadir)
   const createRegistro = useCallback(async (historyData) => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const newRegistro = await HistoryService.create(historyData);
-      setHistoria(prev => [...prev, newRegistro]);
-      return newRegistro;
+      const newRegistro = await HistoryService.create(historyData)
+      setHistoria((prev) => [...prev, newRegistro])
+      return newRegistro
     } catch (err) {
-      setError(err.message);
-      throw err;
+      setError(err?.message || String(err))
+      throw err
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
+  }, [])
 
   const updateRegistro = useCallback(async (id, historyData) => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const updatedRegistro = await HistoryService.update(id, historyData);
-      setHistoria(prev => prev.map(r => r.id_registro === id ? updatedRegistro : r));
-      return updatedRegistro;
+      const updatedRegistro = await HistoryService.update(id, historyData)
+      setHistoria((prev) =>
+        prev.map((r) => (r.id_registro === id ? updatedRegistro : r))
+      )
+      return updatedRegistro
     } catch (err) {
-      setError(err.message);
-      throw err;
+      setError(err?.message || String(err))
+      throw err
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
+  }, [])
 
   const deleteRegistro = useCallback(async (id) => {
-    setLoading(true);
+    setLoading(true)
     try {
-      await HistoryService.delete(id);
-      setHistoria(prev => prev.filter(r => r.id_registro !== id));
+      await HistoryService.delete(id)
+      setHistoria((prev) => prev.filter((r) => r.id_registro !== id))
     } catch (err) {
-      setError(err.message);
-      throw err;
+      setError(err?.message || String(err))
+      throw err
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
+  }, [])
 
   return {
     historia,
@@ -69,6 +78,6 @@ export function useHistory() {
     fetchHistoria,
     createRegistro,
     updateRegistro,
-    deleteRegistro,
-  };
+    deleteRegistro
+  }
 }

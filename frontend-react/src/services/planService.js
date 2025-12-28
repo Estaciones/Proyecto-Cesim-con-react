@@ -1,36 +1,25 @@
-// src/services/planService.js
-import { api } from '../utils/api';
+import { api } from "../utils/api"
 
 export const PlanService = {
-  getAll: async (params = {}) => {
-    // params puede ser { ci, id_paciente } o vacío
-    const queryString = new URLSearchParams(params).toString();
-    const path = queryString ? `plan_tratamiento?${queryString}` : 'plan_tratamiento';
-    return api.get(path);
+  getAll: (params = {}, options = {}) => {
+    const queryString = new URLSearchParams(params).toString()
+    const path = queryString
+      ? `planes?${queryString}`
+      : "planes"
+    return api.get(path, options)
   },
 
-  getById: async (id) => {
-    return api.get(`plan_tratamiento/${id}`);
-  },
+  getById: (id, options = {}) => api.get(`planes/${id}`, options),
 
-  create: async (planData) => {
-    return api.post('plan_tratamiento', planData);
-  },
+  create: (planData) => api.post("planes", planData),
 
-  update: async (id, planData) => {
-    return api.patch(`plan_tratamiento/${id}`, planData);
-  },
+  update: (id, planData) => api.patch(`planes/${id}`, planData),
 
-  delete: async (id) => {
-    return api.delete(`plan_tratamiento/${id}`);
-  },
+  delete: (id) => api.delete(`planes/${id}`),
 
-  // Funciones para prescripciones
-  updatePrescription: async (presId, prescriptionData) => {
-    return api.patch(`prescripcion/${presId}`, prescriptionData);
-  },
+  updatePrescription: (presId, prescriptionData) =>
+    api.patch(`prescripcion/${presId}`, prescriptionData),
 
-  getPrescription: async (presId) => {
-    return api.get(`prescripcion/${presId}`);
-  },
-};
+  getPrescription: (presId, options = {}) =>
+    api.get(`prescripcion/${presId}`, options)
+}

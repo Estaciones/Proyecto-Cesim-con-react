@@ -1,100 +1,81 @@
-// src/components/dashboard/sections/Historia/Historia.jsx
-import React, { useEffect, useState, useCallback, useMemo } from "react"
+import React, { useEffect, useCallback, useMemo } from "react"
 import { useAuthContext } from "../../../../context/AuthContext"
 import { useModal } from "../../../../hooks/useModal"
+import { useHistory } from "../../../../hooks/useHistory"
 import Button from "../../../ui/Button/Button"
 import Card from "../../../ui/Card/Card"
 import styles from "./Historia.module.css"
 
-// Servicio independiente - Esto debería estar en un archivo separado
-const HistoriaService = {
-  async fetchHistoria(params) {
-    try {
-      const response = await fetch(`/api/historia?${new URLSearchParams(params)}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      if (!response.ok) throw new Error('Error al cargar historia');
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching historia:', error);
-      throw error;
-    }
-  }
-};
-
 export default function Historia({ selectedPatient }) {
-  const [historia, setHistoria] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const { profile } = useAuthContext();
+  const { profile } = useAuthContext()
   const {
     openModal,
     openViewHistoria,
     openEditHistoria,
     openRegistroWithPatient
-  } = useModal();
+  } = useModal()
 
-  // Función para cargar historia - memorizada
-  const loadHistoria = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = {};
-      
-      if (selectedPatient?.ci) {
-        params.ci = selectedPatient.ci;
-      } else if (selectedPatient?.id_paciente) {
-        params.id_paciente = selectedPatient.id_paciente;
-      } else if (profile?.tipo_usuario === "paciente") {
-        if (profile.ci) params.ci = profile.ci;
-        else if (profile.id_paciente) params.id_paciente = profile.id_paciente;
+  // Hook centralizado
+  const { historia, loading, error, fetchHistoria } = useHistory()
+
+  const load = useCallback(
+    async (signal) => {
+      const params = {}
+      if (selectedPatient?.ci) params.ci = selectedPatient.ci
+      else if (selectedPatient?.id_paciente)
+        params.id_paciente = selectedPatient.id_paciente
+      else if (profile?.tipo_usuario === "paciente") {
+        if (profile.ci) params.ci = profile.ci
+        else if (profile.id_paciente) params.id_paciente = profile.id_paciente
       }
 
-      const data = await HistoriaService.fetchHistoria(params);
-      setHistoria(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Error loading historia:', error);
-      setHistoria([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedPatient, profile]);
+      return fetchHistoria(params, { signal })
+    },
+    [selectedPatient, profile, fetchHistoria]
+  )
 
-  // Efecto para cargar datos
   useEffect(() => {
-    loadHistoria();
-  }, [loadHistoria]);
+    const controller = new AbortController()
+    load(controller.signal).catch((err) => {
+      if (err?.name !== "AbortError")
+        console.error("Error loading historia:", err)
+    })
+    return () => controller.abort()
+  }, [load])
 
-  // Helper functions memorizadas
   const formatShortDate = useCallback((dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("es-ES", {
+    if (!dateString) return ""
+    const d = new Date(dateString)
+    return d.toLocaleDateString("es-ES", {
       day: "2-digit",
       month: "short",
       year: "numeric"
-    });
-  }, []);
+    })
+  }, [])
 
-  const isPaciente = useMemo(() => profile?.tipo_usuario === "paciente", [profile]);
-  const canEditHistoria = useMemo(() => profile?.tipo_usuario === "medico", [profile]);
+  const isPaciente = useMemo(
+    () => profile?.tipo_usuario === "paciente",
+    [profile]
+  )
+  const canEditHistoria = useMemo(
+    () => profile?.tipo_usuario === "medico",
+    [profile]
+  )
 
-  // Handlers memorizados
   const handleNuevoRegistro = useCallback(() => {
-    if (selectedPatient?.id_paciente) {
-      openRegistroWithPatient(selectedPatient.id_paciente);
-    } else {
-      openModal("registro");
-    }
-  }, [selectedPatient, openRegistroWithPatient, openModal]);
+    if (selectedPatient?.id_paciente)
+      openRegistroWithPatient(selectedPatient.id_paciente)
+    else openModal("registro")
+  }, [selectedPatient, openRegistroWithPatient, openModal])
 
-  const handleVerRegistro = useCallback((record) => {
-    openViewHistoria(record);
-  }, [openViewHistoria]);
-
-  const handleEditarRegistro = useCallback((record) => {
-    openEditHistoria(record);
-  }, [openEditHistoria]);
+  const handleVerRegistro = useCallback(
+    (record) => openViewHistoria(record),
+    [openViewHistoria]
+  )
+  const handleEditarRegistro = useCallback(
+    (record) => openEditHistoria(record),
+    [openEditHistoria]
+  )
 
   return (
     <section className={styles.container}>
@@ -119,8 +100,7 @@ export default function Historia({ selectedPatient }) {
               variant="primary"
               onClick={handleNuevoRegistro}
               className={styles.addButton}
-              disabled={loading}
-            >
+              disabled={loading}>
               <svg
                 className={styles.addIcon}
                 fill="none"
@@ -144,7 +124,14 @@ export default function Historia({ selectedPatient }) {
           <div className={styles.spinner}></div>
           <p>Cargando historia clínica...</p>
         </div>
-      ) : historia.length === 0 ? (
+      ) : error ? (
+        <Card className={styles.emptyCard}>
+          <div className={styles.emptyState}>
+            <h3>Error</h3>
+            <p>{String(error)}</p>
+          </div>
+        </Card>
+      ) : !historia || historia.length === 0 ? (
         <Card className={styles.emptyCard}>
           <div className={styles.emptyState}>
             <svg
@@ -180,26 +167,7 @@ export default function Historia({ selectedPatient }) {
                     variant="secondary"
                     size="small"
                     onClick={() => handleVerRegistro(record)}
-                    className={styles.actionButton}
-                  >
-                    <svg
-                      className={styles.buttonIcon}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                      />
-                    </svg>
+                    className={styles.actionButton}>
                     Ver
                   </Button>
                   {canEditHistoria && (
@@ -207,20 +175,7 @@ export default function Historia({ selectedPatient }) {
                       variant="secondary"
                       size="small"
                       onClick={() => handleEditarRegistro(record)}
-                      className={styles.actionButton}
-                    >
-                      <svg
-                        className={styles.buttonIcon}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        />
-                      </svg>
+                      className={styles.actionButton}>
                       Editar
                     </Button>
                   )}
@@ -238,36 +193,12 @@ export default function Historia({ selectedPatient }) {
               <div className={styles.cardFooter}>
                 <div className={styles.meta}>
                   <div className={styles.metaItem}>
-                    <svg
-                      className={styles.metaIcon}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
                     <span>
                       Creado: {formatShortDate(record.fecha_creacion)}
                     </span>
                   </div>
                   {record.fecha_actualizacion && (
                     <div className={styles.metaItem}>
-                      <svg
-                        className={styles.metaIcon}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                        />
-                      </svg>
                       <span>
                         Actualizado:{" "}
                         {formatShortDate(record.fecha_actualizacion)}

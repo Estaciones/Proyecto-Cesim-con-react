@@ -22,17 +22,28 @@ export default function ViewPlanModal() {
   }
 
   const getEstadoLabel = (estado) => {
+    // Si estado es booleano
+    if (typeof estado === "boolean") {
+      return estado ? "Activo" : "Inactivo"
+    }
+
+    // Si es string (para compatibilidad)
     const estados = {
       activo: "Activo",
       completado: "Completado",
       cancelado: "Cancelado",
       pendiente: "Pendiente"
     }
-
     return estados[estado] || estado || "No especificado"
   }
 
   const getEstadoClass = (estado) => {
+    // Si es booleano
+    if (typeof estado === "boolean") {
+      return estado ? styles.estadoActivo : styles.estadoCancelado
+    }
+
+    // Si es string
     switch (estado) {
       case "activo":
         return styles.estadoActivo

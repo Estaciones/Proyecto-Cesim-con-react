@@ -1,36 +1,38 @@
-// src/services/patientService.js
-import { api } from '../utils/api';
+import { api } from "../utils/api"
 
 export const PatientService = {
-  getAll: async (params = {}) => {
-    // params puede ser { medico_id, gestor_id } o vacío
-    const queryString = new URLSearchParams(params).toString();
-    const path = queryString ? `pacientes?${queryString}` : 'pacientes';
-    return api.get(path);
+  /**
+   * getAll(params = {}, options = {})
+   * - params: objeto para query string (p.ej. { medico_id, gestor_id })
+   * - options: se forwardea a api.get (p.ej. { signal })
+   */
+  getAll: async (params = {}, options = {}) => {
+    const queryString = new URLSearchParams(params).toString()
+    const path = queryString ? `pacientes?${queryString}` : "pacientes"
+    return api.get(path, options)
   },
 
-  getById: async (id) => {
-    return api.get(`pacientes/${id}`);
+  getById: (id, options = {}) => {
+    return api.get(`pacientes/${id}`, options)
   },
 
-  create: async (patientData) => {
-    return api.post('pacientes', patientData);
+  create: (patientData) => {
+    return api.post("pacientes", patientData)
   },
 
-  update: async (id, patientData) => {
-    return api.patch(`pacientes/${id}`, patientData);
+  update: (id, patientData) => {
+    return api.patch(`pacientes/${id}`, patientData)
   },
 
-  delete: async (id) => {
-    return api.delete(`pacientes/${id}`);
+  delete: (id) => {
+    return api.delete(`pacientes/${id}`)
   },
 
-  // Otras funciones específicas de pacientes
-  getGestores: async () => {
-    return api.get('gestores');
+  getGestores: (options = {}) => {
+    return api.get("gestores", options)
   },
 
-  assignGestor: async (data) => {
-    return api.post('asignar_gestor', data);
-  },
-};
+  assignGestor: (data) => {
+    return api.post("asignar_gestor", data)
+  }
+}

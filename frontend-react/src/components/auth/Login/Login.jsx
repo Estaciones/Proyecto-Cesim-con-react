@@ -20,15 +20,25 @@ export default function Login() {
     setLoading(true)
 
     try {
+      console.log("Login - Intentando login con:", { username, password })
+
       // Usar identifier en lugar de 'email' para que el hook/service lo normalice
       await login({ identifier: username.trim(), password })
 
       setMessage({ text: "✅ Login exitoso. Redirigiendo...", type: "success" })
       showToast("Login exitoso", "success", 2000)
-      setTimeout(() => navigate("/dashboard"), 700)
+
+      // Pequeño delay para que el usuario vea el mensaje
+      setTimeout(() => {
+        console.log("Login - Redirigiendo a dashboard")
+        navigate("/dashboard")
+      }, 700)
     } catch (error) {
-      console.error("Login error:", error)
-      setMessage({ text: "❌ " + (error.message || "Error desconocido"), type: "error" })
+      console.error("Login - Error completo:", error)
+      setMessage({
+        text: "❌ " + (error.message || "Error desconocido"),
+        type: "error"
+      })
       showToast(error.message || "Error desconocido", "error")
     } finally {
       setLoading(false)

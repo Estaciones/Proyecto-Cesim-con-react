@@ -1,5 +1,4 @@
-// src/components/modals/AsignarGestorModal/AsignarGestorModal.jsx
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useCallback } from "react"
 import Modal from "../Modal/Modal"
 import { useModal } from "../../../hooks/useModal"
 import { usePatients } from "../../../hooks/usePatients"
@@ -19,7 +18,8 @@ export default function AsignarGestorModal() {
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
-  const loadGestoresData = async () => {
+  // CORRECCIÓN: Memoizar loadGestoresData
+  const loadGestoresData = useCallback(async () => {
     setLoading(true)
     try {
       const data = await fetchGestores()
@@ -31,15 +31,15 @@ export default function AsignarGestorModal() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [fetchGestores, showToast])
 
+  // CORRECCIÓN: Usar loadGestoresData memoizada en las dependencias
   useEffect(() => {
     if (open) {
       loadGestoresData()
       setSelectedGestor("")
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
+  }, [open, loadGestoresData])
 
   const handleSubmit = async (e) => {
     e.preventDefault()

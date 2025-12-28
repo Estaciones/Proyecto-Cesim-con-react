@@ -1,35 +1,42 @@
-// src/components/dashboard/Header/Header.jsx
 import React from "react"
-import { useAuth } from "../../../hooks/useAuth"
+import { useAuthContext } from "../../../context/AuthContext"
 import styles from "./Header.module.css"
 
 export default function DashboardHeader({ onLogout }) {
-  const { profile } = useAuth()
+  const { profile, user } = useAuthContext()
+
+  // Obtener datos del usuario para mostrar
+  const userData = profile || user || {}
 
   return (
     <header className={styles.header}>
       <div className={styles.container}>
         <div className={styles.left}>
           <h1 className={styles.title}>Panel de Control</h1>
-          {profile?.tipo_usuario && (
+          {userData.tipo_usuario && (
             <span className={styles.badge}>
-              {profile.tipo_usuario.charAt(0).toUpperCase() +
-                profile.tipo_usuario.slice(1)}
+              {userData.tipo_usuario.charAt(0).toUpperCase() +
+                userData.tipo_usuario.slice(1)}
             </span>
           )}
         </div>
 
         <div className={styles.right}>
-          {profile && (
+          {userData && (
             <div className={styles.userInfo}>
               <div className={styles.userAvatar}>
-                {profile.nombre?.charAt(0) || "U"}
+                {userData.nombre?.charAt(0) ||
+                  userData.nombre_usuario?.charAt(0) ||
+                  "U"}
               </div>
               <div className={styles.userDetails}>
                 <span className={styles.userName}>
-                  {profile.nombre} {profile.apellido}
+                  {userData.nombre || userData.nombre_usuario || "Usuario"}
+                  {userData.apellido ? ` ${userData.apellido}` : ""}
                 </span>
-                <span className={styles.userRole}>{profile.tipo_usuario}</span>
+                <span className={styles.userRole}>
+                  {userData.tipo_usuario || userData.tipo || "Usuario"}
+                </span>
               </div>
             </div>
           )}
