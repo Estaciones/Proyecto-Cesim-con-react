@@ -2,7 +2,7 @@
 import bcrypt from "bcrypt"
 import * as userModel from "../models/userModel.js"
 import pool from "../db/pool.js"
-
+import jwt from "jsonwebtoken"
 export const registerUser = async (req, res) => {
   try {
     const {
@@ -90,11 +90,9 @@ export const registerUser = async (req, res) => {
 
     // Error custom de persona ya asociada: lo lanzamos desde el modelo con code = 'PERSONA_ASOCIADA'
     if (err.code === "PERSONA_ASOCIADA") {
-      return res
-        .status(409)
-        .json({
-          error: err.message || "La persona ya está asociada a otro usuario"
-        })
+      return res.status(409).json({
+        error: err.message || "La persona ya está asociada a otro usuario"
+      })
     }
 
     return res.status(500).json({ error: "Error en el servidor" })
@@ -130,17 +128,27 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ error: "Credenciales inválidas" })
     }
 
-    // Si llegamos aquí, autenticación correcta.
-    // Por ahora devolvemos datos básicos del usuario.
-    // En el futuro puedes generar JWT y setear cookie httpOnly.
+    // Generar JWT (usa una variable de entorno en producción)
+    const payload = {
+      id_usuario: user.id_usuario,
+      nombre_usuario: user.nombre_usuario,
+      tipo_usuario: user.tipo_usuario
+    }
+
+    const secret = process.env.JWT_SECRET || "dev_secret" // cambia en prod
+    const token = jwt.sign(payload, secret, { expiresIn: "8h" })
+
+    // Devolver user normalizado + token (token también fuera por compatibilidad)
     return res.json({
       message: "Login correcto",
       user: {
         id_usuario: user.id_usuario,
         email: user.email,
         tipo_usuario: user.tipo_usuario,
-        nombre_usuario: user.nombre_usuario
-      }
+        nombre_usuario: user.nombre_usuario,
+        token // <-- incrustado en user para que el frontend lo encuentre fácilmente
+      },
+      token
     })
   } catch (err) {
     console.error("Error loginUser:", err)

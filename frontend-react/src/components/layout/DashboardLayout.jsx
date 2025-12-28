@@ -1,31 +1,31 @@
 // src/components/layout/DashboardLayout.jsx
-import React, { useEffect } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import './DashboardLayout.module.css';
+import React from "react"
+import { Outlet, Navigate } from "react-router-dom"
+import { useAuthContext } from "../../context/AuthContext"
+import "./DashboardLayout.module.css"
 
-/**
- * Layout para todas las páginas del dashboard
- * Ahora solo maneja la redirección si no hay usuario
- */
 export default function DashboardLayout() {
-  const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading } = useAuthContext()
 
-  // Si no hay usuario, redirigir al login
-  useEffect(() => {
-    if (!user) {
-      navigate('/login');
-    }
-  }, [user, navigate]);
-
-  if (!user) {
-    return null; // O un loader mientras redirige
+  // Mientras resolvemos (p.ej. comprobando localStorage / cargando perfil), mostramos loader
+  if (loading) {
+    return (
+      <div className="dashboard-layout">
+        <div style={{ padding: 24 }}>Cargando sesión...</div>
+      </div>
+    )
   }
 
+  // Si no hay usuario autenticado, redirigir a login
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+
+  // Usuario presente -> renderizamos el layout y las rutas hijas
   return (
     <div className="dashboard-layout">
+      {/* Aquí puedes mantener tu sidebar / header */}
       <Outlet />
     </div>
-  );
+  )
 }

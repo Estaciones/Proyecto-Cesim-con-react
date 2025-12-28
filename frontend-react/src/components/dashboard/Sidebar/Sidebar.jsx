@@ -1,11 +1,11 @@
 // src/components/dashboard/Sidebar/Sidebar.jsx
 import React from "react"
-import { useAuth } from "../../../hooks/useAuth"
+import { useAuthContext } from "../../../context/AuthContext"
 import { useModal } from "../../../hooks/useModal"
 import styles from "./Sidebar.module.css"
 
 export default function DashboardSidebar({ activeSection, onNavigate }) {
-  const { user, profile } = useAuth()
+  const { user, profile } = useAuthContext()
   const { openModal } = useModal()
 
   // Determinar el tipo de usuario

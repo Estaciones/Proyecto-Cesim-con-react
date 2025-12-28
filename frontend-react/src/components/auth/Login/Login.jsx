@@ -1,6 +1,8 @@
+// src/components/auth/Login/Login.jsx
 import React, { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import { useAuth } from "../../../hooks/useAuth"
+// consume el contexto, NO el hook useAuth
+import { useAuthContext } from "../../../context/AuthContext"
 import { useToast } from "../../../hooks/useToast"
 import styles from "./Login.module.css"
 
@@ -11,7 +13,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
-  const { login } = useAuth()
+  const { login } = useAuthContext()
   const { showToast } = useToast()
 
   const handleSubmit = async (e) => {
@@ -28,11 +30,8 @@ export default function Login() {
       setMessage({ text: "✅ Login exitoso. Redirigiendo...", type: "success" })
       showToast("Login exitoso", "success", 2000)
 
-      // Pequeño delay para que el usuario vea el mensaje
-      setTimeout(() => {
-        console.log("Login - Redirigiendo a dashboard")
-        navigate("/dashboard")
-      }, 700)
+      // Redirigir al dashboard
+      navigate("/dashboard")
     } catch (error) {
       console.error("Login - Error completo:", error)
       setMessage({
