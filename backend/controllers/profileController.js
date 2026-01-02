@@ -1,3 +1,4 @@
+// backend/controllers/profileController.js
 import pool from "../db/pool.js"
 
 /* ---------- PROFILE ---------- */
@@ -10,18 +11,37 @@ export const getProfile = async (req, res) => {
       return res.status(204).end()
     }
 
+    /**
+     * Objetivo:
+     * - Devolver datos del usuario + persona (si existe)
+     * - Intentar devolver id_paciente asociado al usuario.
+     *   Primero intentamos por pa.id_usuario = u.id_usuario;
+     *   si no hay, intentamos encontrar paciente por CI (pa_ci).
+     *
+     * Esto cubre ambos esquemas: tabla `paciente` que referencia al usuario
+     * por id_usuario o por CI en la tabla persona.
+     */
     const q = await pool.query(
-      `SELECT u.id_usuario, u.email, u.tipo_usuario, u.nombre_usuario,
-              p.ci, p.nombre as persona_nombre, p.apellido, p.telefono
-       FROM usuario u
-       LEFT JOIN persona p ON p.id_usuario = u.id_usuario
-       WHERE u.id_usuario = $1
-       LIMIT 1`,
+      `SELECT u.id_usuario,
+       u.email,
+       u.tipo_usuario,
+       u.nombre_usuario,
+       p.ci,
+       p.nombre AS persona_nombre,
+       p.apellido,
+       p.telefono,
+       pa_ci.id_paciente AS id_paciente
+FROM usuario u
+LEFT JOIN persona p ON p.id_usuario = u.id_usuario
+LEFT JOIN paciente pa_ci ON pa_ci.ci = p.ci
+WHERE u.id_usuario = $1
+LIMIT 1`,
       [id]
     )
 
-    if (q.rowCount === 0)
+    if (q.rowCount === 0) {
       return res.status(404).json({ error: "Usuario no encontrado" })
+    }
 
     const row = q.rows[0]
     return res.json({
@@ -32,7 +52,9 @@ export const getProfile = async (req, res) => {
       ci: row.ci,
       nombre: row.persona_nombre,
       apellido: row.apellido,
-      telefono: row.telefono
+      telefono: row.telefono,
+      // id_paciente será null si no existe asociación
+      id_paciente: row.id_paciente || null
     })
   } catch (err) {
     console.error("getProfile", err)

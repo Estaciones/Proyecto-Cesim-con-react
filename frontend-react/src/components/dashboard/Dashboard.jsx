@@ -1,4 +1,3 @@
-// src/components/dashboard/Dashboard.jsx
 import React, { useEffect, useState, useCallback, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuthContext } from "../../context/AuthContext"
@@ -12,11 +11,15 @@ import Pacientes from "./sections/Pacientes/Pacientes"
 // Modales
 import RegistroModal from "../modals/RegistroModal/RegistroModal"
 
+// Services (fallback si profile no trae id_paciente)
+import { PatientService } from "../../services/patientService"
+
 import styles from "./Dashboard.module.css"
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { user, profile, logout } = useAuthContext()
+  // ahora pedimos loadProfile desde el contexto para poder refrescar perfil si hace falta
+  const { user, profile, logout, loadProfile } = useAuthContext()
   const { toast, showToast } = useToast()
   const [activeSection, setActiveSection] = useState("historia")
   const [selectedPatient, setSelectedPatient] = useState(null)
@@ -44,7 +47,7 @@ export default function Dashboard() {
     setInitialized(false)
   }, [userType])
 
-  // Inicializar dashboard
+  // Inicializar dashboard - ahora con loadProfile + fallback a PatientService
   useEffect(() => {
     if (!user) {
       navigate("/login")
@@ -54,7 +57,9 @@ export default function Dashboard() {
     if (initialized) return
 
     let mounted = true
-    const initializeDashboard = () => {
+    const controller = new AbortController()
+
+    const initializeDashboard = async () => {
       try {
         let defaultSection = "historia"
         if (userType === "medico" || userType === "gestor_casos") {
@@ -69,21 +74,131 @@ export default function Dashboard() {
           )
         }
 
-        // Si el usuario es paciente, autoseleccionar su propio perfil como paciente
+        // Si el usuario es paciente: necesitamos el id_paciente real
         if (mounted && userType === "paciente") {
-          const p = {
-            id_paciente:
-              profile?.id_paciente ||
-              profile?.id_usuario ||
-              user?.id_usuario ||
-              user?.id,
-            ci: profile?.ci || null,
-            nombre:
-              profile?.nombre || profile?.persona_nombre || user?.nombre || "",
-            apellido: profile?.apellido || "",
-            email: profile?.email || user?.email || ""
+          // 1) Si el profile ya trae id_paciente, úsalo
+          const existingPatientId =
+            profile?.id_paciente ||
+            profile?.idPaciente ||
+            profile?.paciente_id ||
+            null
+
+          if (existingPatientId) {
+            const p = {
+              id_paciente: existingPatientId,
+              ci: profile?.ci || null,
+              nombre:
+                profile?.nombre ||
+                profile?.persona_nombre ||
+                user?.nombre ||
+                "",
+              apellido: profile?.apellido || "",
+              email: profile?.email || user?.email || ""
+            }
+            if (mounted) setSelectedPatient(p)
+          } else {
+            // 2) Intentar recargar profile desde backend (loadProfile expuesto por contexto)
+            try {
+              const profileId = user?.id_usuario || user?.id
+              if (profileId) {
+                const refreshed = await loadProfile(profileId)
+                // loadProfile puede retornar null; si trae id_paciente la usamos
+                const refreshedId =
+                  refreshed?.id_paciente || refreshed?.idPaciente || null
+                if (refreshedId) {
+                  const p = {
+                    id_paciente: refreshedId,
+                    ci: refreshed?.ci || profile?.ci || null,
+                    nombre:
+                      refreshed?.nombre ||
+                      refreshed?.persona_nombre ||
+                      user?.nombre ||
+                      "",
+                    apellido: refreshed?.apellido || "",
+                    email: refreshed?.email || user?.email || ""
+                  }
+                  if (mounted) setSelectedPatient(p)
+                } else {
+                  // 3) Fallback: buscar paciente vía PatientService por CI o por user_id
+                  const searchKey =
+                    profile?.ci || refreshed?.ci || profile?.persona_ci || null
+                  let patientsResponse = null
+                  if (searchKey) {
+                    patientsResponse = await PatientService.getAll(
+                      { ci: searchKey },
+                      { signal: controller.signal }
+                    )
+                  } else {
+                    // intentar por user_id (si el backend soporta el parámetro)
+                    const uid =
+                      profile?.id_usuario || user?.id_usuario || user?.id
+                    if (uid) {
+                      patientsResponse = await PatientService.getAll(
+                        { user_id: uid },
+                        { signal: controller.signal }
+                      )
+                    }
+                  }
+
+                  // Normalización simple de resultados (Array o { data: [...] } etc)
+                  let arr = []
+                  if (Array.isArray(patientsResponse)) arr = patientsResponse
+                  else if (
+                    patientsResponse?.data &&
+                    Array.isArray(patientsResponse.data)
+                  )
+                    arr = patientsResponse.data
+                  else if (
+                    patientsResponse?.pacientes &&
+                    Array.isArray(patientsResponse.pacientes)
+                  )
+                    arr = patientsResponse.pacientes
+                  else if (
+                    patientsResponse?.results &&
+                    Array.isArray(patientsResponse.results)
+                  )
+                    arr = patientsResponse.results
+                  else arr = []
+
+                  if (arr.length > 0) {
+                    const found = arr[0]
+                    const p = {
+                      id_paciente:
+                        found.id_paciente || found.id || found.idPaciente,
+                      ci: found.ci || profile?.ci || null,
+                      nombre: found.nombre || profile?.nombre || "",
+                      apellido: found.apellido || profile?.apellido || "",
+                      email: found.email || profile?.email || ""
+                    }
+                    if (mounted) setSelectedPatient(p)
+                  } else {
+                    console.warn(
+                      "Dashboard - No se encontró registro de paciente para este usuario:",
+                      {
+                        profile,
+                        refreshed
+                      }
+                    )
+                    if (mounted)
+                      showToast(
+                        "No se encontró tu registro de paciente (ID). Contacta al administrador.",
+                        "warning"
+                      )
+                  }
+                }
+              }
+            } catch (err) {
+              if (err && err.name === "AbortError") {
+                console.log(
+                  "Dashboard.initializeDashboard - búsqueda paciente abortada"
+                )
+              } else {
+                console.error("Dashboard - Error buscando id_paciente:", err)
+                if (mounted)
+                  showToast("Error al obtener datos del paciente", "error")
+              }
+            }
           }
-          setSelectedPatient(p)
         }
 
         if (mounted) setInitialized(true)
@@ -97,13 +212,16 @@ export default function Dashboard() {
     }
 
     // pequeña espera para asegurar que profile esté listo
-    const t = setTimeout(initializeDashboard, 50)
+    const t = setTimeout(() => {
+      initializeDashboard()
+    }, 50)
 
     return () => {
       mounted = false
+      controller.abort()
       clearTimeout(t)
     }
-  }, [user, userType, profile, initialized, navigate, showToast])
+  }, [user, userType, profile, initialized, navigate, showToast, loadProfile])
 
   // Restricciones de acceso a secciones
   const isSectionAllowed = useCallback(
@@ -185,9 +303,6 @@ export default function Dashboard() {
           activeSection={activeSection}
           onNavigate={(sec) => {
             setActiveSection(sec)
-            // Si navega a Historia o Plan sin paciente seleccionado y es médico,
-            // no se selecciona nada (pero se pueden mostrar vacíos hasta seleccionar)
-            // Si quiere que al hacer click en paciente se cambie la sección, manejalo desde Pacientes.onSelectPatient
           }}
           userType={userType}
           onLogout={handleLogout}
