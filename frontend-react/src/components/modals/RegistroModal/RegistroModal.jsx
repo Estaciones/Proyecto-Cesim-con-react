@@ -1,262 +1,231 @@
-// src/components/RegistroModal/RegistroModal.jsx
-import React, { useState, useEffect, useCallback, useRef } from "react"
-import Modal from "../Modal/Modal"
-import { useModal } from "../../../hooks/useModal"
-import { useHistory } from "../../../hooks/useHistory"
-import { useToast } from "../../../hooks/useToast"
-import { useAuthContext } from "../../../context/AuthContext"
-import { usePatients } from "../../../hooks/usePatients"
-import styles from "./RegistroModal.module.css"
+import React, { useState, useEffect, useCallback } from "react";
+import Modal from "../Modal/Modal";
+import { useModal } from "../../../hooks/useModal";
+import { useHistory } from "../../../hooks/useHistory";
+import { useToast } from "../../../hooks/useToast";
+import { useAuthContext } from "../../../context/AuthContext";
+import { usePatients } from "../../../hooks/usePatients";
+import styles from "./RegistroModal.module.css";
 
-// 🔴 CONTADOR DE RENDERS (para la parte interna)
-let renderCountInner = 0
-
-// Wrapper: solo decide si montar el modal o no.
-// IMPORTANTE: este wrapper **no** importa/llama hooks pesados,
-// solo lee si el modal está abierto y, si no, evita montar el contenido.
 export default function RegistroModal() {
-  const { modals } = useModal()
-  const open = !!modals.registro
+  console.log("🔵 RegistroModal - RENDER");
 
-  // Si el modal está cerrado no montamos el contenido (evita que se invoquen hooks)
-  if (!open) return null
+  const { modals, closeModal, getModalData } = useModal();
+  const { createRegistro } = useHistory();
+  const { showToast } = useToast();
+  const { profile } = useAuthContext();
+  const { patients, fetchPatients, loading: patientsLoading } = usePatients();
 
-  // Solo cuando open === true montamos el contenido real
-  return <RegistroModalInner />
-}
+  const open = !!modals.registro;
+  const registroData = getModalData("registro");
+  const currentRegistroPacienteId = registroData.currentRegistroPacienteId;
 
-function RegistroModalInner() {
-  renderCountInner++
-  console.log(`🔵 RegistroModalInner - RENDER #${renderCountInner}`)
-
-  // Circuit breaker (solo en DEV)
-  if (renderCountInner > 200) {
-    console.error(
-      "🚨 RegistroModalInner: posible bucle de renders (circuit breaker)"
-    )
-    renderCountInner = 0
-  }
-
-  // Ahora sí: hooks de negocio (solo se ejecutan cuando el modal está abierto)
-  const { modals, closeModal, modalData } = useModal()
-  const { createRegistro } = useHistory()
-  const { showToast } = useToast()
-  const { profile } = useAuthContext()
-  const { patients, fetchPatients } = usePatients()
-
-  console.log("🔵 RegistroModalInner - props:", {
-    modalsRegistro: modals.registro,
+  console.log("🔵 RegistroModal - Datos recibidos:", {
+    open,
+    currentRegistroPacienteId,
+    tipoId: typeof currentRegistroPacienteId,
     profileId: profile?.id_paciente,
-    patientsCount: patients?.length || 0
-  })
-
-  const open = modals.registro
-  const { currentRegistroPacienteId } = modalData
+    profileTipo: profile?.tipo_usuario,
+    pacientesCount: patients?.length || 0,
+  });
 
   const [formData, setFormData] = useState({
     titulo: "",
     descripcion: "",
     tipo: "general",
-    id_paciente: ""
-  })
+    id_paciente: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
-  const [submitting, setSubmitting] = useState(false)
-  const [patientsLoaded, setPatientsLoaded] = useState(false)
+  // Buscar información del paciente seleccionado
+  const selectedPatientInfo = React.useMemo(() => {
+    let targetId = null;
 
-  // Ref para evitar llamadas concurrentes a loadPatientsData
-  const loadInFlightRef = useRef(false)
-
-  const loadPatientsData = useCallback(async () => {
-    console.log("🔄 RegistroModalInner.loadPatientsData - INICIO")
-    if (loadInFlightRef.current) {
-      console.log("🔒 loadPatientsData - ya hay una carga en curso, saliendo")
-      return
+    if (currentRegistroPacienteId) {
+      targetId = currentRegistroPacienteId;
+      console.log("🎯 RegistroModal - Buscando paciente por ID del modal:", targetId);
+    } else if (formData.id_paciente) {
+      targetId = parseInt(formData.id_paciente);
+      console.log("📋 RegistroModal - Buscando por ID del formulario:", targetId);
+    } else if (profile?.id_paciente) {
+      targetId = profile.id_paciente;
+      console.log("👤 RegistroModal - Buscando por ID del perfil:", targetId);
     }
-    loadInFlightRef.current = true
 
-    try {
-      await fetchPatients()
-      console.log("✅ loadPatientsData - fetchPatients completado")
-      setPatientsLoaded(true)
-    } catch (error) {
-      console.error("❌ loadPatientsData - ERROR:", error)
-      showToast("Error al cargar la lista de pacientes", "error")
-    } finally {
-      loadInFlightRef.current = false
-      console.log("🏁 loadPatientsData - FIN")
-    }
-  }, [fetchPatients, showToast])
-
-  // Efecto: cargar pacientes si hace falta (y solo cuando el modal está abierto)
-  useEffect(() => {
-    console.log("🎯 useEffect carga pacientes - ejecutando check")
-    const shouldLoad = open && !profile?.id_paciente && !patientsLoaded
-    console.log({
-      open,
-      profileId: profile?.id_paciente,
-      patientsLoaded,
-      shouldLoad
-    })
-    if (shouldLoad) loadPatientsData()
-  }, [open, profile?.id_paciente, patientsLoaded, loadPatientsData])
-
-  // Efecto: inicializar formulario al abrir/ cerrar modal
-  useEffect(() => {
-    console.log("🎯 useEffect inicialización modal - ejecutando")
-    if (open) {
-      let initialPatientId = ""
-      if (currentRegistroPacienteId) {
-        initialPatientId = currentRegistroPacienteId.toString()
-      } else if (profile?.id_paciente) {
-        initialPatientId = profile.id_paciente.toString()
+    if (targetId && Array.isArray(patients)) {
+      const patient = patients.find((p) => p.id_paciente === targetId);
+      if (patient) {
+        console.log("✅ RegistroModal - Paciente encontrado:", patient.nombre);
+        return {
+          id: patient.id_paciente,
+          nombre: `${patient.nombre} ${patient.apellido}`,
+          ci: patient.ci,
+        };
+      } else {
+        console.warn("⚠️ RegistroModal - No se encontró paciente con ID:", targetId);
       }
+    }
+    return null;
+  }, [currentRegistroPacienteId, formData.id_paciente, profile, patients]);
+
+  // Efecto para inicializar
+  useEffect(() => {
+    if (open && !initialized) {
+      console.log("📝 RegistroModal - Inicializando...");
+
+      let initialPatientId = "";
+      if (currentRegistroPacienteId) {
+        initialPatientId = String(currentRegistroPacienteId);
+        console.log("🎯 RegistroModal - Usando ID del modal:", initialPatientId);
+      } else if (profile?.id_paciente) {
+        initialPatientId = String(profile.id_paciente);
+        console.log("👤 RegistroModal - Usando ID del perfil:", initialPatientId);
+      }
+
       setFormData({
         titulo: "",
         descripcion: "",
         tipo: "general",
-        id_paciente: initialPatientId
-      })
-      if (profile?.id_paciente) setPatientsLoaded(true)
-    } else {
-      setPatientsLoaded(false)
-    }
-  }, [open, currentRegistroPacienteId, profile])
+        id_paciente: initialPatientId,
+      });
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+      // Cargar pacientes si es médico y no tiene pacientes
+      if (profile?.tipo_usuario === "medico" && (!patients || patients.length === 0)) {
+        console.log("📥 RegistroModal - Cargando pacientes para médico");
+        fetchPatients().catch((err) => {
+          console.error("❌ RegistroModal - Error cargando pacientes:", err);
+        });
+      }
+
+      setInitialized(true);
+    } else if (!open) {
+      setInitialized(false);
+      setFormData({
+        titulo: "",
+        descripcion: "",
+        tipo: "general",
+        id_paciente: "",
+      });
+      setSubmitting(false);
+    }
+  }, [open, initialized, currentRegistroPacienteId, profile, patients, fetchPatients]);
+
+  const handleInputChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  }, []);
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
+    console.log("🚀 RegistroModal - Enviando formulario");
+
     if (!formData.titulo.trim()) {
-      showToast("El título del registro es obligatorio", "error")
-      return
+      showToast("El título es obligatorio", "error");
+      return;
     }
     if (!formData.descripcion.trim()) {
-      showToast("La descripción del registro es obligatoria", "error")
-      return
+      showToast("La descripción es obligatoria", "error");
+      return;
     }
 
-    let id_paciente = null
-    if (currentRegistroPacienteId) id_paciente = currentRegistroPacienteId
-    else if (formData.id_paciente) id_paciente = parseInt(formData.id_paciente)
-    else if (profile?.id_paciente) id_paciente = profile.id_paciente
+    let id_paciente = null;
+    if (currentRegistroPacienteId) {
+      id_paciente = currentRegistroPacienteId;
+      console.log("🎯 RegistroModal - Usando ID del modal:", id_paciente);
+    } else if (formData.id_paciente) {
+      id_paciente = parseInt(formData.id_paciente);
+      console.log("📋 RegistroModal - Usando ID del select:", id_paciente);
+    } else if (profile?.id_paciente) {
+      id_paciente = profile.id_paciente;
+      console.log("👤 RegistroModal - Usando ID del perfil:", id_paciente);
+    }
 
     if (!id_paciente) {
-      showToast("Selecciona un paciente", "error")
-      return
+      showToast("Selecciona un paciente", "error");
+      return;
     }
 
-    let ci = null
+    let ci = null;
     if (Array.isArray(patients)) {
-      const patient = patients.find((p) => p.id_paciente === id_paciente)
-      if (patient) ci = patient.ci
+      const patient = patients.find((p) => p.id_paciente === id_paciente);
+      if (patient) ci = patient.ci;
     }
-    if (!ci && profile?.ci) ci = profile.ci
+    if (!ci && profile?.ci) ci = profile.ci;
+
     if (!ci) {
-      showToast("No se pudo identificar el CI del paciente", "error")
-      return
+      showToast("No se pudo identificar el CI del paciente", "error");
+      return;
     }
 
-    setSubmitting(true)
+    console.log("📡 RegistroModal - Creando registro:", { id_paciente, ci });
+
+    setSubmitting(true);
     try {
       await createRegistro({
         titulo: formData.titulo,
         descripcion: formData.descripcion,
         tipo: formData.tipo,
         id_paciente,
-        ci
-      })
-      showToast("Registro guardado", "success")
-      closeModal("registro")
+        ci,
+      });
+      showToast("Registro creado exitosamente", "success");
+      console.log("✅ RegistroModal - Registro creado");
+      closeModal("registro");
     } catch (err) {
-      console.error("❌ Error creando registro:", err)
-      showToast(err.message || "Error al guardar el registro", "error")
+      console.error("❌ RegistroModal - Error:", err);
+      showToast(err.message || "Error al crear registro", "error");
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const availablePatients = Array.isArray(patients)
-    ? patients.filter(
-        (p) => !profile?.id_paciente || p.id_paciente === profile.id_paciente
-      )
-    : []
+    ? patients.filter((p) => !profile?.id_paciente || p.id_paciente === profile.id_paciente)
+    : [];
 
-  const isLoadingPatients = !profile?.id_paciente && !patientsLoaded
-
-  const getSelectedPatientInfo = () => {
-    if (currentRegistroPacienteId && Array.isArray(patients)) {
-      const patient = patients.find(
-        (p) => p.id_paciente === currentRegistroPacienteId
-      )
-      if (patient) {
-        return {
-          id: patient.id_paciente,
-          nombre: `${patient.nombre} ${patient.apellido}`,
-          ci: patient.ci
-        }
-      }
-    }
-    if (profile?.id_paciente && Array.isArray(patients)) {
-      const patient = patients.find(
-        (p) => p.id_paciente === profile.id_paciente
-      )
-      if (patient) {
-        return {
-          id: patient.id_paciente,
-          nombre: `${patient.nombre} ${patient.apellido}`,
-          ci: patient.ci
-        }
-      }
-    }
-    return null
+  if (!open) {
+    console.log("👻 RegistroModal - Cerrado, no renderizar");
+    return null;
   }
 
-  const selectedPatientInfo = getSelectedPatientInfo()
-
-  // Limpiar contador al desmontar (solo inner)
-  useEffect(() => {
-    return () => {
-      renderCountInner = 0
-    }
-  }, [])
+  console.log("🎨 RegistroModal - Renderizando modal");
 
   return (
     <Modal
       open={open}
       onClose={() => closeModal("registro")}
       title="Nuevo Registro Clínico"
-      size="md">
+      size="md"
+    >
       <form onSubmit={handleSubmit} className={styles.form}>
-        {selectedPatientInfo && (
+        {selectedPatientInfo ? (
           <div className={styles.selectedPatientInfo}>
-            <div className={styles.patientBadge}>
-              <span className={styles.patientName}>
-                {selectedPatientInfo.nombre}
-              </span>
-              <span className={styles.patientCI}>
-                CI: {selectedPatientInfo.ci}
-              </span>
+            <h4>Paciente Seleccionado</h4>
+            <div className={styles.patientCard}>
+              <div className={styles.avatar}>
+                {selectedPatientInfo.nombre?.charAt(0) || "P"}
+              </div>
+              <div className={styles.patientDetails}>
+                <div className={styles.name}>{selectedPatientInfo.nombre}</div>
+                <div className={styles.ci}>CI: {selectedPatientInfo.ci}</div>
+              </div>
               {currentRegistroPacienteId && (
-                <span className={styles.preselectedBadge}>Preseleccionado</span>
+                <div className={styles.badge}>Seleccionado desde la lista</div>
               )}
             </div>
           </div>
-        )}
-
-        {!profile?.id_paciente && !selectedPatientInfo && (
+        ) : !profile?.id_paciente ? (
           <div className={styles.formGroup}>
             <label htmlFor="id_paciente" className={styles.label}>
               Paciente *
             </label>
-            {isLoadingPatients ? (
-              <div className={styles.loadingPatients}>
-                <span className={styles.spinner}></span>
-                Cargando lista de pacientes...
+            {patientsLoading ? (
+              <div className={styles.loading}>
+                <div className={styles.spinner}></div>
+                Cargando pacientes...
               </div>
-            ) : (
+            ) : availablePatients.length > 0 ? (
               <select
                 id="id_paciente"
                 name="id_paciente"
@@ -264,42 +233,40 @@ function RegistroModalInner() {
                 onChange={handleInputChange}
                 className={styles.select}
                 required
-                disabled={submitting || availablePatients.length === 0}>
-                <option value="">
-                  {availablePatients.length === 0
-                    ? "No hay pacientes disponibles"
-                    : "Selecciona un paciente"}
-                </option>
-                {availablePatients.map((patient) => (
-                  <option key={patient.id_paciente} value={patient.id_paciente}>
-                    {patient.nombre} {patient.apellido} - CI: {patient.ci}
+                disabled={submitting}
+              >
+                <option value="">-- Selecciona un paciente --</option>
+                {availablePatients.map((p) => (
+                  <option key={p.id_paciente} value={p.id_paciente}>
+                    {p.nombre} {p.apellido} (CI: {p.ci})
                   </option>
                 ))}
               </select>
+            ) : (
+              <div className={styles.empty}>No hay pacientes disponibles</div>
             )}
           </div>
-        )}
+        ) : null}
 
         <div className={styles.formGroup}>
           <label htmlFor="titulo" className={styles.label}>
-            Título del Registro *
+            Título *
           </label>
           <input
-            type="text"
             id="titulo"
             name="titulo"
             value={formData.titulo}
             onChange={handleInputChange}
-            placeholder="Ej: Consulta inicial, Evaluación, Seguimiento"
             className={styles.input}
             required
             disabled={submitting}
+            placeholder="Título del registro"
           />
         </div>
 
         <div className={styles.formGroup}>
           <label htmlFor="tipo" className={styles.label}>
-            Tipo de Registro
+            Tipo
           </label>
           <select
             id="tipo"
@@ -307,7 +274,8 @@ function RegistroModalInner() {
             value={formData.tipo}
             onChange={handleInputChange}
             className={styles.select}
-            disabled={submitting}>
+            disabled={submitting}
+          >
             <option value="general">General</option>
             <option value="consulta">Consulta</option>
             <option value="evaluacion">Evaluación</option>
@@ -319,45 +287,35 @@ function RegistroModalInner() {
 
         <div className={styles.formGroup}>
           <label htmlFor="descripcion" className={styles.label}>
-            Descripción Detallada *
+            Descripción *
           </label>
           <textarea
             id="descripcion"
             name="descripcion"
             value={formData.descripcion}
             onChange={handleInputChange}
-            placeholder="Describe el registro clínico en detalle..."
             className={styles.textarea}
             rows={6}
             required
             disabled={submitting}
+            placeholder="Descripción detallada del registro clínico"
           />
         </div>
 
-        <div className={styles.formFooter}>
-          <div className={styles.formActions}>
-            <button
-              type="button"
-              onClick={() => closeModal("registro")}
-              className={styles.cancelButton}
-              disabled={submitting}>
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className={styles.submitButton}
-              disabled={submitting}>
-              {submitting ? (
-                <>
-                  <span className={styles.spinner}></span>Guardando...
-                </>
-              ) : (
-                "Guardar Registro"
-              )}
-            </button>
-          </div>
+        <div className={styles.actions}>
+          <button
+            type="button"
+            onClick={() => closeModal("registro")}
+            className={styles.cancel}
+            disabled={submitting}
+          >
+            Cancelar
+          </button>
+          <button type="submit" className={styles.submit} disabled={submitting}>
+            {submitting ? "Guardando..." : "Guardar Registro"}
+          </button>
         </div>
       </form>
     </Modal>
-  )
+  );
 }

@@ -1,5 +1,5 @@
 // src/components/dashboard/sections/Pacientes/Pacientes.jsx
-import React, { useEffect, useCallback, useMemo } from "react"
+import React, { useEffect, useCallback, useMemo, useState } from "react"
 import { useAuthContext } from "../../../../context/AuthContext"
 import { useModal } from "../../../../hooks/useModal"
 import { usePatients } from "../../../../hooks/usePatients"
@@ -14,9 +14,10 @@ export default function Pacientes({ onSelectPatient }) {
     openCrearPlanWithPatient,
     openRegistroWithPatient
   } = useModal()
-
-  // hook centralizado
   const { patients, loading, error, fetchPatients } = usePatients()
+
+  // Estado local para búsqueda
+  const [searchQuery, setSearchQuery] = useState("")
 
   // Construir params según tipo de usuario
   const buildParams = useCallback(() => {
@@ -27,42 +28,33 @@ export default function Pacientes({ onSelectPatient }) {
     if (!tipo) return params
 
     if (tipo === "medico") {
-      // Backend debería filtrar por medico_id
       if (idUsuario) params.medico_id = idUsuario
     } else if (
       tipo === "gestor_casos" ||
       (typeof tipo === "string" && tipo.includes("gestor"))
     ) {
       if (idUsuario) params.gestor_id = idUsuario
-    } else {
-      // otros tipos no deberían acceder a esta vista (ya lo manejas)
     }
+    // Para otros tipos, no agregamos filtros
 
     return params
   }, [profile])
 
-  // carga inicial con abort controller (ahora con params)
+  // carga inicial con abort controller
   useEffect(() => {
     const controller = new AbortController()
     const params = buildParams()
 
-    // Si no hay parámetros (ej. perfil no listo), intentamos reintentar más tarde.
-    // Pero si perfil indica que no debe ver pacientes, no hacemos la llamada.
-    if (!profile?.tipo_usuario) {
-      // esperar hasta que profile esté disponible
+    // Si no hay perfil o es paciente, no hacer fetch
+    if (!profile?.tipo_usuario || profile?.tipo_usuario === "paciente") {
       return
     }
 
-    // Si el usuario no puede ver pacientes, no llamar
-    if (profile?.tipo_usuario === "paciente") return
-
     fetchPatients(params, { signal: controller.signal }).catch((err) => {
       if (err && err.name === "AbortError") {
-        console.log(
-          "Pacientes.jsx - fetch aborted (expected in dev StrictMode)"
-        )
+        console.log("Fetch abortado (modo estricto)")
       } else {
-        console.error("Pacientes.jsx - fetchPatients error:", err)
+        console.error("Error fetchPatients:", err)
       }
     })
 
@@ -73,36 +65,62 @@ export default function Pacientes({ onSelectPatient }) {
     () => profile?.tipo_usuario === "paciente",
     [profile]
   )
+  
   const isMedico = useMemo(() => profile?.tipo_usuario === "medico", [profile])
+  
+  // Solo médicos pueden asignar gestor y crear planes
   const canAssignGestor = isMedico
   const canCreatePlan = isMedico
 
   const handleSelectPatient = useCallback(
-    (patient) => {
+    (patient, openTo = null) => {
+      console.log("👤 Pacientes - Seleccionando paciente:", {
+        id: patient.id_paciente,
+        nombre: patient.nombre,
+        openTo,
+      })
+
       if (onSelectPatient) {
         onSelectPatient({
           id_paciente: patient.id_paciente || patient.id,
           ci: patient.ci,
           nombre: patient.nombre,
           apellido: patient.apellido,
-          email: patient.email
+          email: patient.email,
         })
       }
+
+      // Determinar qué acción realizar basado en openTo
+      switch (openTo) {
+        case "registro":
+          console.log("📝 Abriendo registro para:", patient.id_paciente)
+          openRegistroWithPatient(Number(patient.id_paciente || patient.id))
+          break
+        case "crearPlan":
+          openCrearPlanWithPatient(patient.id_paciente || patient.id)
+          break
+        case "asignarGestor":
+          openAsignarGestor(patient.id_paciente || patient.id)
+          break
+        default:
+          // Solo "Ver detalles" - no abrir ningún modal
+          break
+      }
     },
-    [onSelectPatient]
+    [onSelectPatient, openRegistroWithPatient, openCrearPlanWithPatient, openAsignarGestor]
   )
 
   // filtrado local
-  const [searchQuery, setSearchQuery] = React.useState("")
-  const filteredPatients = React.useMemo(() => {
+  const filteredPatients = useMemo(() => {
     if (!Array.isArray(patients)) return []
     const q = searchQuery.trim().toLowerCase()
     if (!q) return patients
+    
     return patients.filter((p) => {
-      const s = `${p.nombre || ""} ${p.apellido || ""} ${p.ci || ""} ${
+      const searchString = `${p.nombre || ""} ${p.apellido || ""} ${p.ci || ""} ${
         p.email || ""
       }`.toLowerCase()
-      return s.includes(q)
+      return searchString.includes(q)
     })
   }, [patients, searchQuery])
 
@@ -144,7 +162,8 @@ export default function Pacientes({ onSelectPatient }) {
               <button
                 onClick={() => setSearchQuery("")}
                 className={styles.clearButton}
-                aria-label="Limpiar búsqueda">
+                aria-label="Limpiar búsqueda"
+              >
                 ✖
               </button>
             )}
@@ -186,7 +205,8 @@ export default function Pacientes({ onSelectPatient }) {
           {filteredPatients.map((patient) => (
             <Card
               key={patient.id_paciente || patient.id}
-              className={styles.patientCard}>
+              className={styles.patientCard}
+            >
               <div className={styles.cardHeader}>
                 <div className={styles.avatar}>
                   {patient.nombre?.charAt(0) || "P"}
@@ -232,46 +252,43 @@ export default function Pacientes({ onSelectPatient }) {
                     variant="primary"
                     size="small"
                     onClick={() => handleSelectPatient(patient)}
-                    className={styles.actionButton}>
+                    className={styles.actionButton}
+                  >
                     Ver detalles
                   </Button>
 
+                  {/* Botón de Asignar Gestor (solo para médicos) */}
                   {canAssignGestor && (
                     <Button
                       variant="secondary"
                       size="small"
-                      onClick={() =>
-                        openAsignarGestor(patient.id_paciente || patient.id)
-                      }
-                      className={styles.actionButton}>
+                      onClick={() => handleSelectPatient(patient, "asignarGestor")}
+                      className={styles.actionButton}
+                    >
                       Asignar gestor
                     </Button>
                   )}
 
+                  {/* Botón de Crear Plan (solo para médicos) */}
                   {canCreatePlan && (
                     <Button
                       variant="secondary"
                       size="small"
-                      onClick={() =>
-                        openCrearPlanWithPatient(
-                          patient.id_paciente || patient.id
-                        )
-                      }
-                      className={styles.actionButton}>
+                      onClick={() => handleSelectPatient(patient, "crearPlan")}
+                      className={styles.actionButton}
+                    >
                       Crear plan
                     </Button>
                   )}
 
+                  {/* Botón de Nuevo Registro (solo para médicos) */}
                   {isMedico && (
                     <Button
                       variant="secondary"
                       size="small"
-                      onClick={() =>
-                        openRegistroWithPatient(
-                          patient.id_paciente || patient.id
-                        )
-                      }
-                      className={styles.actionButton}>
+                      onClick={() => handleSelectPatient(patient, "registro")}
+                      className={styles.actionButton}
+                    >
                       Nuevo Registro
                     </Button>
                   )}

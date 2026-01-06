@@ -7,6 +7,12 @@ import Card from "../../../ui/Card/Card"
 import styles from "./Historia.module.css"
 
 export default function Historia({ selectedPatient }) {
+  console.log("🟢 Historia - RENDER", {
+    selectedPatientId: selectedPatient?.id_paciente,
+    // eslint-disable-next-line react-hooks/purity
+    timestamp: Date.now()
+  })
+
   const { profile } = useAuthContext()
   const {
     openModal,
@@ -20,6 +26,11 @@ export default function Historia({ selectedPatient }) {
 
   const load = useCallback(
     async (signal) => {
+      console.log("📥 Historia - load function called", {
+        selectedPatientId: selectedPatient?.id_paciente,
+        profileType: profile?.tipo_usuario
+      })
+
       const params = {}
       if (selectedPatient?.ci) params.ci = selectedPatient.ci
       else if (selectedPatient?.id_paciente)
@@ -29,12 +40,14 @@ export default function Historia({ selectedPatient }) {
         else if (profile.id_paciente) params.id_paciente = profile.id_paciente
       }
 
+      console.log("📥 Historia - fetch params:", params)
       return fetchHistoria(params, { signal })
     },
     [selectedPatient, profile, fetchHistoria]
   )
 
   useEffect(() => {
+    console.log("🎯 Historia - useEffect ejecutándose")
     const controller = new AbortController()
 
     // Determinar si hay parámetros válidos antes de llamar
@@ -44,20 +57,33 @@ export default function Historia({ selectedPatient }) {
       (profile?.tipo_usuario === "paciente" &&
         (profile.ci || profile.id_paciente))
 
+    console.log("🔍 Historia - hasParams check:", {
+      hasParams,
+      selectedPatientCI: selectedPatient?.ci,
+      selectedPatientId: selectedPatient?.id_paciente,
+      profileType: profile?.tipo_usuario,
+      profileCI: profile?.ci,
+      profilePacienteId: profile?.id_paciente
+    })
+
     if (!hasParams) {
-      // no hacemos fetch (ej. medico que no ha seleccionado paciente)
-      setTimeout(() => {
-        // opcional: limpiar historia si quieres
-      }, 0)
+      console.log("⏭️ Historia - No hay parámetros válidos, omitiendo fetch")
       return () => controller.abort()
     }
 
+    console.log("🚀 Historia - Iniciando fetch de historia")
     load(controller.signal).catch((err) => {
-      if (err?.name !== "AbortError")
-        console.error("Error loading historia:", err)
+      if (err?.name !== "AbortError") {
+        console.error("❌ Historia - Error loading historia:", err)
+      } else {
+        console.log("⏹️ Historia - Fetch abortado")
+      }
     })
 
-    return () => controller.abort()
+    return () => {
+      console.log("🧹 Historia - Cleanup, aborting controller")
+      controller.abort()
+    }
   }, [load, selectedPatient, profile])
 
   const formatShortDate = useCallback((dateString) => {
@@ -80,19 +106,56 @@ export default function Historia({ selectedPatient }) {
   )
 
   const handleNuevoRegistro = useCallback(() => {
-    if (selectedPatient?.id_paciente)
-      openRegistroWithPatient(selectedPatient.id_paciente)
-    else openModal("registro")
+    console.log("🟢 Historia - Botón 'Nuevo Registro' clickeado", {
+      selectedPatient: selectedPatient,
+      hasId: !!selectedPatient?.id_paciente,
+      idValue: selectedPatient?.id_paciente
+    })
+
+    if (selectedPatient?.id_paciente) {
+      console.log(
+        "🎯 Historia - Llamando openRegistroWithPatient con ID:",
+        selectedPatient.id_paciente
+      )
+      // Convierte a número para asegurar
+      const pacienteId = Number(selectedPatient.id_paciente)
+      console.log("🎯 Historia - ID convertido a número:", pacienteId)
+      openRegistroWithPatient(pacienteId)
+    } else {
+      console.log(
+        "⚠️ Historia - selectedPatient no tiene id_paciente:",
+        selectedPatient
+      )
+      console.log(
+        "🎯 Historia - Llamando openModal('registro') sin paciente específico"
+      )
+      openModal("registro")
+    }
   }, [selectedPatient, openRegistroWithPatient, openModal])
 
   const handleVerRegistro = useCallback(
-    (record) => openViewHistoria(record),
+    (record) => {
+      console.log("👁️ Historia - Ver registro:", record.id_registro || record.id)
+      openViewHistoria(record)
+    },
     [openViewHistoria]
   )
+
   const handleEditarRegistro = useCallback(
-    (record) => openEditHistoria(record),
+    (record) => {
+      console.log("✏️ Historia - Editar registro:", record.id_registro || record.id)
+      openEditHistoria(record)
+    },
     [openEditHistoria]
   )
+
+  console.log("📊 Historia - Estado actual:", {
+    historiaCount: historia?.length || 0,
+    loading,
+    error: error ? error.substring(0, 100) : null,
+    selectedPatient: selectedPatient?.id_paciente,
+    canEditHistoria
+  })
 
   return (
     <section className={styles.container}>
@@ -106,7 +169,9 @@ export default function Historia({ selectedPatient }) {
               <span className={styles.patientName}>
                 {selectedPatient.nombre} {selectedPatient.apellido}
               </span>
-              <span className={styles.patientCI}>CI: {selectedPatient.ci}</span>
+              <span className={styles.patientCI}>
+                CI: {selectedPatient.ci}
+              </span>
             </div>
           )}
         </div>
@@ -117,12 +182,14 @@ export default function Historia({ selectedPatient }) {
               variant="primary"
               onClick={handleNuevoRegistro}
               className={styles.addButton}
-              disabled={loading}>
+              disabled={loading}
+            >
               <svg
                 className={styles.addIcon}
                 fill="none"
                 stroke="currentColor"
-                viewBox="0 0 24 24">
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -155,7 +222,8 @@ export default function Historia({ selectedPatient }) {
               className={styles.emptyIcon}
               fill="none"
               stroke="currentColor"
-              viewBox="0 0 24 24">
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -176,7 +244,8 @@ export default function Historia({ selectedPatient }) {
           {historia.map((record) => (
             <Card
               key={record.id_registro || record.id}
-              className={styles.recordCard}>
+              className={styles.recordCard}
+            >
               <div className={styles.cardHeader}>
                 <h3 className={styles.recordTitle}>{record.titulo}</h3>
                 <div className={styles.cardActions}>
@@ -184,7 +253,8 @@ export default function Historia({ selectedPatient }) {
                     variant="secondary"
                     size="small"
                     onClick={() => handleVerRegistro(record)}
-                    className={styles.actionButton}>
+                    className={styles.actionButton}
+                  >
                     Ver
                   </Button>
                   {canEditHistoria && (
@@ -192,7 +262,8 @@ export default function Historia({ selectedPatient }) {
                       variant="secondary"
                       size="small"
                       onClick={() => handleEditarRegistro(record)}
-                      className={styles.actionButton}>
+                      className={styles.actionButton}
+                    >
                       Editar
                     </Button>
                   )}

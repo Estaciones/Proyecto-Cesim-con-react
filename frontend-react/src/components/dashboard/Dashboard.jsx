@@ -10,6 +10,8 @@ import Pacientes from "./sections/Pacientes/Pacientes"
 
 // Modales
 import RegistroModal from "../modals/RegistroModal/RegistroModal"
+import ViewHistoriaModal from "../modals/ViewHistoriaModal/ViewHistoriaModal"
+import EditHistoriaModal from "../modals/EditHistoriaModal/EditHistoriaModal"
 
 // Services (fallback si profile no trae id_paciente)
 import { PatientService } from "../../services/patientService"
@@ -39,6 +41,47 @@ export default function Dashboard() {
     if (user?.tipo) return user.tipo
     return null
   }, [user, profile])
+
+  // Restricciones de acceso a secciones
+  const isSectionAllowed = useCallback(
+    (section) => {
+      if (!userType) return false
+      switch (section) {
+        case "pacientes":
+          return userType === "medico" || userType === "gestor_casos"
+        case "historia":
+        case "plan":
+        case "comunicacion":
+          return true
+        default:
+          return false
+      }
+    },
+    [userType]
+  )
+
+  const handleSelectPatient = useCallback(
+    (patient) => {
+      console.log("👤 Dashboard - handleSelectPatient llamado con:", patient)
+      
+      const selectedPatientData = {
+        id_paciente: patient.id_paciente || patient.id,
+        ci: patient.ci,
+        nombre: patient.nombre,
+        apellido: patient.apellido,
+        email: patient.email,
+      }
+      
+      console.log("📝 Dashboard - Guardando paciente:", selectedPatientData)
+      setSelectedPatient(selectedPatientData)
+      
+      if (isSectionAllowed("historia")) {
+        console.log("📊 Dashboard - Cambiando a sección historia")
+        setActiveSection("historia")
+      }
+    },
+    [isSectionAllowed]
+  )
 
   // Si cambia el tipo de usuario, limpiar selección y re-inicializar
   useEffect(() => {
@@ -223,24 +266,6 @@ export default function Dashboard() {
     }
   }, [user, userType, profile, initialized, navigate, showToast, loadProfile])
 
-  // Restricciones de acceso a secciones
-  const isSectionAllowed = useCallback(
-    (section) => {
-      if (!userType) return false
-      switch (section) {
-        case "pacientes":
-          return userType === "medico" || userType === "gestor_casos"
-        case "historia":
-        case "plan":
-        case "comunicacion":
-          return true
-        default:
-          return false
-      }
-    },
-    [userType]
-  )
-
   const activeSectionContent = useMemo(() => {
     if (!userType) {
       return (
@@ -252,7 +277,7 @@ export default function Dashboard() {
     }
 
     if (activeSection === "pacientes" && isSectionAllowed("pacientes")) {
-      return <Pacientes onSelectPatient={setSelectedPatient} />
+      return <Pacientes onSelectPatient={handleSelectPatient} />
     }
 
     if (activeSection === "historia" && isSectionAllowed("historia")) {
@@ -282,7 +307,7 @@ export default function Dashboard() {
     }
 
     return null
-  }, [activeSection, isSectionAllowed, selectedPatient, userType])
+  }, [activeSection, isSectionAllowed, selectedPatient, userType, handleSelectPatient])
 
   // Mostrar loading si no hay usuario
   if (!user) {
@@ -301,9 +326,7 @@ export default function Dashboard() {
       <div className={styles.mainLayout}>
         <Sidebar
           activeSection={activeSection}
-          onNavigate={(sec) => {
-            setActiveSection(sec)
-          }}
+          onNavigate={(sec) => setActiveSection(sec)}
           userType={userType}
           onLogout={handleLogout}
           profile={profile}
@@ -321,8 +344,10 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Modales (omitidos/externos) */}
+      {/* Modales */}
       <RegistroModal />
+      <ViewHistoriaModal />
+      <EditHistoriaModal />
     </div>
   )
 }
