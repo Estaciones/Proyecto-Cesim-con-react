@@ -12,6 +12,12 @@ import Pacientes from "./sections/Pacientes/Pacientes"
 import RegistroModal from "../modals/RegistroModal/RegistroModal"
 import ViewHistoriaModal from "../modals/ViewHistoriaModal/ViewHistoriaModal"
 import EditHistoriaModal from "../modals/EditHistoriaModal/EditHistoriaModal"
+import CrearPlanModal from "../modals/CrearPlanModal/CrearPlanModal"
+import ViewPlanModal from "../modals/ViewPlanModal/ViewPlanModal"
+import EditPlanModal from "../modals/EditPlanModal/EditPlanModal"
+import EditPrescripcionModal from "../modals/EditPrescripcionModal/EditPrescripcionModal"
+import AsignarGestorModal from "../modals/AsignarGestorModal/AsignarGestorModal"
+import NuevoPacienteModal from "../modals/NuevoPacienteModal/NuevoPacienteModal"
 
 // Services (fallback si profile no trae id_paciente)
 import { PatientService } from "../../services/patientService"
@@ -63,18 +69,18 @@ export default function Dashboard() {
   const handleSelectPatient = useCallback(
     (patient) => {
       console.log("👤 Dashboard - handleSelectPatient llamado con:", patient)
-      
+
       const selectedPatientData = {
         id_paciente: patient.id_paciente || patient.id,
         ci: patient.ci,
         nombre: patient.nombre,
         apellido: patient.apellido,
-        email: patient.email,
+        email: patient.email
       }
-      
+
       console.log("📝 Dashboard - Guardando paciente:", selectedPatientData)
       setSelectedPatient(selectedPatientData)
-      
+
       if (isSectionAllowed("historia")) {
         console.log("📊 Dashboard - Cambiando a sección historia")
         setActiveSection("historia")
@@ -307,7 +313,13 @@ export default function Dashboard() {
     }
 
     return null
-  }, [activeSection, isSectionAllowed, selectedPatient, userType, handleSelectPatient])
+  }, [
+    activeSection,
+    isSectionAllowed,
+    selectedPatient,
+    userType,
+    handleSelectPatient
+  ])
 
   // Mostrar loading si no hay usuario
   if (!user) {
@@ -348,6 +360,12 @@ export default function Dashboard() {
       <RegistroModal />
       <ViewHistoriaModal />
       <EditHistoriaModal />
+      <CrearPlanModal />
+      <ViewPlanModal />
+      <EditPlanModal />
+      <EditPrescripcionModal />
+      <AsignarGestorModal />
+      <NuevoPacienteModal />
     </div>
   )
 }

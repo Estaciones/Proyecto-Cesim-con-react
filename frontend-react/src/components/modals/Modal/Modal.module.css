@@ -1,12 +1,17 @@
+/* Modal.module.css */
 .overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
-  animation: fadeIn 0.2s ease;
+  background: rgba(26, 60, 52, 0.7); /* Verde oscuro con transparencia */
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
 }
 
 .wrapper {
@@ -15,86 +20,126 @@
   left: 0;
   right: 0;
   bottom: 0;
+  z-index: 1001;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
+  padding: 20px;
   pointer-events: none;
 }
 
 .modal {
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  pointer-events: all;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(26, 60, 52, 0.2);
   max-width: 95%;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
+  pointer-events: auto;
   animation: slideIn 0.3s ease;
   overflow: hidden;
+  border: 1px solid #e1f5ea;
 }
 
+/* Tamaños de Modal */
 .modal-sm {
   width: 400px;
 }
+
 .modal-md {
-  width: 500px;
-}
-.modal-lg {
   width: 600px;
 }
-.modal-xl {
+
+.modal-lg {
   width: 800px;
 }
 
+.modal-xl {
+  width: 1000px;
+}
+
+/* Header del Modal */
 .header {
+  padding: 24px 32px 20px;
+  border-bottom: 2px solid #f0f9f4;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-  flex-shrink: 0;
+  background: linear-gradient(135deg, #f8fdf9 0%, white 100%);
 }
 
 .title {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 20px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-primary, #1a3c34);
+  line-height: 1.4;
 }
 
 .close {
-  background: none;
-  border: none;
-  font-size: 1.75rem;
-  cursor: pointer;
-  color: #6b7280;
-  padding: 0.25rem;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
-  transition: all 0.2s;
+  background: #fff5f5;
+  border: 1px solid #ffd1d1;
+  border-radius: 10px;
+  color: #e74c3c;
+  font-size: 20px;
+  font-weight: 300;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
   line-height: 1;
 }
+
 .close:hover {
-  background-color: #f3f4f6;
-  color: #374151;
+  background: #ffeaea;
+  border-color: #ffb8b8;
+  transform: rotate(90deg);
 }
 
+.close:active {
+  transform: rotate(90deg) scale(0.95);
+}
+
+/* Contenido del Modal */
 .content {
-  padding: 1.5rem;
+  padding: 32px;
   overflow-y: auto;
   flex: 1;
+  background: white;
 }
 
+/* Scrollbar personalizado */
+.content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: #f0f9f4;
+  border-radius: 4px;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: #c6f0d9;
+  border-radius: 4px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-color, #2ecc71);
+}
+
+/* Animaciones */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideIn {
@@ -108,11 +153,61 @@
   }
 }
 
-@media (max-width: 640px) {
-  .modal-sm, .modal-md, .modal-lg, .modal-xl {
-    width: 95%;
+/* Responsive */
+@media (max-width: 768px) {
+  .wrapper {
+    padding: 16px;
   }
-  .header, .content {
-    padding: 1rem;
+
+  .modal {
+    max-width: 100%;
+    max-height: 95vh;
+  }
+
+  .modal-sm,
+  .modal-md,
+  .modal-lg,
+  .modal-xl {
+    width: 100%;
+  }
+
+  .header {
+    padding: 20px 24px 16px;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+
+  .content {
+    padding: 24px;
+  }
+
+  .close {
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 16px 20px 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .title {
+    text-align: center;
+  }
+
+  .close {
+    align-self: flex-end;
+    margin-top: -40px;
+  }
+
+  .content {
+    padding: 20px 16px;
   }
 }

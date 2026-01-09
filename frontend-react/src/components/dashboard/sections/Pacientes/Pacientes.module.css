@@ -1,222 +1,445 @@
-.container {
-  padding: 1.5rem;
-  max-width: 100%;
+/* Variables CSS */
+:root {
+  --primary-color: #2ecc71;
+  --primary-dark: #27ae60;
+  --primary-light: #d5f4e6;
+  --secondary-color: #3498db;
+  --accent-color: #9b59b6;
+  --warning-color: #e67e22;
+  --error-color: #e74c3c;
+  --success-color: #27ae60;
+  --text-primary: #1a3c34;
+  --text-secondary: #2d4a43;
+  --text-muted: #6c8981;
+  --text-light: #94a3b8;
+  --background-light: #f8fdf9;
+  --background-card: #ffffff;
+  --border-color: #e1f5ea;
+  --border-dark: #c6f0d9;
+  --shadow-light: 0 4px 12px rgba(46, 204, 113, 0.1);
+  --shadow-medium: 0 8px 24px rgba(46, 204, 113, 0.15);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --transition: all 0.3s ease;
 }
 
+/* Contenedor Principal */
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 24px;
+  background: var(--background-light);
+  min-height: 100%;
+}
+
+/* Acceso Denegado */
+.accessDenied {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+  gap: 24px;
+}
+
+.accessDeniedIcon {
+  font-size: 64px;
+  opacity: 0.5;
+}
+
+.accessDeniedTitle {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.accessDeniedText {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-secondary);
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+/* Encabezado */
 .header {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.headerContent {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1.5rem;
+  gap: 32px;
 }
 
 .titleSection {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 12px;
 }
 
 .title {
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #1f2937;
   margin: 0;
-  line-height: 1.2;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.titleIcon {
+  font-size: 32px;
+  opacity: 0.9;
 }
 
 .subtitle {
-  font-size: 0.875rem;
-  color: #6b7280;
   margin: 0;
+  font-size: 16px;
+  color: var(--text-muted);
+  line-height: 1.5;
 }
 
-.actions {
-  flex: 1;
-  max-width: 400px;
+.headerActions {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 300px;
 }
 
+/* Barra de Búsqueda */
 .searchContainer {
-  position: relative;
   width: 100%;
+}
+
+.searchWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--background-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+.searchWrapper:focus-within {
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-light);
 }
 
 .searchIcon {
   position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
-  color: #9ca3af;
+  left: 16px;
+  font-size: 18px;
+  color: var(--text-muted);
   pointer-events: none;
 }
 
 .searchInput {
   width: 100%;
-  padding: 0.875rem 1rem 0.875rem 3rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 10px;
-  font-size: 0.9375rem;
-  background: white;
-  transition: all 0.2s;
+  padding: 14px 16px 14px 48px;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  color: var(--text-primary);
+  outline: none;
 }
 
-.searchInput:focus {
-  outline: none;
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+.searchInput::placeholder {
+  color: var(--text-light);
 }
 
 .clearButton {
   position: absolute;
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
+  right: 12px;
   background: none;
   border: none;
-  color: #9ca3af;
+  color: var(--text-muted);
+  font-size: 18px;
   cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 4px;
-  transition: all 0.2s;
+  padding: 4px;
+  transition: var(--transition);
 }
 
 .clearButton:hover {
-  color: #6b7280;
-  background: #f3f4f6;
+  color: var(--text-primary);
 }
 
-.clearIcon {
-  width: 16px;
-  height: 16px;
+/* Botones de Acción */
+.actionButtons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-/* Loading State */
-.loading {
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.actionButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-light);
+}
+
+.buttonIcon {
+  font-size: 16px;
+}
+
+/* Estadísticas */
+.stats {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--background-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  min-width: 200px;
+}
+
+.statIcon {
+  font-size: 24px;
+  opacity: 0.8;
+}
+
+.statContent {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.statValue {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.statLabel {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Contenido Principal */
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Estados de Carga y Error */
+.loadingState {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem 2rem;
+  padding: 60px 20px;
   text-align: center;
-  color: #6b7280;
+  gap: 20px;
 }
 
 .spinner {
   width: 48px;
   height: 48px;
-  border: 3px solid #e5e7eb;
-  border-top-color: #4f46e5;
+  border: 3px solid rgba(46, 204, 113, 0.1);
   border-radius: 50%;
+  border-top-color: var(--primary-color);
   animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
+}
+
+.loadingState p {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
-/* Empty State */
+.errorCard,
 .emptyCard {
-  padding: 4rem 2rem;
-  text-align: center;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 2px dashed #cbd5e1;
+  border: none;
+  box-shadow: var(--shadow-light);
+  overflow: hidden;
 }
 
-.emptyState {
+.errorContent,
+.emptyContent {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  justify-content: center;
+  padding: 48px 32px;
+  text-align: center;
+  gap: 20px;
 }
 
+.errorIcon,
 .emptyIcon {
-  width: 64px;
-  height: 64px;
-  color: #94a3b8;
-  margin-bottom: 0.5rem;
+  font-size: 48px;
+  opacity: 0.7;
 }
 
-.emptyState h3 {
-  font-size: 1.25rem;
+.errorIcon {
+  color: var(--error-color);
+}
+
+.errorTitle,
+.emptyTitle {
+  margin: 0;
+  font-size: 20px;
   font-weight: 600;
-  color: #475569;
-  margin: 0;
+  color: var(--text-primary);
 }
 
-.emptyState p {
-  color: #64748b;
-  max-width: 400px;
+.errorMessage {
   margin: 0;
+  font-size: 15px;
+  color: var(--text-secondary);
+  max-width: 600px;
+  line-height: 1.6;
 }
 
-/* Grid */
-.grid {
+.retryButton {
+  margin-top: 16px;
+}
+
+.emptyDescription {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text-muted);
+  max-width: 500px;
+  line-height: 1.6;
+}
+
+.emptyAction {
+  margin-top: 16px;
+}
+
+/* Grid de Pacientes */
+.patientsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 24px;
 }
 
-@media (max-width: 768px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Patient Card */
+/* Tarjeta de Paciente */
 .patientCard {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--background-card);
+  transition: var(--transition);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  transition: all 0.3s ease;
-  border: 1px solid #e5e7eb;
-  overflow: hidden;
+  cursor: pointer;
 }
 
 .patientCard:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  border-color: #c7d2fe;
+  box-shadow: var(--shadow-medium);
+  border-color: var(--primary-light);
 }
 
+.patientCard.selected {
+  border: 2px solid var(--primary-color);
+  box-shadow: var(--shadow-medium);
+  background: linear-gradient(135deg, #f8fdf9 0%, #f0f9f4 100%);
+}
+
+/* Encabezado de la Tarjeta */
 .cardHeader {
+  padding: 20px;
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-bottom: 1px solid #e5e7eb;
+  gap: 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(135deg, #f8fdf9 0%, #f0f9f4 100%);
 }
 
-.avatar {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+.patientAvatar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatarCircle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 1.25rem;
+  font-size: 18px;
+  border: 3px solid white;
+  box-shadow: 0 4px 8px rgba(46, 204, 113, 0.2);
+}
+
+.statusBadge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statusBadge.active {
+  background: var(--success-color);
   color: white;
-  flex-shrink: 0;
+}
+
+.statusBadge.inactive {
+  background: var(--text-light);
+  color: white;
 }
 
 .patientInfo {
   flex: 1;
-  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
 }
 
 .patientName {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 0.25rem 0;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
   line-height: 1.3;
   white-space: nowrap;
   overflow: hidden;
@@ -226,140 +449,170 @@
 .patientMeta {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 6px;
+}
+
+.patientCI,
+.patientEmail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
 }
 
 .patientCI {
-  font-size: 0.875rem;
-  color: #4f46e5;
   font-weight: 500;
 }
 
-.patientEmail {
-  font-size: 0.8125rem;
-  color: #6b7280;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.metaIcon {
+  font-size: 12px;
+  opacity: 0.7;
 }
 
-.cardContent {
+/* Cuerpo de la Tarjeta */
+.cardBody {
+  padding: 20px;
   flex: 1;
-  padding: 1.5rem;
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
 }
 
 .infoItem {
   display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.infoItem:last-child {
-  margin-bottom: 0;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .infoIcon {
-  width: 16px;
-  height: 16px;
-  color: #9ca3af;
-  flex-shrink: 0;
-  margin-top: 0.125rem;
+  font-size: 14px;
+  opacity: 0.7;
+  margin-bottom: 4px;
 }
 
-.infoText {
-  font-size: 0.875rem;
-  color: #4b5563;
-  line-height: 1.5;
-  flex: 1;
-}
-
-.cardFooter {
-  padding: 1.5rem;
-  border-top: 1px solid #f1f5f9;
-  background: #fafafa;
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.actionButton {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  flex: 1;
-  min-width: 120px;
-  justify-content: center;
-}
-
-.buttonIcon {
-  width: 16px;
-  height: 16px;
-}
-
-/* Footer */
-.footer {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e5e7eb;
-}
-
-.stats {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.stat {
-  font-size: 0.875rem;
-  color: #6b7280;
+.infoLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   font-weight: 500;
 }
 
-.statHint {
-  font-size: 0.75rem;
-  color: #9ca3af;
-  font-style: italic;
+.infoValue {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* Pie de la Tarjeta */
+.cardFooter {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color);
+  background: #f8fdf9;
+}
+
+.footerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 /* Responsive */
-@media (max-width: 640px) {
-  .container {
-    padding: 1rem;
+@media (max-width: 1200px) {
+  .patientsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .headerContent {
+    flex-direction: column;
+    gap: 24px;
   }
   
-  .header {
-    flex-direction: column;
-    align-items: stretch;
+  .headerActions {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .actionButtons {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+  
+  .patientsGrid {
+    grid-template-columns: 1fr;
   }
   
   .title {
-    font-size: 1.5rem;
+    font-size: 24px;
   }
   
-  .actions {
-    max-width: 100%;
+  .statItem {
+    min-width: 160px;
+    padding: 12px 16px;
   }
   
-  .grid {
-    gap: 1rem;
+  .statValue {
+    font-size: 18px;
   }
   
-  .cardHeader {
-    padding: 1rem;
+  .infoGrid {
+    grid-template-columns: 1fr;
   }
   
-  .cardContent,
-  .cardFooter {
-    padding: 1rem;
+  .footerActions {
+    flex-direction: column;
   }
   
   .actionButton {
-    min-width: 100px;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .headerActions {
+    gap: 16px;
+  }
+  
+  .actionButtons {
+    flex-direction: column;
+  }
+  
+  .actionButton {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .stats {
+    flex-direction: column;
+  }
+  
+  .statItem {
+    width: 100%;
+  }
+  
+  .cardHeader {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .patientAvatar {
+    align-self: center;
+  }
+  
+  .patientName {
+    text-align: center;
   }
 }

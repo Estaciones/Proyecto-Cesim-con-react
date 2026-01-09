@@ -14,17 +14,20 @@ export default function Historia({ selectedPatient }) {
   })
 
   const { profile } = useAuthContext()
-  const {
-    openModal,
-    openViewHistoria,
-    openEditHistoria,
-    openRegistroWithPatient
-  } = useModal()
-
-  // Hook centralizado
+  const { openRegistroWithPatient } = useModal()
   const { historia, loading, error, fetchHistoria } = useHistory()
 
-  const load = useCallback(
+  const isPaciente = useMemo(
+    () => profile?.tipo_usuario === "paciente",
+    [profile]
+  )
+  
+  const canEditHistoria = useMemo(
+    () => profile?.tipo_usuario === "medico",
+    [profile]
+  )
+
+  const loadHistoria = useCallback(
     async (signal) => {
       console.log("📥 Historia - load function called", {
         selectedPatientId: selectedPatient?.id_paciente,
@@ -32,18 +35,19 @@ export default function Historia({ selectedPatient }) {
       })
 
       const params = {}
-      if (selectedPatient?.ci) params.ci = selectedPatient.ci
-      else if (selectedPatient?.id_paciente)
+      if (selectedPatient?.ci) {
+        params.ci = selectedPatient.ci
+      } else if (selectedPatient?.id_paciente) {
         params.id_paciente = selectedPatient.id_paciente
-      else if (profile?.tipo_usuario === "paciente") {
-        if (profile.ci) params.ci = profile.ci
-        else if (profile.id_paciente) params.id_paciente = profile.id_paciente
+      } else if (isPaciente) {
+        if (profile?.ci) params.ci = profile.ci
+        else if (profile?.id_paciente) params.id_paciente = profile.id_paciente
       }
 
       console.log("📥 Historia - fetch params:", params)
       return fetchHistoria(params, { signal })
     },
-    [selectedPatient, profile, fetchHistoria]
+    [selectedPatient, profile, isPaciente, fetchHistoria]
   )
 
   useEffect(() => {
@@ -54,14 +58,13 @@ export default function Historia({ selectedPatient }) {
     const hasParams =
       selectedPatient?.ci ||
       selectedPatient?.id_paciente ||
-      (profile?.tipo_usuario === "paciente" &&
-        (profile.ci || profile.id_paciente))
+      (isPaciente && (profile?.ci || profile?.id_paciente))
 
     console.log("🔍 Historia - hasParams check:", {
       hasParams,
       selectedPatientCI: selectedPatient?.ci,
       selectedPatientId: selectedPatient?.id_paciente,
-      profileType: profile?.tipo_usuario,
+      isPaciente,
       profileCI: profile?.ci,
       profilePacienteId: profile?.id_paciente
     })
@@ -72,7 +75,7 @@ export default function Historia({ selectedPatient }) {
     }
 
     console.log("🚀 Historia - Iniciando fetch de historia")
-    load(controller.signal).catch((err) => {
+    loadHistoria(controller.signal).catch((err) => {
       if (err?.name !== "AbortError") {
         console.error("❌ Historia - Error loading historia:", err)
       } else {
@@ -84,7 +87,7 @@ export default function Historia({ selectedPatient }) {
       console.log("🧹 Historia - Cleanup, aborting controller")
       controller.abort()
     }
-  }, [load, selectedPatient, profile])
+  }, [loadHistoria, selectedPatient, profile, isPaciente])
 
   const formatShortDate = useCallback((dateString) => {
     if (!dateString) return ""
@@ -96,14 +99,17 @@ export default function Historia({ selectedPatient }) {
     })
   }, [])
 
-  const isPaciente = useMemo(
-    () => profile?.tipo_usuario === "paciente",
-    [profile]
-  )
-  const canEditHistoria = useMemo(
-    () => profile?.tipo_usuario === "medico",
-    [profile]
-  )
+  const formatDateTime = useCallback((dateString) => {
+    if (!dateString) return ""
+    const d = new Date(dateString)
+    return d.toLocaleString("es-ES", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    })
+  }, [])
 
   const handleNuevoRegistro = useCallback(() => {
     console.log("🟢 Historia - Botón 'Nuevo Registro' clickeado", {
@@ -117,37 +123,47 @@ export default function Historia({ selectedPatient }) {
         "🎯 Historia - Llamando openRegistroWithPatient con ID:",
         selectedPatient.id_paciente
       )
-      // Convierte a número para asegurar
       const pacienteId = Number(selectedPatient.id_paciente)
       console.log("🎯 Historia - ID convertido a número:", pacienteId)
       openRegistroWithPatient(pacienteId)
-    } else {
-      console.log(
-        "⚠️ Historia - selectedPatient no tiene id_paciente:",
-        selectedPatient
-      )
-      console.log(
-        "🎯 Historia - Llamando openModal('registro') sin paciente específico"
-      )
-      openModal("registro")
     }
-  }, [selectedPatient, openRegistroWithPatient, openModal])
+  }, [selectedPatient, openRegistroWithPatient])
 
-  const handleVerRegistro = useCallback(
-    (record) => {
-      console.log("👁️ Historia - Ver registro:", record.id_registro || record.id)
-      openViewHistoria(record)
-    },
-    [openViewHistoria]
-  )
+  const getTipoIcon = (tipo) => {
+    const icons = {
+      "consulta": "🩺",
+      "evaluacion": "📊",
+      "seguimiento": "📋",
+      "tratamiento": "💊",
+      "diagnostico": "🔍",
+      "default": "📝"
+    }
+    return icons[tipo] || icons["default"]
+  }
 
-  const handleEditarRegistro = useCallback(
-    (record) => {
-      console.log("✏️ Historia - Editar registro:", record.id_registro || record.id)
-      openEditHistoria(record)
-    },
-    [openEditHistoria]
-  )
+  const getTipoLabel = (tipo) => {
+    const tipos = {
+      "general": "General",
+      "consulta": "Consulta",
+      "evaluacion": "Evaluación",
+      "seguimiento": "Seguimiento",
+      "tratamiento": "Tratamiento",
+      "diagnostico": "Diagnóstico"
+    }
+    return tipos[tipo] || tipo || "General"
+  }
+
+  const getTipoColor = (tipo) => {
+    const colors = {
+      "general": "#6c8981",
+      "consulta": "#3498db",
+      "evaluacion": "#9b59b6",
+      "seguimiento": "#2ecc71",
+      "tratamiento": "#e67e22",
+      "diagnostico": "#e74c3c"
+    }
+    return colors[tipo] || colors["general"]
+  }
 
   console.log("📊 Historia - Estado actual:", {
     historiaCount: historia?.length || 0,
@@ -159,146 +175,203 @@ export default function Historia({ selectedPatient }) {
 
   return (
     <section className={styles.container}>
+      {/* Encabezado */}
       <div className={styles.header}>
-        <div className={styles.titleSection}>
-          <h1 className={styles.title}>
-            {isPaciente ? "Mi Historia Clínica" : "Historia Clínica"}
-          </h1>
-          {selectedPatient && !isPaciente && (
-            <div className={styles.patientBadge}>
-              <span className={styles.patientName}>
-                {selectedPatient.nombre} {selectedPatient.apellido}
-              </span>
-              <span className={styles.patientCI}>
-                CI: {selectedPatient.ci}
-              </span>
+        <div className={styles.headerContent}>
+          <div className={styles.titleSection}>
+            <h1 className={styles.title}>
+              <span className={styles.titleIcon}>📋</span>
+              {isPaciente ? "Mi Historia Clínica" : "Historia Clínica"}
+            </h1>
+            
+            {selectedPatient && !isPaciente && (
+              <div className={styles.patientInfo}>
+                <div className={styles.patientAvatar}>
+                  {selectedPatient.nombre?.charAt(0) || "P"}
+                </div>
+                <div className={styles.patientDetails}>
+                  <span className={styles.patientName}>
+                    {selectedPatient.nombre} {selectedPatient.apellido}
+                  </span>
+                  <span className={styles.patientCI}>
+                    CI: {selectedPatient.ci}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {canEditHistoria && (
+            <div className={styles.actions}>
+              <Button
+                variant="primary"
+                onClick={handleNuevoRegistro}
+                className={styles.addButton}
+                disabled={loading || !selectedPatient}
+                title={!selectedPatient ? "Selecciona un paciente primero" : "Crear nuevo registro"}
+              >
+                <span className={styles.addIcon}>+</span>
+                Nuevo Registro
+              </Button>
             </div>
           )}
         </div>
 
-        <div className={styles.actions}>
-          {canEditHistoria && (
-            <Button
-              variant="primary"
-              onClick={handleNuevoRegistro}
-              className={styles.addButton}
-              disabled={loading}
-            >
-              <svg
-                className={styles.addIcon}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              Nuevo Registro
-            </Button>
-          )}
-        </div>
+        {/* Estadísticas */}
+        {!loading && !error && historia?.length > 0 && (
+          <div className={styles.stats}>
+            <div className={styles.statItem}>
+              <span className={styles.statIcon}>📋</span>
+              <div className={styles.statContent}>
+                <span className={styles.statValue}>{historia.length}</span>
+                <span className={styles.statLabel}>registros</span>
+              </div>
+            </div>
+            
+            <div className={styles.statItem}>
+              <span className={styles.statIcon}>📅</span>
+              <div className={styles.statContent}>
+                <span className={styles.statValue}>
+                  {formatShortDate(historia[0]?.fecha_creacion)}
+                </span>
+                <span className={styles.statLabel}>más reciente</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {loading ? (
-        <div className={styles.loading}>
-          <div className={styles.spinner}></div>
-          <p>Cargando historia clínica...</p>
-        </div>
-      ) : error ? (
-        <Card className={styles.emptyCard}>
-          <div className={styles.emptyState}>
-            <h3>Error</h3>
-            <p>{String(error)}</p>
+      {/* Contenido Principal */}
+      <div className={styles.content}>
+        {loading ? (
+          <div className={styles.loadingState}>
+            <div className={styles.spinner}></div>
+            <p>Cargando historia clínica...</p>
           </div>
-        </Card>
-      ) : !historia || historia.length === 0 ? (
-        <Card className={styles.emptyCard}>
-          <div className={styles.emptyState}>
-            <svg
-              className={styles.emptyIcon}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            <h3>Sin registros</h3>
-            <p>
-              {isPaciente
-                ? "Aún no hay registros en tu historia clínica."
-                : "No hay registros en la historia clínica para este paciente."}
-            </p>
-          </div>
-        </Card>
-      ) : (
-        <div className={styles.grid}>
-          {historia.map((record) => (
-            <Card
-              key={record.id_registro || record.id}
-              className={styles.recordCard}
-            >
-              <div className={styles.cardHeader}>
-                <h3 className={styles.recordTitle}>{record.titulo}</h3>
-                <div className={styles.cardActions}>
-                  <Button
-                    variant="secondary"
-                    size="small"
-                    onClick={() => handleVerRegistro(record)}
-                    className={styles.actionButton}
-                  >
-                    Ver
-                  </Button>
-                  {canEditHistoria && (
+        ) : error ? (
+          <Card className={styles.errorCard}>
+            <div className={styles.errorContent}>
+              <span className={styles.errorIcon}>⚠️</span>
+              <h3 className={styles.errorTitle}>Error al cargar</h3>
+              <p className={styles.errorMessage}>{String(error)}</p>
+            </div>
+          </Card>
+        ) : !historia || historia.length === 0 ? (
+          <Card className={styles.emptyCard}>
+            <div className={styles.emptyContent}>
+              <span className={styles.emptyIcon}>📝</span>
+              <h3 className={styles.emptyTitle}>
+                {isPaciente 
+                  ? "Aún no hay registros en tu historia clínica" 
+                  : "No hay registros para este paciente"}
+              </h3>
+              <p className={styles.emptyDescription}>
+                {isPaciente
+                  ? "Los registros médicos aparecerán aquí cuando sean creados por tu médico."
+                  : "Puedes comenzar a agregar registros médicos para este paciente."}
+              </p>
+              {canEditHistoria && selectedPatient && (
+                <Button
+                  variant="primary"
+                  onClick={handleNuevoRegistro}
+                  className={styles.emptyAction}
+                >
+                  Crear Primer Registro
+                </Button>
+              )}
+            </div>
+          </Card>
+        ) : (
+          <div className={styles.recordsGrid}>
+            {historia.map((record) => (
+              <Card
+                key={record.id_registro || record.id}
+                className={styles.recordCard}
+              >
+                <div className={styles.cardHeader}>
+                  <div className={styles.recordType}>
+                    <span 
+                      className={styles.typeIcon}
+                      style={{ color: getTipoColor(record.tipo) }}
+                    >
+                      {getTipoIcon(record.tipo)}
+                    </span>
+                    <span 
+                      className={styles.typeBadge}
+                      style={{ backgroundColor: getTipoColor(record.tipo) }}
+                    >
+                      {getTipoLabel(record.tipo)}
+                    </span>
+                  </div>
+                  
+                  <div className={styles.cardActions}>
                     <Button
                       variant="secondary"
                       size="small"
-                      onClick={() => handleEditarRegistro(record)}
+                      onClick={() => console.log("Ver registro:", record.id)}
                       className={styles.actionButton}
                     >
-                      Editar
+                      <span className={styles.actionIcon}>👁️</span>
+                      Ver
                     </Button>
-                  )}
-                </div>
-              </div>
-
-              <div className={styles.cardContent}>
-                <p className={styles.recordDescription}>
-                  {(record.descripcion || "").length > 200
-                    ? `${(record.descripcion || "").slice(0, 200)}...`
-                    : record.descripcion || ""}
-                </p>
-              </div>
-
-              <div className={styles.cardFooter}>
-                <div className={styles.meta}>
-                  <div className={styles.metaItem}>
-                    <span>
-                      Creado: {formatShortDate(record.fecha_creacion)}
-                    </span>
+                    {canEditHistoria && (
+                      <Button
+                        variant="secondary"
+                        size="small"
+                        onClick={() => console.log("Editar registro:", record.id)}
+                        className={styles.actionButton}
+                      >
+                        <span className={styles.actionIcon}>✏️</span>
+                        Editar
+                      </Button>
+                    )}
                   </div>
-                  {record.fecha_actualizacion && (
+                </div>
+
+                <div className={styles.cardBody}>
+                  <h3 className={styles.recordTitle}>{record.titulo}</h3>
+                  
+                  <p className={styles.recordDescription}>
+                    {(record.descripcion || "").length > 180
+                      ? `${(record.descripcion || "").slice(0, 180)}...`
+                      : record.descripcion || "Sin descripción"}
+                  </p>
+                </div>
+
+                <div className={styles.cardFooter}>
+                  <div className={styles.recordMeta}>
                     <div className={styles.metaItem}>
-                      <span>
-                        Actualizado:{" "}
-                        {formatShortDate(record.fecha_actualizacion)}
+                      <span className={styles.metaIcon}>📅</span>
+                      <span className={styles.metaText}>
+                        Creado: {formatDateTime(record.fecha_creacion)}
+                      </span>
+                    </div>
+                    
+                    {record.fecha_actualizacion && 
+                     record.fecha_actualizacion !== record.fecha_creacion && (
+                      <div className={styles.metaItem}>
+                        <span className={styles.metaIcon}>🔄</span>
+                        <span className={styles.metaText}>
+                          Actualizado: {formatDateTime(record.fecha_actualizacion)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {record.medico_ci && (
+                    <div className={styles.recordAuthor}>
+                      <span className={styles.authorIcon}>👨‍⚕️</span>
+                      <span className={styles.authorText}>
+                        Dr. {record.medico_ci}
                       </span>
                     </div>
                   )}
                 </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
     </section>
   )
 }

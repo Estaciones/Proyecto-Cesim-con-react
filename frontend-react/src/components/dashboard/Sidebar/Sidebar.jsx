@@ -1,195 +1,174 @@
-// src/components/dashboard/Sidebar/Sidebar.jsx
 import React from "react"
 import { useAuthContext } from "../../../context/AuthContext"
 import { useModal } from "../../../hooks/useModal"
 import styles from "./Sidebar.module.css"
 
 export default function DashboardSidebar({ activeSection, onNavigate }) {
-  const { user, profile } = useAuthContext()
+  const { profile, user } = useAuthContext()
   const { openModal } = useModal()
 
   // Determinar el tipo de usuario
-  const userType = user?.tipo || profile?.tipo_usuario
+  const userType = profile?.tipo_usuario || user?.tipo
 
-  // Definir los ítems del menú base
+  // Ítems del menú base con íconos actualizados
   const baseMenuItems = [
     {
       id: "historia",
       label: "Historia Clínica",
-      icon: (
-        <svg
-          className={styles.icon}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        </svg>
-      ),
-      allowed: ["paciente", "medico", "gestor_casos"] // Todos pueden ver historia
+      icon: "📋",
+      allowed: ["paciente", "medico", "gestor_casos"],
+      description: "Registros médicos del paciente"
     },
     {
       id: "plan",
-      label: "Planes",
-      icon: (
-        <svg
-          className={styles.icon}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-          />
-        </svg>
-      ),
-      allowed: ["paciente", "medico", "gestor_casos"] // Todos pueden ver planes
+      label: "Planes de Tratamiento",
+      icon: "💊",
+      allowed: ["paciente", "medico", "gestor_casos"],
+      description: "Planes y prescripciones"
     },
     {
       id: "pacientes",
       label: "Pacientes",
-      icon: (
-        <svg
-          className={styles.icon}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-          />
-        </svg>
-      ),
-      allowed: ["medico", "gestor_casos"] // Paciente no puede ver pacientes
+      icon: "👥",
+      allowed: ["medico", "gestor_casos"],
+      description: "Gestión de pacientes"
     },
     {
       id: "comunicacion",
       label: "Comunicación",
-      icon: (
-        <svg
-          className={styles.icon}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-          />
-        </svg>
-      ),
-      allowed: ["medico", "gestor_casos", "paciente"] // Todos pueden ver comunicación (si está disponible)
+      icon: "💬",
+      allowed: ["medico", "gestor_casos", "paciente"],
+      description: "Mensajes y notificaciones"
+    },
+    {
+      id: "analiticas",
+      label: "Analíticas",
+      icon: "📊",
+      allowed: ["medico", "gestor_casos"],
+      description: "Estadísticas y reportes"
+    },
+    {
+      id: "configuracion",
+      label: "Configuración",
+      icon: "⚙️",
+      allowed: ["medico", "gestor_casos", "paciente"],
+      description: "Ajustes del sistema"
     }
   ]
 
-  // Orden específico para cada tipo
-  const orderForMedicoGestor = ["pacientes", "historia", "plan", "comunicacion"]
-  const orderForPaciente = ["historia", "plan", "comunicacion"]
-
-  // Filtrar ítems del menú según el tipo de usuario
-  const allowedItems = baseMenuItems.filter((item) =>
+  // Filtrar ítems según tipo de usuario
+  const menuItems = baseMenuItems.filter(item => 
     item.allowed.includes(userType)
   )
-
-  // Construir el orden final respetando la lista de alloweds
-  let menuItems = []
-  if (
-    userType === "medico" ||
-    (typeof userType === "string" && userType.includes("gestor"))
-  ) {
-    menuItems = orderForMedicoGestor
-      .map((id) => allowedItems.find((i) => i.id === id))
-      .filter(Boolean)
-  } else if (userType === "paciente") {
-    menuItems = orderForPaciente
-      .map((id) => allowedItems.find((i) => i.id === id))
-      .filter(Boolean)
-  } else {
-    // fallback: mantener el orden natural filtrado
-    menuItems = allowedItems
-  }
 
   // Acciones rápidas (solo para médicos)
   const quickActions = [
     {
       id: "nuevoPaciente",
       label: "Nuevo Paciente",
-      icon: (
-        <svg
-          className={styles.icon}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-      ),
+      icon: "➕",
       allowed: ["medico"],
-      onClick: () => openModal("nuevoPaciente")
+      onClick: () => openModal("nuevoPaciente"),
+      color: "#2ecc71"
     },
     {
       id: "nuevoRegistro",
       label: "Nuevo Registro",
-      icon: (
-        <svg
-          className={styles.icon}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-          />
-        </svg>
-      ),
+      icon: "📝",
       allowed: ["medico"],
-      onClick: () => openModal("registro")
+      onClick: () => openModal("registro"),
+      color: "#3498db"
+    },
+    {
+      id: "crearPlan",
+      label: "Crear Plan",
+      icon: "📋",
+      allowed: ["medico"],
+      onClick: () => openModal("crearPlan"),
+      color: "#9b59b6"
     }
   ]
 
-  const filteredQuickActions = quickActions.filter((action) =>
+  const filteredQuickActions = quickActions.filter(action => 
     action.allowed.includes(userType)
   )
 
+  // Función para obtener las iniciales del nombre
+  const getUserInitials = () => {
+    if (profile?.nombre && profile?.apellido) {
+      return `${profile.nombre.charAt(0)}${profile.apellido.charAt(0)}`.toUpperCase()
+    }
+    if (user?.nombre_usuario) {
+      return user.nombre_usuario.charAt(0).toUpperCase()
+    }
+    return "U"
+  }
+
+  // Función para formatear el tipo de usuario
+  const formatUserType = (type) => {
+    const types = {
+      "medico": "Médico",
+      "paciente": "Paciente",
+      "gestor_casos": "Gestor",
+      "admin": "Administrador"
+    }
+    return types[type] || type
+  }
+
   return (
     <aside className={styles.sidebar}>
+      {/* Encabezado del Sidebar */}
       <div className={styles.sidebarHeader}>
         <div className={styles.logo}>
-          <div className={styles.logoIcon}>HS</div>
-          <span className={styles.logoText}>Health System</span>
+          <div className={styles.logoIcon}>🏥</div>
+          <div className={styles.logoContent}>
+            <span className={styles.logoTitle}>Health System</span>
+            <span className={styles.logoSubtitle}>Salud Integral</span>
+          </div>
         </div>
       </div>
 
+      {/* Perfil del Usuario */}
+      <div className={styles.userProfile}>
+        <div className={styles.avatarContainer}>
+          <div className={styles.userAvatar}>
+            {getUserInitials()}
+          </div>
+          <div className={styles.userStatus}></div>
+        </div>
+        <div className={styles.userInfo}>
+          <span className={styles.userName}>
+            {profile?.nombre || user?.nombre_usuario || "Usuario"}
+            {profile?.apellido ? ` ${profile.apellido}` : ""}
+          </span>
+          <span className={styles.userRole}>
+            {formatUserType(userType)}
+          </span>
+        </div>
+      </div>
+
+      {/* Navegación Principal */}
       <nav className={styles.nav}>
         <div className={styles.navSection}>
-          <h3 className={styles.sectionTitle}>Navegación</h3>
+          <h3 className={styles.sectionTitle}>
+            <span className={styles.sectionIcon}>📊</span>
+            Dashboard
+          </h3>
           <ul className={styles.navList}>
             {menuItems.map((item) => (
               <li key={item.id}>
                 <button
-                  className={`${styles.navItem} ${
-                    activeSection === item.id ? styles.active : ""
-                  }`}
-                  onClick={() => onNavigate(item.id)}>
+                  className={`${styles.navItem} ${activeSection === item.id ? styles.active : ""}`}
+                  onClick={() => onNavigate(item.id)}
+                  title={item.description}
+                >
                   <span className={styles.navIcon}>{item.icon}</span>
                   <span className={styles.navLabel}>{item.label}</span>
                   {activeSection === item.id && (
-                    <span className={styles.activeIndicator} />
+                    <>
+                      <span className={styles.activeIndicator} />
+                      <span className={styles.activeGlow} />
+                    </>
                   )}
                 </button>
               </li>
@@ -197,32 +176,78 @@ export default function DashboardSidebar({ activeSection, onNavigate }) {
           </ul>
         </div>
 
+        {/* Acciones Rápidas */}
         {filteredQuickActions.length > 0 && (
           <div className={styles.navSection}>
-            <h3 className={styles.sectionTitle}>Acciones Rápidas</h3>
-            <ul className={styles.navList}>
+            <h3 className={styles.sectionTitle}>
+              <span className={styles.sectionIcon}>⚡</span>
+              Acciones Rápidas
+            </h3>
+            <div className={styles.quickActions}>
               {filteredQuickActions.map((action) => (
-                <li key={action.id}>
-                  <button
-                    className={styles.quickAction}
-                    onClick={action.onClick}>
-                    <span className={styles.navIcon}>{action.icon}</span>
-                    <span className={styles.navLabel}>{action.label}</span>
-                  </button>
-                </li>
+                <button
+                  key={action.id}
+                  className={styles.quickAction}
+                  onClick={action.onClick}
+                  style={{ '--action-color': action.color }}
+                >
+                  <span className={styles.quickActionIcon}>{action.icon}</span>
+                  <span className={styles.quickActionLabel}>{action.label}</span>
+                  <span className={styles.quickActionArrow}>→</span>
+                </button>
               ))}
-            </ul>
+            </div>
           </div>
         )}
+
+        {/* Sistema de Notificaciones */}
+        <div className={styles.notificationSection}>
+          <div className={styles.notificationHeader}>
+            <span className={styles.notificationIcon}>🔔</span>
+            <span className={styles.notificationTitle}>Notificaciones</span>
+            <span className={styles.notificationBadge}>3</span>
+          </div>
+          <div className={styles.notificationList}>
+            <div className={styles.notificationItem}>
+              <span className={styles.notificationDot} style={{ backgroundColor: '#2ecc71' }}></span>
+              <span className={styles.notificationText}>Nuevo paciente registrado</span>
+            </div>
+            <div className={styles.notificationItem}>
+              <span className={styles.notificationDot} style={{ backgroundColor: '#3498db' }}></span>
+              <span className={styles.notificationText}>Plan completado</span>
+            </div>
+            <div className={styles.notificationItem}>
+              <span className={styles.notificationDot} style={{ backgroundColor: '#e74c3c' }}></span>
+              <span className={styles.notificationText}>Prescripción pendiente</span>
+            </div>
+          </div>
+        </div>
       </nav>
 
-      <div className={styles.footer}>
-        <div className={styles.systemInfo}>
-          <div className={styles.statusIndicator} />
-          <span className={styles.systemText}>Sistema Activo</span>
+      {/* Footer del Sidebar */}
+      <footer className={styles.sidebarFooter}>
+        <div className={styles.systemStatus}>
+          <div className={styles.statusIndicator}>
+            <span className={styles.statusDot}></span>
+            <span className={styles.statusText}>Sistema Activo</span>
+          </div>
+          <div className={styles.systemInfo}>
+            <span className={styles.systemVersion}>v2.1.0</span>
+            <span className={styles.systemHealth}>✓ Saludable</span>
+          </div>
         </div>
-        <div className={styles.version}>v2.1.0</div>
-      </div>
+        
+        <div className={styles.footerActions}>
+          <button className={styles.footerButton} title="Ayuda">
+            <span className={styles.footerIcon}>❓</span>
+            <span className={styles.footerText}>Ayuda</span>
+          </button>
+          <button className={styles.footerButton} title="Reportar problema">
+            <span className={styles.footerIcon}>⚠️</span>
+            <span className={styles.footerText}>Reportar</span>
+          </button>
+        </div>
+      </footer>
     </aside>
   )
 }

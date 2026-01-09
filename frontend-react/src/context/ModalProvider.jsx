@@ -11,6 +11,10 @@ export function ModalProvider({ children }) {
     viewHistoria: false,
     editHistoria: false,
     crearPlan: false,
+    viewPlan: false,        // <-- nuevo
+    editPlan: false,        // <-- nuevo
+    viewPres: false,        // <-- nuevo (ver prescripción)
+    editPres: false,        // <-- nuevo (editar prescripción)
     asignarGestor: false,
   });
 
@@ -20,6 +24,10 @@ export function ModalProvider({ children }) {
     viewHistoria: null,    // { currentViewHistoria: object }
     editHistoria: null,    // { currentEditHistoria: object }
     crearPlan: null,       // { currentCrearPlanPacienteId: number }
+    viewPlan: null,        // { currentViewPlan: object }
+    editPlan: null,        // { currentEditPlan: object }
+    viewPres: null,        // { currentViewPres: object }
+    editPres: null,        // { currentEditPres: object }
     asignarGestor: null,   // { currentAsignarPacienteId: number }
   });
 
@@ -89,10 +97,32 @@ export function ModalProvider({ children }) {
   const openCrearPlanWithPatient = useCallback(
     (pacienteId) => {
       console.log("📋 ModalProvider - Abriendo crear plan para paciente:", pacienteId);
-      openModal("crearPlan", { currentCrearPlanPacienteId: pacienteId });
+      openModal("crearPlan", { currentCrearPlanPacienteId: Number(pacienteId) });
     },
     [openModal]
   );
+
+  // helpers para planes/prescripciones
+  const openViewPlan = useCallback((plan) => {
+    console.log("📄 ModalProvider - Abriendo vista plan:", plan?.id_plan || plan?.id);
+    // acepta objeto plan completo o { id_plan }
+    openModal("viewPlan", { currentViewPlan: plan });
+  }, [openModal]);
+
+  const openEditPlan = useCallback((plan) => {
+    console.log("✏️ ModalProvider - Abriendo edición plan:", plan?.id_plan || plan?.id);
+    openModal("editPlan", { currentEditPlan: plan });
+  }, [openModal]);
+
+  const openViewPrescripcion = useCallback((pres) => {
+    console.log("💊 ModalProvider - Abriendo vista prescripción:", pres?.id_prescripcion || pres?.id);
+    openModal("viewPres", { currentViewPres: pres });
+  }, [openModal]);
+
+  const openEditPrescripcion = useCallback((pres) => {
+    console.log("✏️ ModalProvider - Abriendo edición prescripción:", pres?.id_prescripcion || pres?.id);
+    openModal("editPres", { currentEditPres: pres });
+  }, [openModal]);
 
   const openAsignarGestor = useCallback(
     (pacienteId) => {
@@ -112,6 +142,10 @@ export function ModalProvider({ children }) {
       openViewHistoria,
       openEditHistoria,
       openCrearPlanWithPatient,
+      openViewPlan,
+      openEditPlan,
+      openViewPrescripcion,
+      openEditPrescripcion,
       openAsignarGestor,
     }),
     [
@@ -123,6 +157,10 @@ export function ModalProvider({ children }) {
       openViewHistoria,
       openEditHistoria,
       openCrearPlanWithPatient,
+      openViewPlan,
+      openEditPlan,
+      openViewPrescripcion,
+      openEditPrescripcion,
       openAsignarGestor,
     ]
   );

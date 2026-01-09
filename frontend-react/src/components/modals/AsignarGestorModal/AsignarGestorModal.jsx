@@ -18,7 +18,6 @@ export default function AsignarGestorModal() {
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
-  // CORRECCIÓN: Memoizar loadGestoresData
   const loadGestoresData = useCallback(async () => {
     setLoading(true)
     try {
@@ -33,7 +32,6 @@ export default function AsignarGestorModal() {
     }
   }, [fetchGestores, showToast])
 
-  // CORRECCIÓN: Usar loadGestoresData memoizada en las dependencias
   useEffect(() => {
     if (open) {
       loadGestoresData()
@@ -71,83 +69,114 @@ export default function AsignarGestorModal() {
     }
   }
 
+  const handleClear = () => {
+    setSelectedGestor("")
+  }
+
   return (
     <Modal
       open={open}
       onClose={() => closeModal("asignarGestor")}
       title="Asignar Gestor de Casos"
-      size="md">
+      size="md"
+      loading={submitting}
+    >
       <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.patientInfo}>
-          <h4>Paciente a asignar:</h4>
-          <p className={styles.patientName}>
-            Paciente ID: {currentAsignarPacienteId}
-          </p>
-        </div>
+        <div className={styles.formSection}>
+          <h3 className={styles.sectionTitle}>
+            <span className={styles.sectionIcon}>👨‍⚕️</span>
+            Información de Asignación
+          </h3>
+          
+          <div className={styles.patientInfo}>
+            <div className={styles.infoBadge}>Paciente ID: {currentAsignarPacienteId}</div>
+            <p className={styles.infoText}>Selecciona un gestor de casos para asignar al paciente</p>
+          </div>
 
-        <div className={styles.formGroup}>
-          <label htmlFor="gestorSelect" className={styles.label}>
-            Seleccionar Gestor *
-          </label>
+          <div className={styles.formGroup}>
+            <label htmlFor="gestorSelect" className={styles.label}>
+              Seleccionar Gestor *
+            </label>
 
-          {loading ? (
-            <div className={styles.loadingState}>
-              <span className={styles.spinner}></span>
-              Cargando gestores disponibles...
-            </div>
-          ) : gestores.length === 0 ? (
-            <div className={styles.emptyState}>
-              No hay gestores disponibles para asignar
-            </div>
-          ) : (
-            <select
-              id="gestorSelect"
-              value={selectedGestor}
-              onChange={(e) => setSelectedGestor(e.target.value)}
-              className={styles.select}
-              required
-              disabled={submitting}>
-              <option value="">Selecciona un gestor</option>
-              {gestores.map((gestor) => (
-                <option key={gestor.id_gestor} value={gestor.id_gestor}>
-                  {gestor.nombre} {gestor.apellido} - CI: {gestor.ci}
-                  {gestor.especialidad ? ` (${gestor.especialidad})` : ""}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
+            {loading ? (
+              <div className={styles.loadingState}>
+                <span className={styles.spinner}></span>
+                Cargando gestores disponibles...
+              </div>
+            ) : gestores.length === 0 ? (
+              <div className={styles.emptyState}>
+                No hay gestores disponibles para asignar
+              </div>
+            ) : (
+              <select
+                id="gestorSelect"
+                value={selectedGestor}
+                onChange={(e) => setSelectedGestor(e.target.value)}
+                className={styles.select}
+                required
+                disabled={submitting}
+              >
+                <option value="">Selecciona un gestor</option>
+                {gestores.map((gestor) => (
+                  <option key={gestor.id_gestor} value={gestor.id_gestor}>
+                    {gestor.nombre} {gestor.apellido} - CI: {gestor.ci}
+                    {gestor.especialidad ? ` (${gestor.especialidad})` : ""}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
 
-        <div className={styles.gestoresInfo}>
-          <h4>Total de gestores disponibles: {gestores.length}</h4>
-          {gestores.length > 0 && (
-            <div className={styles.gestoresList}>
-              <small>Selecciona un gestor para asignar al paciente</small>
+          <div className={styles.summaryInfo}>
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryLabel}>Total de gestores disponibles:</span>
+              <span className={styles.summaryValue}>{gestores.length}</span>
             </div>
-          )}
+            {selectedGestor && (
+              <div className={styles.selectedInfo}>
+                <span className={styles.selectedLabel}>Gestor seleccionado:</span>
+                <span className={styles.selectedValue}>
+                  {gestores.find(g => g.id_gestor === selectedGestor)?.nombre || ""}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className={styles.formActions}>
           <button
             type="button"
-            onClick={() => closeModal("asignarGestor")}
-            className={styles.cancelButton}
-            disabled={submitting}>
-            Cancelar
+            onClick={handleClear}
+            className={styles.secondaryButton}
+            disabled={submitting || !selectedGestor}
+          >
+            Limpiar Selección
           </button>
-          <button
-            type="submit"
-            className={styles.submitButton}
-            disabled={submitting || !selectedGestor || gestores.length === 0}>
-            {submitting ? (
-              <>
-                <span className={styles.spinner}></span>
-                Asignando...
-              </>
-            ) : (
-              "Asignar Gestor"
-            )}
-          </button>
+
+          <div className={styles.primaryActions}>
+            <button
+              type="button"
+              onClick={() => closeModal("asignarGestor")}
+              className={styles.cancelButton}
+              disabled={submitting}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className={styles.submitButton}
+              disabled={submitting || !selectedGestor || gestores.length === 0}
+            >
+              {submitting ? (
+                <>
+                  <span className={styles.spinner}></span>
+                  Asignando...
+                </>
+              ) : (
+                "Asignar Gestor"
+              )}
+            </button>
+          </div>
         </div>
       </form>
     </Modal>

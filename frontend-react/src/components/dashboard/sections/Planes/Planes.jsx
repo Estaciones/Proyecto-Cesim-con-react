@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useMemo } from "react"
+import React, { useEffect, useCallback, useMemo, useState } from "react"
 import { useAuthContext } from "../../../../context/AuthContext"
 import { useModal } from "../../../../hooks/useModal"
 import { usePlans } from "../../../../hooks/usePlans"
@@ -8,254 +8,458 @@ import styles from "./Planes.module.css"
 
 export default function Planes({ selectedPatient }) {
   const { profile } = useAuthContext()
-  const { openModal, openCrearPlanWithPatient } = useModal()
-
-  // hook centralizado
+  const { openCrearPlanWithPatient, openViewPlan } = useModal()
   const { plans, loading, error, fetchPlans } = usePlans()
 
-  // Construir parámetros de búsqueda
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedPlan, setSelectedPlan] = useState(null)
+
+  const isPaciente = useMemo(() => profile?.tipo_usuario === "paciente", [profile])
+  const isMedico = useMemo(() => profile?.tipo_usuario === "medico", [profile])
+  const isGestor = useMemo(() => 
+    profile?.tipo_usuario === "gestor_casos" || 
+    (typeof profile?.tipo_usuario === "string" && profile.tipo_usuario.includes("gestor")),
+    [profile]
+  )
+
   const buildParams = useCallback(() => {
     const params = {}
+    
     if (selectedPatient?.ci) {
       params.ci = selectedPatient.ci
     } else if (selectedPatient?.id_paciente) {
       params.id_paciente = selectedPatient.id_paciente
-    } else if (profile?.tipo_usuario === "paciente") {
-      if (profile.ci) params.ci = profile.ci
-      else if (profile.id_paciente) params.id_paciente = profile.id_paciente
+    } else if (isPaciente) {
+      if (profile?.ci) params.ci = profile.ci
+      else if (profile?.id_paciente) params.id_paciente = profile.id_paciente
+    } else if (isMedico) {
+      params.medico_id = profile?.id_usuario
+    } else if (isGestor) {
+      params.gestor_id = profile?.id_usuario
     }
-    return params
-  }, [selectedPatient, profile])
 
-  // carga inicial con abort controller
+    return params
+  }, [selectedPatient, profile, isPaciente, isMedico, isGestor])
+
   useEffect(() => {
+    const controller = new AbortController()
     const params = buildParams()
 
-    // Si no hay parámetros y el usuario es médico o gestor, intentar filtrar por id de usuario
-    if (!params.ci && !params.id_paciente) {
-      if (profile?.tipo_usuario === "medico") {
-        params.medico_id = profile.id_usuario
-      } else if (
-        profile?.tipo_usuario === "gestor_casos" ||
-        (typeof profile?.tipo_usuario === "string" &&
-          profile.tipo_usuario.includes("gestor"))
-      ) {
-        params.gestor_id = profile.id_usuario
-      } else {
-        // si es paciente y no hay params, no hacemos fetch
-        if (profile?.tipo_usuario === "paciente") {
-          // si no hay info de paciente (improbable), no fetch
-          return
-        }
-      }
+    const hasValidParams = 
+      params.ci || 
+      params.id_paciente || 
+      params.medico_id || 
+      params.gestor_id
+
+    if (!hasValidParams) {
+      console.log("⏭️ Planes - No hay parámetros válidos, omitiendo fetch")
+      return () => controller.abort()
     }
 
-    // Si aún no hay parámetros válidos, no llamamos
-    if (
-      !params.ci &&
-      !params.id_paciente &&
-      !params.medico_id &&
-      !params.gestor_id
-    ) {
-      return
-    }
-
-    const controller = new AbortController()
+    console.log("🚀 Planes - Iniciando fetch con params:", params)
+    
     fetchPlans(params, { signal: controller.signal }).catch((err) => {
-      if (err && err.name === "AbortError") {
-        console.log("Planes.jsx - fetch aborted (expected in dev StrictMode)")
-      } else {
-        console.error("Planes.jsx - fetchPlans error:", err)
+      if (err?.name !== "AbortError") {
+        console.error("❌ Planes - Error fetching plans:", err)
       }
     })
 
     return () => controller.abort()
-  }, [fetchPlans, buildParams, profile])
+  }, [fetchPlans, buildParams])
 
-  const handleViewPlan = (plan) => {
-    openModal("viewPlan", { currentViewPlan: plan })
+  const handleViewPlan = useCallback((plan) => {
+    console.log("👁️ Planes - Ver plan:", plan.id_plan)
+    openViewPlan(plan)
+  }, [openViewPlan])
+
+  const handleCreatePlan = useCallback(() => {
+    if (selectedPatient?.id_paciente) {
+      openCrearPlanWithPatient(selectedPatient.id_paciente)
+    } else {
+      openCrearPlanWithPatient(undefined)
+    }
+  }, [selectedPatient, openCrearPlanWithPatient])
+
+  const formatDate = useCallback((dateString) => {
+    if (!dateString) return "No definida"
+    try {
+      const date = new Date(dateString)
+      return date.toLocaleDateString("es-ES", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+      })
+    } catch {
+      return "Fecha inválida"
+    }
+  }, [])
+
+  const getStatusBadge = (estado) => {
+    const isActive = estado === true || estado === "activo" || estado === 1
+    
+    return (
+      <span 
+        className={`${styles.statusBadge} ${isActive ? styles.statusActive : styles.statusInactive}`}
+        title={isActive ? "Plan activo" : "Plan inactivo"}
+      >
+        {isActive ? "Activo" : "Inactivo"}
+      </span>
+    )
   }
 
-  const isPaciente = useMemo(
-    () => profile?.tipo_usuario === "paciente",
-    [profile]
-  )
-  const isMedico = useMemo(() => profile?.tipo_usuario === "medico", [profile])
+  const getPlanIcon = (tipo) => {
+    const icons = {
+      "rehabilitacion": "🏃",
+      "postoperatorio": "🩹",
+      "medicacion": "💊",
+      "dieta": "🍎",
+      "ejercicio": "💪",
+      "default": "📋"
+    }
+    
+    return icons[tipo] || icons["default"]
+  }
 
-  // Filtrado local (opcional, si quieres agregar búsqueda en el futuro)
-  const [searchQuery, setSearchQuery] = React.useState("")
-  const filteredPlans = React.useMemo(() => {
+  const getPlanColor = (estado) => {
+    return estado ? "#27ae60" : "#e74c3c"
+  }
+
+  const filteredPlans = useMemo(() => {
     if (!Array.isArray(plans)) return []
-    const q = searchQuery.trim().toLowerCase()
-    if (!q) return plans
-    return plans.filter((p) => {
-      const s = `${p.titulo || ""} ${p.descripcion || ""}`.toLowerCase()
-      return s.includes(q)
+    const query = searchQuery.trim().toLowerCase()
+    if (!query) return plans
+
+    return plans.filter((plan) => {
+      if (!plan) return false
+      
+      const searchString = `
+        ${plan.titulo || ""} 
+        ${plan.descripcion || ""}
+        ${plan.medico_ci || ""}
+      `.toLowerCase()
+      
+      return searchString.includes(query)
     })
   }, [plans, searchQuery])
 
+  console.log("📊 Planes - Estado actual:", {
+    plansCount: filteredPlans.length,
+    loading,
+    error: error ? error.substring(0, 100) : null,
+    selectedPatient: selectedPatient?.id_paciente
+  })
+
   return (
     <section className={styles.container}>
+      {/* Encabezado */}
       <div className={styles.header}>
-        <div className={styles.titleSection}>
-          <h1 className={styles.title}>
-            {isPaciente ? "Mis Planes de Tratamiento" : "Planes de Tratamiento"}
-          </h1>
-          {selectedPatient && !isPaciente && (
-            <div className={styles.patientBadge}>
-              <span className={styles.patientName}>
-                {selectedPatient.nombre} {selectedPatient.apellido}
-              </span>
-              <span className={styles.patientCI}>CI: {selectedPatient.ci}</span>
-            </div>
-          )}
-        </div>
-
-        <div className={styles.actions}>
-          {/* Podrías agregar un buscador si lo deseas */}
-          <div className={styles.searchContainer}>
-            <input
-              type="text"
-              placeholder="Buscar por título o descripción..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={styles.searchInput}
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className={styles.clearButton}
-                aria-label="Limpiar búsqueda">
-                ✖
-              </button>
-            )}
-          </div>
-
-          {isMedico && (
-            <Button
-              variant="primary"
-              onClick={() =>
-                selectedPatient?.id_paciente
-                  ? openCrearPlanWithPatient(selectedPatient.id_paciente)
-                  : openModal("crearPlan")
-              }
-              className={styles.addButton}
-              disabled={loading}>
-              Crear Plan
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {loading ? (
-        <div className={styles.loading}>
-          <div className={styles.spinner}></div>
-          <p>Cargando planes de tratamiento...</p>
-        </div>
-      ) : error ? (
-        <Card className={styles.emptyCard}>
-          <div className={styles.emptyState}>
-            <h3>Error</h3>
-            <p>{String(error)}</p>
-          </div>
-        </Card>
-      ) : filteredPlans.length === 0 ? (
-        <Card className={styles.emptyCard}>
-          <div className={styles.emptyState}>
-            <h3>
-              {searchQuery
-                ? "No se encontraron planes"
-                : "No hay planes de tratamiento"}
-            </h3>
-            <p>
-              {searchQuery
-                ? "No hay planes que coincidan con tu búsqueda."
-                : isPaciente
-                ? "Aún no tienes planes de tratamiento asignados."
-                : "No hay planes para este paciente."}
-            </p>
-          </div>
-        </Card>
-      ) : (
-        <div className={styles.grid}>
-          {filteredPlans.map((plan) => (
-            <Card key={plan.id_plan} className={styles.planCard}>
-              <div className={styles.cardHeader}>
-                <h3 className={styles.planTitle}>{plan.titulo}</h3>
-                <div className={styles.planStatus}>
-                  <span
-                    className={`${styles.statusBadge} ${
-                      plan.estado ? styles.statusActive : styles.statusInactive
-                    }`}>
-                    {plan.estado ? "Activo" : "Inactivo"}
+        <div className={styles.headerContent}>
+          <div className={styles.titleSection}>
+            <h1 className={styles.title}>
+              <span className={styles.titleIcon}>💊</span>
+              {isPaciente ? "Mis Planes de Tratamiento" : "Planes de Tratamiento"}
+            </h1>
+            
+            {selectedPatient && !isPaciente && (
+              <div className={styles.patientInfo}>
+                <div className={styles.patientAvatar}>
+                  {selectedPatient.nombre?.charAt(0) || "P"}
+                </div>
+                <div className={styles.patientDetails}>
+                  <span className={styles.patientName}>
+                    {selectedPatient.nombre} {selectedPatient.apellido}
+                  </span>
+                  <span className={styles.patientCI}>
+                    CI: {selectedPatient.ci}
                   </span>
                 </div>
               </div>
+            )}
+          </div>
 
-              <div className={styles.cardBody}>
-                <p className={styles.planDescription}>
-                  {plan.descripcion || "Sin descripción"}
-                </p>
+          <div className={styles.headerActions}>
+            {/* Barra de Búsqueda */}
+            <div className={styles.searchContainer}>
+              <div className={styles.searchWrapper}>
+                <span className={styles.searchIcon}>🔍</span>
+                <input
+                  type="text"
+                  placeholder="Buscar por título, descripción o médico..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={styles.searchInput}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className={styles.clearButton}
+                    aria-label="Limpiar búsqueda"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
 
-                <div className={styles.planDates}>
-                  <div className={styles.dateItem}>
-                    <span className={styles.dateLabel}>Inicio:</span>
-                    <span className={styles.dateValue}>
-                      {plan.fecha_inicio
-                        ? new Date(plan.fecha_inicio).toLocaleDateString(
-                            "es-ES"
-                          )
-                        : "No definida"}
-                    </span>
+            {/* Botón Crear Plan (solo para médicos) */}
+            {isMedico && (
+              <Button
+                variant="primary"
+                onClick={handleCreatePlan}
+                className={styles.createButton}
+                disabled={loading}
+                title={selectedPatient ? 
+                  `Crear plan para ${selectedPatient.nombre}` : 
+                  "Crear plan general"
+                }
+              >
+                <span className={styles.buttonIcon}>+</span>
+                Crear Plan
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Estadísticas */}
+        {!loading && !error && filteredPlans.length > 0 && (
+          <div className={styles.stats}>
+            <div className={styles.statItem}>
+              <span className={styles.statIcon}>📋</span>
+              <div className={styles.statContent}>
+                <span className={styles.statValue}>{filteredPlans.length}</span>
+                <span className={styles.statLabel}>planes</span>
+              </div>
+            </div>
+            
+            <div className={styles.statItem}>
+              <span className={styles.statIcon}>✅</span>
+              <div className={styles.statContent}>
+                <span className={styles.statValue}>
+                  {filteredPlans.filter(p => p.estado).length}
+                </span>
+                <span className={styles.statLabel}>activos</span>
+              </div>
+            </div>
+            
+            <div className={styles.statItem}>
+              <span className={styles.statIcon}>💊</span>
+              <div className={styles.statContent}>
+                <span className={styles.statValue}>
+                  {filteredPlans.reduce((acc, plan) => 
+                    acc + (Array.isArray(plan.prescripciones) ? plan.prescripciones.length : 0), 0
+                  )}
+                </span>
+                <span className={styles.statLabel}>prescripciones</span>
+              </div>
+            </div>
+            
+            {searchQuery && (
+              <div className={styles.statItem}>
+                <span className={styles.statIcon}>🔍</span>
+                <div className={styles.statContent}>
+                  <span className={styles.statValue}>"{searchQuery}"</span>
+                  <span className={styles.statLabel}>búsqueda</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Contenido Principal */}
+      <div className={styles.content}>
+        {loading ? (
+          <div className={styles.loadingState}>
+            <div className={styles.spinner}></div>
+            <p>Cargando planes de tratamiento...</p>
+          </div>
+        ) : error ? (
+          <Card className={styles.errorCard}>
+            <div className={styles.errorContent}>
+              <span className={styles.errorIcon}>⚠️</span>
+              <h3 className={styles.errorTitle}>Error al cargar</h3>
+              <p className={styles.errorMessage}>{String(error)}</p>
+              <Button
+                variant="secondary"
+                onClick={() => fetchPlans(buildParams())}
+                className={styles.retryButton}
+              >
+                Reintentar
+              </Button>
+            </div>
+          </Card>
+        ) : filteredPlans.length === 0 ? (
+          <Card className={styles.emptyCard}>
+            <div className={styles.emptyContent}>
+              <span className={styles.emptyIcon}>
+                {searchQuery ? "🔍" : "📋"}
+              </span>
+              <h3 className={styles.emptyTitle}>
+                {searchQuery ? "No se encontraron planes" : "No hay planes de tratamiento"}
+              </h3>
+              <p className={styles.emptyDescription}>
+                {searchQuery
+                  ? "No hay planes que coincidan con tu búsqueda."
+                  : isPaciente
+                  ? "Aún no tienes planes de tratamiento asignados."
+                  : "No hay planes para este paciente."}
+              </p>
+              {isMedico && !searchQuery && (
+                <Button
+                  variant="primary"
+                  onClick={handleCreatePlan}
+                  className={styles.emptyAction}
+                >
+                  Crear Primer Plan
+                </Button>
+              )}
+            </div>
+          </Card>
+        ) : (
+          <div className={styles.plansGrid}>
+            {filteredPlans.map((plan) => (
+              <Card
+                key={plan.id_plan}
+                className={`${styles.planCard} ${
+                  selectedPlan?.id_plan === plan.id_plan ? styles.selected : ""
+                }`}
+                onClick={() => setSelectedPlan(plan)}
+              >
+                {/* Encabezado del Plan */}
+                <div className={styles.cardHeader}>
+                  <div className={styles.planIcon} style={{ color: getPlanColor(plan.estado) }}>
+                    {getPlanIcon(plan.tipo)}
                   </div>
-                  {plan.fecha_fin && (
+                  
+                  <div className={styles.planTitleSection}>
+                    <h3 className={styles.planTitle} title={plan.titulo}>
+                      {plan.titulo}
+                    </h3>
+                    <div className={styles.planMeta}>
+                      {getStatusBadge(plan.estado)}
+                      {plan.medico_ci && (
+                        <span className={styles.planMedico}>
+                          <span className={styles.metaIcon}>👨‍⚕️</span>
+                          Dr. {plan.medico_ci}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Descripción del Plan */}
+                <div className={styles.cardBody}>
+                  <p className={styles.planDescription}>
+                    {plan.descripcion || "Sin descripción"}
+                  </p>
+
+                  {/* Fechas */}
+                  <div className={styles.planDates}>
                     <div className={styles.dateItem}>
-                      <span className={styles.dateLabel}>Fin:</span>
-                      <span className={styles.dateValue}>
-                        {new Date(plan.fecha_fin).toLocaleDateString("es-ES")}
+                      <span className={styles.dateIcon}>📅</span>
+                      <div className={styles.dateContent}>
+                        <span className={styles.dateLabel}>Inicio:</span>
+                        <span className={styles.dateValue}>{formatDate(plan.fecha_inicio)}</span>
+                      </div>
+                    </div>
+                    
+                    {plan.fecha_fin && (
+                      <div className={styles.dateItem}>
+                        <span className={styles.dateIcon}>🏁</span>
+                        <div className={styles.dateContent}>
+                          <span className={styles.dateLabel}>Fin estimado:</span>
+                          <span className={styles.dateValue}>{formatDate(plan.fecha_fin)}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Prescripciones */}
+                  <div className={styles.prescriptionsSection}>
+                    <div className={styles.prescriptionsHeader}>
+                      <span className={styles.prescriptionsIcon}>💊</span>
+                      <span className={styles.prescriptionsTitle}>Prescripciones</span>
+                      <span className={styles.prescriptionsCount}>
+                        {Array.isArray(plan.prescripciones) ? plan.prescripciones.length : 0}
                       </span>
+                    </div>
+                    
+                    {Array.isArray(plan.prescripciones) && plan.prescripciones.length > 0 ? (
+                      <div className={styles.prescriptionsList}>
+                        {plan.prescripciones.slice(0, 3).map((pres, index) => (
+                          <div key={index} className={styles.prescriptionItem}>
+                            <span className={styles.prescriptionIcon}>•</span>
+                            <span className={styles.prescriptionText} title={pres.descripcion}>
+                              {pres.tipo || "Prescripción"}: {pres.descripcion?.slice(0, 60)}
+                              {pres.descripcion?.length > 60 ? "..." : ""}
+                            </span>
+                          </div>
+                        ))}
+                        {plan.prescripciones.length > 3 && (
+                          <div className={styles.morePrescriptions}>
+                            +{plan.prescripciones.length - 3} más...
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className={styles.noPrescriptions}>
+                        No hay prescripciones en este plan.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Resumen de Egreso */}
+                  {plan.resumen_egreso && (
+                    <div className={styles.egresoSection}>
+                      <div className={styles.egresoHeader}>
+                        <span className={styles.egresoIcon}>✅</span>
+                        <span className={styles.egresoTitle}>Resumen de Egreso</span>
+                      </div>
+                      <p className={styles.egresoText}>
+                        {plan.resumen_egreso.slice(0, 100)}
+                        {plan.resumen_egreso.length > 100 ? "..." : ""}
+                      </p>
                     </div>
                   )}
                 </div>
 
-                <div className={styles.planMeta}>
-                  <span className={styles.metaItem}>
-                    📋 {plan.prescripciones?.length || 0} prescripciones
-                  </span>
-                  {plan.medico_ci && (
-                    <span className={styles.metaItem}>👨‍⚕️ {plan.medico_ci}</span>
-                  )}
+                {/* Acciones */}
+                <div className={styles.cardFooter}>
+                  <div className={styles.footerActions}>
+                    <Button
+                      variant="primary"
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleViewPlan(plan)
+                      }}
+                      className={styles.actionButton}
+                    >
+                      <span className={styles.buttonIcon}>👁️</span>
+                      Ver Detalles
+                    </Button>
+
+                    {(isMedico || isGestor) && (
+                      <Button
+                        variant="secondary"
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          console.log("Editar plan:", plan.id_plan)
+                        }}
+                        className={styles.actionButton}
+                      >
+                        <span className={styles.buttonIcon}>✏️</span>
+                        Editar
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-
-              <div className={styles.cardActions}>
-                <Button
-                  variant="secondary"
-                  size="small"
-                  onClick={() => handleViewPlan(plan)}>
-                  Ver detalles
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {!loading && filteredPlans.length > 0 && (
-        <div className={styles.footer}>
-          <div className={styles.stats}>
-            <span className={styles.stat}>
-              {filteredPlans.length} plan
-              {filteredPlans.length !== 1 ? "es" : ""}
-            </span>
-            {searchQuery && (
-              <span className={styles.statHint}>
-                Filtrados por: "{searchQuery}"
-              </span>
-            )}
+              </Card>
+            ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </section>
   )
 }

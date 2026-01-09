@@ -1,4 +1,3 @@
-// src/components/modals/NuevoPacienteModal/NuevoPacienteModal.jsx
 import React, { useEffect, useState } from "react"
 import Modal from "../Modal/Modal"
 import { useModal } from "../../../hooks/useModal"
@@ -32,24 +31,29 @@ export default function NuevoPacienteModal() {
 
   const [submitting, setSubmitting] = useState(false)
 
+  // Efecto para resetear el formulario cuando se abre el modal
   useEffect(() => {
     if (open) {
-      setFormData({
-        ci: "",
-        nombre: "",
-        apellido: "",
-        genero: "",
-        telefono: "",
-        direccion: "",
-        alergias: "",
-        condiciones_cronicas: "",
-        contacto_emergencia_nombre: "",
-        contacto_emergencia_telefono: "",
-        email: "",
-        fecha_nacimiento: ""
-      })
+      resetForm()
     }
   }, [open])
+
+  const resetForm = () => {
+    setFormData({
+      ci: "",
+      nombre: "",
+      apellido: "",
+      genero: "",
+      telefono: "",
+      direccion: "",
+      alergias: "",
+      condiciones_cronicas: "",
+      contacto_emergencia_nombre: "",
+      contacto_emergencia_telefono: "",
+      email: "",
+      fecha_nacimiento: ""
+    })
+  }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -132,20 +136,7 @@ export default function NuevoPacienteModal() {
   }
 
   const handleClear = () => {
-    setFormData({
-      ci: "",
-      nombre: "",
-      apellido: "",
-      genero: "",
-      telefono: "",
-      direccion: "",
-      alergias: "",
-      condiciones_cronicas: "",
-      contacto_emergencia_nombre: "",
-      contacto_emergencia_telefono: "",
-      email: "",
-      fecha_nacimiento: ""
-    })
+    resetForm()
   }
 
   return (
@@ -153,10 +144,16 @@ export default function NuevoPacienteModal() {
       open={open}
       onClose={() => closeModal("nuevoPaciente")}
       title="Registrar Nuevo Paciente"
-      size="lg">
+      size="lg"
+      loading={submitting}
+    >
       <form onSubmit={handleSubmit} className={styles.form}>
+        {/* Sección 1: Información Básica */}
         <div className={styles.formSection}>
-          <h3 className={styles.sectionTitle}>Información Básica</h3>
+          <h3 className={styles.sectionTitle}>
+            <span className={styles.sectionIcon}>👤</span>
+            Información Básica
+          </h3>
           <div className={styles.formGrid}>
             <div className={styles.formGroup}>
               <label htmlFor="ci" className={styles.label}>
@@ -220,7 +217,8 @@ export default function NuevoPacienteModal() {
                 value={formData.genero}
                 onChange={handleInputChange}
                 className={styles.select}
-                disabled={submitting}>
+                disabled={submitting}
+              >
                 <option value="">Seleccione</option>
                 <option value="M">Masculino</option>
                 <option value="F">Femenino</option>
@@ -279,8 +277,10 @@ export default function NuevoPacienteModal() {
           </div>
         </div>
 
+        {/* Sección 2: Información de Contacto y Salud */}
         <div className={styles.formSection}>
           <h3 className={styles.sectionTitle}>
+            <span className={styles.sectionIcon}>🏥</span>
             Información de Contacto y Salud
           </h3>
           <div className={styles.formGrid}>
@@ -334,13 +334,18 @@ export default function NuevoPacienteModal() {
           </div>
         </div>
 
+        {/* Sección 3: Contacto de Emergencia */}
         <div className={styles.formSection}>
-          <h3 className={styles.sectionTitle}>Contacto de Emergencia</h3>
+          <h3 className={styles.sectionTitle}>
+            <span className={styles.sectionIcon}>🆘</span>
+            Contacto de Emergencia
+          </h3>
           <div className={styles.formGrid}>
             <div className={styles.formGroup}>
               <label
                 htmlFor="contacto_emergencia_nombre"
-                className={styles.label}>
+                className={styles.label}
+              >
                 Nombre del Contacto
               </label>
               <input
@@ -358,7 +363,8 @@ export default function NuevoPacienteModal() {
             <div className={styles.formGroup}>
               <label
                 htmlFor="contacto_emergencia_telefono"
-                className={styles.label}>
+                className={styles.label}
+              >
                 Teléfono de Emergencia
               </label>
               <input
@@ -376,31 +382,36 @@ export default function NuevoPacienteModal() {
           </div>
         </div>
 
+        {/* Información de campos obligatorios */}
         <div className={styles.requiredInfo}>
           <span className={styles.requiredMark}>*</span> Campos obligatorios
         </div>
 
+        {/* Acciones del formulario */}
         <div className={styles.formActions}>
           <button
             type="button"
             onClick={handleClear}
-            className={styles.clearButton}
-            disabled={submitting}>
+            className={styles.secondaryButton}
+            disabled={submitting}
+          >
             Limpiar
           </button>
 
-          <div className={styles.actionButtons}>
+          <div className={styles.primaryActions}>
             <button
               type="button"
               onClick={() => closeModal("nuevoPaciente")}
               className={styles.cancelButton}
-              disabled={submitting}>
+              disabled={submitting}
+            >
               Cancelar
             </button>
             <button
               type="submit"
               className={styles.submitButton}
-              disabled={submitting}>
+              disabled={submitting}
+            >
               {submitting ? (
                 <>
                   <span className={styles.spinner}></span>

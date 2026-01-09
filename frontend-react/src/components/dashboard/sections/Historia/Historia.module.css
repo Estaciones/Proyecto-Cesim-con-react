@@ -1,245 +1,477 @@
-.container {
-  padding: 1.5rem;
-  max-width: 100%;
+/* Variables CSS */
+:root {
+  --primary-color: #2ecc71;
+  --primary-dark: #27ae60;
+  --primary-light: #d5f4e6;
+  --secondary-color: #3498db;
+  --accent-color: #9b59b6;
+  --warning-color: #e67e22;
+  --error-color: #e74c3c;
+  --text-primary: #1a3c34;
+  --text-secondary: #2d4a43;
+  --text-muted: #6c8981;
+  --text-light: #94a3b8;
+  --background-light: #f8fdf9;
+  --background-card: #ffffff;
+  --border-color: #e1f5ea;
+  --border-dark: #c6f0d9;
+  --shadow-light: 0 4px 12px rgba(46, 204, 113, 0.1);
+  --shadow-medium: 0 8px 24px rgba(46, 204, 113, 0.15);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --transition: all 0.3s ease;
 }
 
+/* Contenedor Principal */
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 24px;
+  background: var(--background-light);
+  min-height: 100%;
+}
+
+/* Encabezado */
 .header {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.headerContent {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
+  gap: 24px;
 }
 
 .titleSection {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 16px;
+  flex: 1;
 }
 
 .title {
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #1f2937;
   margin: 0;
-  line-height: 1.2;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.patientBadge {
-  display: inline-flex;
+.titleIcon {
+  font-size: 32px;
+  opacity: 0.9;
+}
+
+.patientInfo {
+  display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-  border-radius: 8px;
-  border: 1px solid #93c5fd;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--background-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  max-width: fit-content;
+}
+
+.patientAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.patientDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .patientName {
+  font-size: 15px;
   font-weight: 600;
-  color: #1e40af;
+  color: var(--text-primary);
 }
 
 .patientCI {
-  font-size: 0.875rem;
-  color: #3b82f6;
-  font-weight: 500;
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 .actions {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  gap: 16px;
 }
 
 .addButton {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.addButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, #219653 100%);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-medium);
+}
+
+.addButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
 }
 
 .addIcon {
-  width: 20px;
-  height: 20px;
+  font-size: 18px;
+  font-weight: bold;
 }
 
-/* Loading State */
-.loading {
+/* Estadísticas */
+.stats {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--background-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  min-width: 180px;
+}
+
+.statIcon {
+  font-size: 24px;
+  opacity: 0.8;
+}
+
+.statContent {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.statValue {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.statLabel {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Contenido Principal */
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Estados de Carga y Error */
+.loadingState {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem 2rem;
+  padding: 60px 20px;
   text-align: center;
-  color: #6b7280;
+  gap: 20px;
 }
 
 .spinner {
   width: 48px;
   height: 48px;
-  border: 3px solid #e5e7eb;
-  border-top-color: #4f46e5;
+  border: 3px solid rgba(46, 204, 113, 0.1);
   border-radius: 50%;
+  border-top-color: var(--primary-color);
   animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
+}
+
+.loadingState p {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
-/* Empty State */
+.errorCard,
 .emptyCard {
-  padding: 4rem 2rem;
-  text-align: center;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 2px dashed #cbd5e1;
+  border: none;
+  box-shadow: var(--shadow-light);
+  overflow: hidden;
 }
 
-.emptyState {
+.errorContent,
+.emptyContent {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  justify-content: center;
+  padding: 48px 32px;
+  text-align: center;
+  gap: 20px;
+}
+
+.errorIcon,
+.emptyIcon {
+  font-size: 48px;
+  opacity: 0.7;
+}
+
+.errorIcon {
+  color: var(--error-color);
 }
 
 .emptyIcon {
-  width: 64px;
-  height: 64px;
-  color: #94a3b8;
-  margin-bottom: 0.5rem;
+  color: var(--text-muted);
 }
 
-.emptyState h3 {
-  font-size: 1.25rem;
+.errorTitle,
+.emptyTitle {
+  margin: 0;
+  font-size: 20px;
   font-weight: 600;
-  color: #475569;
-  margin: 0;
+  color: var(--text-primary);
 }
 
-.emptyState p {
-  color: #64748b;
-  max-width: 400px;
+.errorMessage {
   margin: 0;
+  font-size: 15px;
+  color: var(--text-secondary);
+  max-width: 600px;
+  line-height: 1.6;
 }
 
-/* Grid */
-.grid {
+.emptyDescription {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text-muted);
+  max-width: 500px;
+  line-height: 1.6;
+}
+
+.emptyAction {
+  margin-top: 16px;
+}
+
+/* Grid de Registros */
+.recordsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 1.5rem;
+  gap: 24px;
 }
 
-@media (max-width: 768px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Record Card */
 .recordCard {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--background-card);
+  transition: var(--transition);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  transition: all 0.3s ease;
-  border: 1px solid #e5e7eb;
 }
 
 .recordCard:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  border-color: #c7d2fe;
+  box-shadow: var(--shadow-medium);
+  border-color: var(--primary-light);
 }
 
+/* Encabezado de la Tarjeta */
 .cardHeader {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(135deg, #f8fdf9 0%, #f0f9f4 100%);
 }
 
-.recordTitle {
-  font-size: 1.125rem;
+.recordType {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.typeIcon {
+  font-size: 24px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.typeBadge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
   font-weight: 600;
-  color: #1f2937;
-  margin: 0;
-  flex: 1;
-  line-height: 1.4;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .cardActions {
   display: flex;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 .actionButton {
+  padding: 8px 16px;
+  background: var(--background-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 6px;
 }
 
-.buttonIcon {
-  width: 16px;
-  height: 16px;
+.actionButton:hover {
+  background: var(--primary-light);
+  border-color: var(--primary-color);
+  color: var(--primary-dark);
 }
 
-.cardContent {
+.actionIcon {
+  font-size: 14px;
+}
+
+/* Cuerpo de la Tarjeta */
+.cardBody {
+  padding: 20px;
   flex: 1;
-  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recordTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
 }
 
 .recordDescription {
-  color: #4b5563;
-  line-height: 1.6;
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  flex: 1;
 }
 
+/* Pie de la Tarjeta */
 .cardFooter {
-  padding-top: 1rem;
-  border-top: 1px solid #f1f5f9;
-}
-
-.meta {
+  padding: 16px 20px 20px;
+  border-top: 1px solid var(--border-color);
+  background: #f8fdf9;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 12px;
+}
+
+.recordMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .metaItem {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8125rem;
-  color: #6b7280;
+  gap: 8px;
 }
 
 .metaIcon {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
+  font-size: 14px;
+  opacity: 0.7;
+  width: 16px;
+}
+
+.metaText {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.recordAuthor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.authorIcon {
+  font-size: 16px;
+  opacity: 0.7;
+}
+
+.authorText {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 /* Responsive */
-@media (max-width: 640px) {
+@media (max-width: 1200px) {
+  .recordsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
   .container {
-    padding: 1rem;
+    padding: 16px;
   }
   
-  .header {
+  .headerContent {
     flex-direction: column;
-    align-items: stretch;
+    gap: 20px;
   }
   
-  .title {
-    font-size: 1.5rem;
+  .actions {
+    width: 100%;
   }
   
   .addButton {
@@ -247,7 +479,58 @@
     justify-content: center;
   }
   
-  .grid {
-    gap: 1rem;
+  .title {
+    font-size: 24px;
+  }
+  
+  .recordsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .statItem {
+    min-width: 140px;
+    padding: 12px 16px;
+  }
+  
+  .statValue {
+    font-size: 18px;
+  }
+  
+  .errorContent,
+  .emptyContent {
+    padding: 32px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .patientInfo {
+    width: 100%;
+    max-width: none;
+  }
+  
+  .stats {
+    flex-direction: column;
+  }
+  
+  .statItem {
+    width: 100%;
+  }
+  
+  .cardHeader {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .cardActions {
+    justify-content: flex-start;
+  }
+  
+  .cardBody {
+    padding: 16px;
+  }
+  
+  .recordTitle {
+    font-size: 16px;
   }
 }
