@@ -23,47 +23,51 @@ export default function EditHistoriaModal() {
   const [submitting, setSubmitting] = useState(false)
   const [recordInfo, setRecordInfo] = useState(null)
 
-  useEffect(() => {
-    if (open && currentEditHistoria) {
-      const fechaCreacion = currentEditHistoria.fecha_creacion
-        ? new Date(currentEditHistoria.fecha_creacion).toLocaleString("es-ES", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
-          })
-        : "No disponible"
+// En EditHistoriaModal.js, asegúrate de que el ID se obtenga correctamente:
+useEffect(() => {
+  if (open && currentEditHistoria) {
+    console.log("📋 EditHistoriaModal - Datos recibidos:", currentEditHistoria)
+    
+    const fechaCreacion = currentEditHistoria.fecha_creacion
+      ? new Date(currentEditHistoria.fecha_creacion).toLocaleString("es-ES", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        })
+      : "No disponible"
 
-      const fechaActualizacion = currentEditHistoria.fecha_actualizacion
-        ? new Date(currentEditHistoria.fecha_actualizacion).toLocaleString("es-ES", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
-          })
-        : "No disponible"
+    const fechaActualizacion = currentEditHistoria.fecha_actualizacion
+      ? new Date(currentEditHistoria.fecha_actualizacion).toLocaleString("es-ES", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        })
+      : "No disponible"
 
-      setFormData({
-        recordId:
-          currentEditHistoria.id_registro || currentEditHistoria.id || "",
-        titulo: currentEditHistoria.titulo || "",
-        descripcion: currentEditHistoria.descripcion || "",
-        tipo: currentEditHistoria.tipo || "general"
-      })
-      setRecordInfo({ fechaCreacion, fechaActualizacion })
-    } else {
-      setFormData({
-        recordId: "",
-        titulo: "",
-        descripcion: "",
-        tipo: "general"
-      })
-      setRecordInfo(null)
-    }
-  }, [open, currentEditHistoria])
-
+    // Usar id_registro si está disponible, de lo contrario usar id
+    const recordId = currentEditHistoria.id_registro || currentEditHistoria.id || ""
+    
+    setFormData({
+      recordId: recordId,
+      titulo: currentEditHistoria.titulo || "",
+      descripcion: currentEditHistoria.descripcion || "",
+      tipo: currentEditHistoria.tipo || "general"
+    })
+    setRecordInfo({ fechaCreacion, fechaActualizacion })
+  } else {
+    setFormData({
+      recordId: "",
+      titulo: "",
+      descripcion: "",
+      tipo: "general"
+    })
+    setRecordInfo(null)
+  }
+}, [open, currentEditHistoria])
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({

@@ -14,7 +14,7 @@ export default function Historia({ selectedPatient }) {
   })
 
   const { profile } = useAuthContext()
-  const { openRegistroWithPatient } = useModal()
+  const { openRegistroWithPatient, openViewHistoria, openEditHistoria } = useModal() // Añadir las funciones
   const { historia, loading, error, fetchHistoria } = useHistory()
 
   const isPaciente = useMemo(
@@ -128,6 +128,26 @@ export default function Historia({ selectedPatient }) {
       openRegistroWithPatient(pacienteId)
     }
   }, [selectedPatient, openRegistroWithPatient])
+
+  // Función para ver registro
+  const handleVerRegistro = useCallback((record) => {
+    console.log("👁️ Historia - Ver registro:", record)
+    if (record && (record.id_registro || record.id)) {
+      openViewHistoria(record)
+    } else {
+      console.error("❌ Historia - Registro no válido para ver:", record)
+    }
+  }, [openViewHistoria])
+
+  // Función para editar registro
+  const handleEditarRegistro = useCallback((record) => {
+    console.log("✏️ Historia - Editar registro:", record)
+    if (record && (record.id_registro || record.id)) {
+      openEditHistoria(record)
+    } else {
+      console.error("❌ Historia - Registro no válido para editar:", record)
+    }
+  }, [openEditHistoria])
 
   const getTipoIcon = (tipo) => {
     const icons = {
@@ -308,7 +328,7 @@ export default function Historia({ selectedPatient }) {
                     <Button
                       variant="secondary"
                       size="small"
-                      onClick={() => console.log("Ver registro:", record.id)}
+                      onClick={() => handleVerRegistro(record)}
                       className={styles.actionButton}
                     >
                       <span className={styles.actionIcon}>👁️</span>
@@ -318,7 +338,7 @@ export default function Historia({ selectedPatient }) {
                       <Button
                         variant="secondary"
                         size="small"
-                        onClick={() => console.log("Editar registro:", record.id)}
+                        onClick={() => handleEditarRegistro(record)}
                         className={styles.actionButton}
                       >
                         <span className={styles.actionIcon}>✏️</span>
