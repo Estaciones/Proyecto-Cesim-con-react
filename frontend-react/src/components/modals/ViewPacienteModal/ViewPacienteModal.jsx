@@ -9,6 +9,9 @@ export default function ViewPacienteModal() {
   const open = !!modals.viewPaciente
   const patient = modalData.viewPaciente?.currentPatientData
 
+  console.log("📋 ViewPacienteModal - patient data:", patient) // Para depuración
+  console.log("📋 ViewPacienteModal - género raw:", patient?.genero) // Ver el valor crudo
+
   const [formData, setFormData] = useState({
     direccion: "",
     alergias: "",
@@ -17,12 +20,12 @@ export default function ViewPacienteModal() {
     contacto_emergencia_telefono: "",
     telefono: "",
     email: "",
-    genero: "",
-    fecha_nacimiento: ""
+    genero: ""
   })
 
   useEffect(() => {
     if (open && patient) {
+      console.log("🔄 ViewPacienteModal - Setting form data from patient:", patient)
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         direccion: patient.direccion || "",
@@ -32,16 +35,18 @@ export default function ViewPacienteModal() {
         contacto_emergencia_telefono: patient.contacto_emergencia_telefono || "",
         telefono: patient.telefono || "",
         email: patient.email || "",
-        genero: patient.genero || "",
-        fecha_nacimiento: patient.fecha_nacimiento || ""
+        genero: patient.genero || ""
       })
     }
   }, [open, patient])
 
-  if (!patient) return null
-
   const getGeneroTexto = (genero) => {
-    switch(genero) {
+    // Limpiar el valor: remover espacios en blanco y convertir a mayúscula
+    const generoLimpio = genero ? genero.trim().toUpperCase() : ''
+    
+    console.log("🔍 getGeneroTexto - valor limpio:", generoLimpio, "original:", genero)
+    
+    switch(generoLimpio) {
       case 'M': return 'Masculino'
       case 'F': return 'Femenino'
       case 'O': return 'Otro'
@@ -49,21 +54,16 @@ export default function ViewPacienteModal() {
     }
   }
 
-  const formatFecha = (fecha) => {
-    if (!fecha) return 'No especificada'
-    const date = new Date(fecha)
-    return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    })
+  if (!patient) {
+    console.log("❌ ViewPacienteModal - No patient data available")
+    return null
   }
 
   return (
     <Modal
       open={open}
       onClose={() => closeModal("viewPaciente")}
-      title={`Información del Paciente: ${patient.nombre} ${patient.apellido}`}
+      title={`Información del Paciente: ${patient.nombre || ''} ${patient.apellido || ''}`}
       size="lg"
     >
       <div className={styles.container}>
@@ -71,7 +71,7 @@ export default function ViewPacienteModal() {
         <div className={styles.patientInfoHeader}>
           <div className={styles.patientBasicInfo}>
             <h4 className={styles.patientName}>
-              {patient.nombre} {patient.apellido}
+              {patient.nombre || ''} {patient.apellido || ''}
             </h4>
             <p className={styles.patientCI}>
               <span className={styles.infoLabel}>CI:</span> {patient.ci || "No especificado"}
@@ -89,28 +89,21 @@ export default function ViewPacienteModal() {
             <div className={styles.formGroup}>
               <label className={styles.label}>Género</label>
               <div className={styles.readonlyField}>
-                {getGeneroTexto(formData.genero)}
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Fecha de Nacimiento</label>
-              <div className={styles.readonlyField}>
-                {formatFecha(formData.fecha_nacimiento)}
+                {getGeneroTexto(patient.genero || formData.genero)}
               </div>
             </div>
 
             <div className={styles.formGroup}>
               <label className={styles.label}>Teléfono</label>
               <div className={styles.readonlyField}>
-                {formData.telefono || "No especificado"}
+                {patient.telefono || formData.telefono || "No especificado"}
               </div>
             </div>
 
             <div className={styles.formGroup}>
               <label className={styles.label}>Email</label>
               <div className={styles.readonlyField}>
-                {formData.email || "No especificado"}
+                {patient.email || formData.email || "No especificado"}
               </div>
             </div>
           </div>
@@ -126,21 +119,21 @@ export default function ViewPacienteModal() {
             <div className={styles.formGroup}>
               <label className={styles.label}>Dirección</label>
               <div className={styles.readonlyField}>
-                {formData.direccion || "No especificada"}
+                {patient.direccion || formData.direccion || "No especificada"}
               </div>
             </div>
 
             <div className={styles.formGroup}>
               <label className={styles.label}>Alergias Conocidas</label>
               <div className={styles.readonlyField}>
-                {formData.alergias || "No especificadas"}
+                {patient.alergias || formData.alergias || "No especificadas"}
               </div>
             </div>
 
             <div className={styles.formGroup}>
               <label className={styles.label}>Condiciones Crónicas</label>
               <div className={styles.readonlyField}>
-                {formData.condiciones_cronicas || "No especificadas"}
+                {patient.condiciones_cronicas || formData.condiciones_cronicas || "No especificadas"}
               </div>
             </div>
           </div>
@@ -156,14 +149,14 @@ export default function ViewPacienteModal() {
             <div className={styles.formGroup}>
               <label className={styles.label}>Nombre del Contacto</label>
               <div className={styles.readonlyField}>
-                {formData.contacto_emergencia_nombre || "No especificado"}
+                {patient.contacto_emergencia_nombre || formData.contacto_emergencia_nombre || "No especificado"}
               </div>
             </div>
 
             <div className={styles.formGroup}>
               <label className={styles.label}>Teléfono de Emergencia</label>
               <div className={styles.readonlyField}>
-                {formData.contacto_emergencia_telefono || "No especificado"}
+                {patient.contacto_emergencia_telefono || formData.contacto_emergencia_telefono || "No especificado"}
               </div>
             </div>
           </div>

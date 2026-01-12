@@ -12,7 +12,7 @@ export default function NuevoPacienteModal() {
   const { profile } = useAuthContext()
   const { showToast } = useToast()
 
- const open = !!modals.nuevoPaciente;
+  const open = !!modals.nuevoPaciente;
 
   const [formData, setFormData] = useState({
     ci: "",
@@ -25,8 +25,7 @@ export default function NuevoPacienteModal() {
     condiciones_cronicas: "",
     contacto_emergencia_nombre: "",
     contacto_emergencia_telefono: "",
-    email: "",
-    fecha_nacimiento: ""
+    // Eliminar email y fecha_nacimiento - no se crean aquí
   })
 
   const [submitting, setSubmitting] = useState(false)
@@ -50,8 +49,7 @@ export default function NuevoPacienteModal() {
       condiciones_cronicas: "",
       contacto_emergencia_nombre: "",
       contacto_emergencia_telefono: "",
-      email: "",
-      fecha_nacimiento: ""
+      // Eliminar email y fecha_nacimiento
     })
   }
 
@@ -86,11 +84,6 @@ export default function NuevoPacienteModal() {
       return false
     }
 
-    if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
-      showToast("El email no es válido", "error")
-      return false
-    }
-
     if (
       formData.contacto_emergencia_telefono &&
       formData.contacto_emergencia_telefono.length < 7
@@ -119,11 +112,23 @@ export default function NuevoPacienteModal() {
 
     setSubmitting(true)
     try {
+      // Preparar datos limpios para el backend
       const pacienteData = {
-        ...formData,
+        ci: formData.ci,
+        nombre: formData.nombre.trim(),
+        apellido: formData.apellido.trim(),
+        genero: formData.genero ? formData.genero.trim().toUpperCase() : "",
+        telefono: formData.telefono || "",
+        direccion: formData.direccion || "",
+        alergias: formData.alergias || "",
+        condiciones_cronicas: formData.condiciones_cronicas || "",
+        contacto_emergencia_nombre: formData.contacto_emergencia_nombre || "",
+        contacto_emergencia_telefono: formData.contacto_emergencia_telefono || "",
         id_medico: profile.id_usuario
       }
 
+      console.log("📤 NuevoPacienteModal - Enviando datos:", pacienteData)
+      
       await createPatient(pacienteData)
       showToast("Paciente creado y asignado", "success")
       closeModal("nuevoPaciente")
@@ -226,7 +231,8 @@ export default function NuevoPacienteModal() {
               </select>
             </div>
 
-            <div className={styles.formGroup}>
+            {/* Eliminar campo de fecha de nacimiento */}
+            {/* <div className={styles.formGroup}>
               <label htmlFor="fecha_nacimiento" className={styles.label}>
                 Fecha de Nacimiento
               </label>
@@ -240,7 +246,7 @@ export default function NuevoPacienteModal() {
                 max={new Date().toISOString().split("T")[0]}
                 disabled={submitting}
               />
-            </div>
+            </div> */}
 
             <div className={styles.formGroup}>
               <label htmlFor="telefono" className={styles.label}>
@@ -259,7 +265,8 @@ export default function NuevoPacienteModal() {
               />
             </div>
 
-            <div className={styles.formGroup}>
+            {/* Eliminar campo de email - no se crea aquí */}
+            {/* <div className={styles.formGroup}>
               <label htmlFor="email" className={styles.label}>
                 Email
               </label>
@@ -273,7 +280,7 @@ export default function NuevoPacienteModal() {
                 className={styles.input}
                 disabled={submitting}
               />
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -385,6 +392,14 @@ export default function NuevoPacienteModal() {
         {/* Información de campos obligatorios */}
         <div className={styles.requiredInfo}>
           <span className={styles.requiredMark}>*</span> Campos obligatorios
+        </div>
+
+        {/* Nota sobre email */}
+        <div className={styles.infoNote}>
+          <p>
+            <strong>Nota:</strong> El paciente podrá acceder con su CI como usuario. 
+            Para configurar un email de contacto, debe crearse una cuenta de usuario separadamente.
+          </p>
         </div>
 
         {/* Acciones del formulario */}

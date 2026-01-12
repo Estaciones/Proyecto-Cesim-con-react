@@ -13,6 +13,8 @@ export default function EditPacienteModal() {
   const open = !!modals.editPaciente
   const patient = modalData.editPaciente?.currentPatientData
 
+  console.log("📋 EditPacienteModal - patient data:", patient) // Para depuración
+
   const [formData, setFormData] = useState({
     direccion: "",
     alergias: "",
@@ -22,13 +24,17 @@ export default function EditPacienteModal() {
     telefono: "",
     email: "",
     genero: "",
-    fecha_nacimiento: ""
+    // Eliminar fecha_nacimiento - no existe en la base de datos
   })
 
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     if (open && patient) {
+      console.log("🔄 EditPacienteModal - Setting form data from patient:", patient)
+      // Limpiar el género de espacios antes de establecerlo
+      const generoLimpio = patient.genero ? patient.genero.trim() : "";
+      
       setFormData({
         direccion: patient.direccion || "",
         alergias: patient.alergias || "",
@@ -37,8 +43,8 @@ export default function EditPacienteModal() {
         contacto_emergencia_telefono: patient.contacto_emergencia_telefono || "",
         telefono: patient.telefono || "",
         email: patient.email || "",
-        genero: patient.genero || "",
-        fecha_nacimiento: patient.fecha_nacimiento || ""
+        genero: generoLimpio, // Usar el género limpio
+        // Eliminar fecha_nacimiento
       })
     }
   }, [open, patient])
@@ -96,10 +102,21 @@ export default function EditPacienteModal() {
 
     setSubmitting(true)
     try {
+      // Preparar datos limpios para enviar al backend
       const pacienteData = {
-        ...formData
+        direccion: formData.direccion || "",
+        alergias: formData.alergias || "",
+        condiciones_cronicas: formData.condiciones_cronicas || "",
+        contacto_emergencia_nombre: formData.contacto_emergencia_nombre || "",
+        contacto_emergencia_telefono: formData.contacto_emergencia_telefono || "",
+        telefono: formData.telefono || "",
+        genero: formData.genero ? formData.genero.trim().toUpperCase() : "",
+        // El email generalmente no se puede editar aquí porque viene del usuario
+        // Si quieres permitir editar email, necesitarás una lógica especial
       }
 
+      console.log("📤 EditPacienteModal - Enviando datos:", pacienteData)
+      
       await updatePatient(patient.id_paciente, pacienteData)
       showToast("Paciente actualizado exitosamente", "success")
       closeModal("editPaciente")
@@ -113,6 +130,9 @@ export default function EditPacienteModal() {
 
   const handleClear = () => {
     if (patient) {
+      // Limpiar el género de espacios antes de establecerlo
+      const generoLimpio = patient.genero ? patient.genero.trim() : "";
+      
       setFormData({
         direccion: patient.direccion || "",
         alergias: patient.alergias || "",
@@ -121,19 +141,22 @@ export default function EditPacienteModal() {
         contacto_emergencia_telefono: patient.contacto_emergencia_telefono || "",
         telefono: patient.telefono || "",
         email: patient.email || "",
-        genero: patient.genero || "",
-        fecha_nacimiento: patient.fecha_nacimiento || ""
+        genero: generoLimpio,
+        // Eliminar fecha_nacimiento
       })
     }
   }
 
-  if (!patient) return null
+  if (!patient) {
+    console.log("❌ EditPacienteModal - No patient data available")
+    return null
+  }
 
   return (
     <Modal
       open={open}
       onClose={() => closeModal("editPaciente")}
-      title={`Editar Paciente: ${patient.nombre} ${patient.apellido}`}
+      title={`Editar Paciente: ${patient.nombre || ''} ${patient.apellido || ''}`}
       size="lg"
       loading={submitting}
     >
@@ -141,9 +164,9 @@ export default function EditPacienteModal() {
         <div className={styles.patientInfoHeader}>
           <div className={styles.patientBasicInfo}>
             <h4 className={styles.patientName}>
-              {patient.nombre} {patient.apellido}
+              {patient.nombre || ''} {patient.apellido || ''}
             </h4>
-            <p className={styles.patientCI}>CI: {patient.ci}</p>
+            <p className={styles.patientCI}>CI: {patient.ci || 'No especificado'}</p>
           </div>
         </div>
 
@@ -172,7 +195,8 @@ export default function EditPacienteModal() {
               </select>
             </div>
 
-            <div className={styles.formGroup}>
+            {/* Eliminar campo de fecha de nacimiento */}
+            {/* <div className={styles.formGroup}>
               <label htmlFor="fecha_nacimiento" className={styles.label}>
                 Fecha de Nacimiento
               </label>
@@ -186,7 +210,7 @@ export default function EditPacienteModal() {
                 max={new Date().toISOString().split("T")[0]}
                 disabled={submitting}
               />
-            </div>
+            </div> */}
 
             <div className={styles.formGroup}>
               <label htmlFor="telefono" className={styles.label}>
@@ -207,18 +231,21 @@ export default function EditPacienteModal() {
 
             <div className={styles.formGroup}>
               <label htmlFor="email" className={styles.label}>
-                Email
+                Email (solo lectura)
               </label>
               <input
                 type="email"
                 id="email"
                 name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="Ingrese el email"
+                value={formData.email || patient.email || ""}
                 className={styles.input}
-                disabled={submitting}
+                readOnly
+                disabled
+                placeholder="Email asociado al usuario"
               />
+              <small className={styles.helpText}>
+                El email no se puede editar aquí
+              </small>
             </div>
           </div>
         </div>
