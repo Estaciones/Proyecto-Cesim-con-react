@@ -14,8 +14,8 @@ export default function CrearPlanModal() {
   const { patients, fetchPatients } = usePatients()
   const { showToast } = useToast()
 
-  const open = modals.crearPlan
-  const { currentCrearPlanPacienteId } = modalData
+  const open = !!modals.crearPlan
+  const { currentCrearPlanPacienteId } = modalData?.crearPlan || {}
 
   const [formData, setFormData] = useState({
     titulo: "",
@@ -52,15 +52,15 @@ export default function CrearPlanModal() {
     }
   }, [open, profile?.id_paciente, loadPatientsData])
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // ------- FIX: resetForm debe ser estable (dependencias explícitas) -------
   const resetForm = useCallback(() => {
     const today = new Date().toISOString().split("T")[0]
     let initialPatientId = ""
-    
+
     if (currentCrearPlanPacienteId) {
-      initialPatientId = currentCrearPlanPacienteId.toString()
+      initialPatientId = String(currentCrearPlanPacienteId)
     } else if (profile?.id_paciente) {
-      initialPatientId = profile.id_paciente.toString()
+      initialPatientId = String(profile.id_paciente)
     }
 
     setFormData({
@@ -77,7 +77,8 @@ export default function CrearPlanModal() {
       frecuencia: "",
       duracion: ""
     })
-  })
+  }, [currentCrearPlanPacienteId, profile?.id_paciente])
+  // ------------------------------------------------------------------------
 
   useEffect(() => {
     if (open) {

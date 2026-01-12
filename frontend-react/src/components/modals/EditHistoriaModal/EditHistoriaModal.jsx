@@ -10,8 +10,8 @@ export default function EditHistoriaModal() {
   const { updateRegistro } = useHistory()
   const { showToast } = useToast()
 
-  const open = modals.editHistoria
-  const { currentEditHistoria } = modalData
+  const open = !!modals.editHistoria
+  const { currentEditHistoria } = modalData?.editHistoria || {}
 
   const [formData, setFormData] = useState({
     recordId: "",
@@ -23,36 +23,28 @@ export default function EditHistoriaModal() {
   const [submitting, setSubmitting] = useState(false)
   const [recordInfo, setRecordInfo] = useState(null)
 
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const getRecordInfo = () => {
-    if (!currentEditHistoria) return null
-
-    const fechaCreacion = currentEditHistoria.fecha_creacion
-      ? new Date(currentEditHistoria.fecha_creacion).toLocaleDateString("es-ES", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit"
-        })
-      : "No disponible"
-
-    const fechaActualizacion = currentEditHistoria.fecha_actualizacion
-      ? new Date(currentEditHistoria.fecha_actualizacion).toLocaleDateString("es-ES", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit"
-        })
-      : "No disponible"
-
-    return { fechaCreacion, fechaActualizacion }
-  }
-
   useEffect(() => {
     if (open && currentEditHistoria) {
+      const fechaCreacion = currentEditHistoria.fecha_creacion
+        ? new Date(currentEditHistoria.fecha_creacion).toLocaleString("es-ES", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+          })
+        : "No disponible"
+
+      const fechaActualizacion = currentEditHistoria.fecha_actualizacion
+        ? new Date(currentEditHistoria.fecha_actualizacion).toLocaleString("es-ES", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+          })
+        : "No disponible"
+
       setFormData({
         recordId:
           currentEditHistoria.id_registro || currentEditHistoria.id || "",
@@ -60,7 +52,7 @@ export default function EditHistoriaModal() {
         descripcion: currentEditHistoria.descripcion || "",
         tipo: currentEditHistoria.tipo || "general"
       })
-      setRecordInfo(getRecordInfo())
+      setRecordInfo({ fechaCreacion, fechaActualizacion })
     } else {
       setFormData({
         recordId: "",
@@ -70,7 +62,7 @@ export default function EditHistoriaModal() {
       })
       setRecordInfo(null)
     }
-  }, [open, currentEditHistoria, getRecordInfo])
+  }, [open, currentEditHistoria])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -88,6 +80,31 @@ export default function EditHistoriaModal() {
         descripcion: currentEditHistoria.descripcion || "",
         tipo: currentEditHistoria.tipo || "general"
       })
+      
+      // Actualizar recordInfo al restaurar
+      if (currentEditHistoria.fecha_creacion || currentEditHistoria.fecha_actualizacion) {
+        const fechaCreacion = currentEditHistoria.fecha_creacion
+          ? new Date(currentEditHistoria.fecha_creacion).toLocaleString("es-ES", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit"
+            })
+          : "No disponible"
+
+        const fechaActualizacion = currentEditHistoria.fecha_actualizacion
+          ? new Date(currentEditHistoria.fecha_actualizacion).toLocaleString("es-ES", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit"
+            })
+          : "No disponible"
+
+        setRecordInfo({ fechaCreacion, fechaActualizacion })
+      }
     }
   }
 

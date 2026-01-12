@@ -1,4 +1,3 @@
-// src/hooks/useModal.js  (reemplaza tu hook actual)
 import { useContext } from "react";
 import { ModalContext } from "../context/ModalProvider";
 
@@ -11,7 +10,6 @@ export function useModal() {
   const {
     modals,
     modalData,
-    getModalData, // not present in provider explicitly, but modalData is returned — we provide helper below
     openModal,
     closeModal,
     openRegistroWithPatient,
@@ -22,10 +20,12 @@ export function useModal() {
     openEditPlan,
     openViewPrescripcion,
     openEditPrescripcion,
-    openAsignarGestor
+    openAsignarGestor,
+    openNuevoPaciente,
+    openEditPaciente, 
+    openViewPaciente,
   } = ctx;
 
-  // helper para acceder a datos de modal por nombre
   const _getModalData = (modalName) => {
     return modalData?.[modalName] || {};
   };
@@ -44,7 +44,10 @@ export function useModal() {
     openEditPlan,
     openViewPrescripcion,
     openEditPrescripcion,
-    openAsignarGestor
+    openAsignarGestor,
+    openNuevoPaciente,
+    openEditPaciente, 
+    openViewPaciente,
   };
 }
 

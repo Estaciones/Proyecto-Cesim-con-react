@@ -11,26 +11,32 @@ export function ModalProvider({ children }) {
     viewHistoria: false,
     editHistoria: false,
     crearPlan: false,
-    viewPlan: false,        // <-- nuevo
-    editPlan: false,        // <-- nuevo
-    viewPres: false,        // <-- nuevo (ver prescripción)
-    editPres: false,        // <-- nuevo (editar prescripción)
+    viewPlan: false,
+    editPlan: false,
+    viewPres: false,
+    editPres: false,
     asignarGestor: false,
+    nuevoPaciente: false,
+    editPaciente: false, 
+    viewPaciente: false,
   });
 
-  // Estructura más clara: cada modal tiene su propio objeto de datos
   const [modalData, setModalData] = useState({
-    registro: null,        // { currentRegistroPacienteId: number }
-    viewHistoria: null,    // { currentViewHistoria: object }
-    editHistoria: null,    // { currentEditHistoria: object }
-    crearPlan: null,       // { currentCrearPlanPacienteId: number }
-    viewPlan: null,        // { currentViewPlan: object }
-    editPlan: null,        // { currentEditPlan: object }
-    viewPres: null,        // { currentViewPres: object }
-    editPres: null,        // { currentEditPres: object }
-    asignarGestor: null,   // { currentAsignarPacienteId: number }
+    registro: null,
+    viewHistoria: null,
+    editHistoria: null,
+    crearPlan: null,
+    viewPlan: null,
+    editPlan: null,
+    viewPres: null,
+    editPres: null,
+    asignarGestor: null,
+    nuevoPaciente: null,
+    editPaciente: null,
+    viewPaciente: null,
   });
 
+  
   const openModal = useCallback((name, data = {}) => {
     console.log("🚪 ModalProvider - ABRIENDO modal:", name, data);
     
@@ -52,7 +58,6 @@ export function ModalProvider({ children }) {
     
     setModals((s) => ({ ...s, [name]: false }));
     
-    // Limpiar datos después de un breve delay
     setTimeout(() => {
       setModalData((d) => {
         const newData = { ...d };
@@ -67,7 +72,6 @@ export function ModalProvider({ children }) {
   const openRegistroWithPatient = useCallback(
     (pacienteId) => {
       console.log("👤 ModalProvider - Abriendo registro para paciente ID:", pacienteId);
-      // Asegurar que sea número
       const id = Number(pacienteId);
       if (isNaN(id)) {
         console.error("❌ ModalProvider - ID inválido:", pacienteId);
@@ -85,7 +89,7 @@ export function ModalProvider({ children }) {
     },
     [openModal]
   );
-
+  
   const openEditHistoria = useCallback(
     (record) => {
       console.log("✏️ ModalProvider - Abriendo edición historia:", record?.id_registro);
@@ -101,29 +105,27 @@ export function ModalProvider({ children }) {
     },
     [openModal]
   );
-
-  // helpers para planes/prescripciones
+  
   const openViewPlan = useCallback((plan) => {
     console.log("📄 ModalProvider - Abriendo vista plan:", plan?.id_plan || plan?.id);
-    // acepta objeto plan completo o { id_plan }
     openModal("viewPlan", { currentViewPlan: plan });
   }, [openModal]);
-
+  
   const openEditPlan = useCallback((plan) => {
     console.log("✏️ ModalProvider - Abriendo edición plan:", plan?.id_plan || plan?.id);
     openModal("editPlan", { currentEditPlan: plan });
   }, [openModal]);
-
+  
   const openViewPrescripcion = useCallback((pres) => {
     console.log("💊 ModalProvider - Abriendo vista prescripción:", pres?.id_prescripcion || pres?.id);
     openModal("viewPres", { currentViewPres: pres });
   }, [openModal]);
-
+  
   const openEditPrescripcion = useCallback((pres) => {
     console.log("✏️ ModalProvider - Abriendo edición prescripción:", pres?.id_prescripcion || pres?.id);
     openModal("editPres", { currentEditPres: pres });
   }, [openModal]);
-
+  
   const openAsignarGestor = useCallback(
     (pacienteId) => {
       console.log("👥 ModalProvider - Abriendo asignar gestor para paciente:", pacienteId);
@@ -131,6 +133,21 @@ export function ModalProvider({ children }) {
     },
     [openModal]
   );
+  
+  const openNuevoPaciente = useCallback(() => {
+    console.log("➕ ModalProvider - Abriendo nuevo paciente");
+    openModal("nuevoPaciente");
+  }, [openModal]);
+  
+  const openEditPaciente = useCallback((patient) => {
+    console.log("✏️ ModalProvider - Abriendo edición paciente:", patient?.id_paciente);
+    openModal("editPaciente", { currentPatientData: patient });
+  }, [openModal]);
+
+  const openViewPaciente = useCallback((patient) => {
+  console.log("👁️ ModalProvider - Abriendo vista paciente:", patient?.id_paciente);
+  openModal("viewPaciente", { currentPatientData: patient });
+}, [openModal]);
 
   const value = useMemo(
     () => ({
@@ -147,6 +164,9 @@ export function ModalProvider({ children }) {
       openViewPrescripcion,
       openEditPrescripcion,
       openAsignarGestor,
+      openNuevoPaciente,
+      openEditPaciente,
+      openViewPaciente,
     }),
     [
       modals,
@@ -162,15 +182,11 @@ export function ModalProvider({ children }) {
       openViewPrescripcion,
       openEditPrescripcion,
       openAsignarGestor,
+      openNuevoPaciente,
+      openEditPaciente,
+      openViewPaciente,
     ]
   );
-
-  console.log("🟣 ModalProvider - Valor del contexto:", {
-    modals,
-    modalData,
-    hasRegistroData: !!modalData.registro?.currentRegistroPacienteId,
-    registroId: modalData.registro?.currentRegistroPacienteId,
-  });
 
   return <ModalContext.Provider value={value}>{children}</ModalContext.Provider>;
 }

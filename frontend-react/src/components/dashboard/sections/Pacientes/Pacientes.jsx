@@ -8,17 +8,29 @@ import styles from "./Pacientes.module.css"
 
 export default function Pacientes({ onSelectPatient }) {
   const { profile } = useAuthContext()
-  const { openModal, openAsignarGestor, openCrearPlanWithPatient, openRegistroWithPatient } = useModal()
+  const {
+    openModal,
+    openAsignarGestor,
+    openCrearPlanWithPatient,
+    openRegistroWithPatient,
+    openEditPaciente,
+    openViewPaciente
+  } = useModal()
   const { patients, loading, error, fetchPatients } = usePatients()
 
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedPatient, setSelectedPatient] = useState(null)
 
-  const isPaciente = useMemo(() => profile?.tipo_usuario === "paciente", [profile])
+  const isPaciente = useMemo(
+    () => profile?.tipo_usuario === "paciente",
+    [profile]
+  )
   const isMedico = useMemo(() => profile?.tipo_usuario === "medico", [profile])
-  const isGestor = useMemo(() => 
-    profile?.tipo_usuario === "gestor_casos" || 
-    (typeof profile?.tipo_usuario === "string" && profile.tipo_usuario.includes("gestor")),
+  const isGestor = useMemo(
+    () =>
+      profile?.tipo_usuario === "gestor_casos" ||
+      (typeof profile?.tipo_usuario === "string" &&
+        profile.tipo_usuario.includes("gestor")),
     [profile]
   )
 
@@ -50,41 +62,49 @@ export default function Pacientes({ onSelectPatient }) {
     return () => controller.abort()
   }, [fetchPatients, buildParams, isPaciente])
 
-  const handleSelectPatient = useCallback((patient, action = null) => {
-    console.log("👤 Pacientes - Seleccionando paciente:", {
-      id: patient.id_paciente,
-      nombre: patient.nombre,
-      action
-    })
+  const handleSelectPatient = useCallback(
+    (patient, action = null) => {
+      console.log("👤 Pacientes - Seleccionando paciente:", {
+        id: patient.id_paciente,
+        nombre: patient.nombre,
+        action
+      })
 
-    const patientData = {
-      id_paciente: patient.id_paciente || patient.id,
-      ci: patient.ci,
-      nombre: patient.nombre,
-      apellido: patient.apellido,
-      email: patient.email
-    }
+      const patientData = {
+        id_paciente: patient.id_paciente || patient.id,
+        ci: patient.ci,
+        nombre: patient.nombre,
+        apellido: patient.apellido,
+        email: patient.email
+      }
 
-    setSelectedPatient(patientData)
+      setSelectedPatient(patientData)
 
-    if (onSelectPatient) {
-      onSelectPatient(patientData)
-    }
+      if (onSelectPatient) {
+        onSelectPatient(patientData)
+      }
 
-    switch (action) {
-      case "registro":
-        openRegistroWithPatient(Number(patient.id_paciente || patient.id))
-        break
-      case "crearPlan":
-        openCrearPlanWithPatient(patient.id_paciente || patient.id)
-        break
-      case "asignarGestor":
-        openAsignarGestor(patient.id_paciente || patient.id)
-        break
-      default:
-        break
-    }
-  }, [onSelectPatient, openRegistroWithPatient, openCrearPlanWithPatient, openAsignarGestor])
+      switch (action) {
+        case "registro":
+          openRegistroWithPatient(Number(patient.id_paciente || patient.id))
+          break
+        case "crearPlan":
+          openCrearPlanWithPatient(patient.id_paciente || patient.id)
+          break
+        case "asignarGestor":
+          openAsignarGestor(patient.id_paciente || patient.id)
+          break
+        default:
+          break
+      }
+    },
+    [
+      onSelectPatient,
+      openRegistroWithPatient,
+      openCrearPlanWithPatient,
+      openAsignarGestor
+    ]
+  )
 
   const filteredPatients = useMemo(() => {
     if (!Array.isArray(patients)) return []
@@ -93,14 +113,14 @@ export default function Pacientes({ onSelectPatient }) {
 
     return patients.filter((p) => {
       if (!p) return false
-      
+
       const searchString = `
         ${p.nombre || ""} 
         ${p.apellido || ""} 
         ${p.ci || ""} 
         ${p.email || ""}
       `.toLowerCase()
-      
+
       return searchString.includes(query)
     })
   }, [patients, searchQuery])
@@ -113,12 +133,13 @@ export default function Pacientes({ onSelectPatient }) {
 
   const getStatusBadge = (estado) => {
     const isActive = estado === true || estado === "activo" || estado === 1
-    
+
     return (
-      <span 
-        className={`${styles.statusBadge} ${isActive ? styles.active : styles.inactive}`}
-        title={isActive ? "Paciente activo" : "Paciente inactivo"}
-      >
+      <span
+        className={`${styles.statusBadge} ${
+          isActive ? styles.active : styles.inactive
+        }`}
+        title={isActive ? "Paciente activo" : "Paciente inactivo"}>
         {isActive ? "Activo" : "Inactivo"}
       </span>
     )
@@ -140,7 +161,6 @@ export default function Pacientes({ onSelectPatient }) {
 
   return (
     <section className={styles.container}>
-      {/* Encabezado */}
       <div className={styles.header}>
         <div className={styles.headerContent}>
           <div className={styles.titleSection}>
@@ -149,14 +169,13 @@ export default function Pacientes({ onSelectPatient }) {
               {isMedico ? "Mis Pacientes" : "Pacientes Asignados"}
             </h1>
             <p className={styles.subtitle}>
-              {isMedico 
-                ? "Gestiona y administra tus pacientes" 
+              {isMedico
+                ? "Gestiona y administra tus pacientes"
                 : "Pacientes bajo tu gestión"}
             </p>
           </div>
 
           <div className={styles.headerActions}>
-            {/* Barra de Búsqueda */}
             <div className={styles.searchContainer}>
               <div className={styles.searchWrapper}>
                 <span className={styles.searchIcon}>🔍</span>
@@ -171,15 +190,13 @@ export default function Pacientes({ onSelectPatient }) {
                   <button
                     onClick={() => setSearchQuery("")}
                     className={styles.clearButton}
-                    aria-label="Limpiar búsqueda"
-                  >
+                    aria-label="Limpiar búsqueda">
                     ✕
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Botones de Acción */}
             <div className={styles.actionButtons}>
               {isMedico && (
                 <>
@@ -187,8 +204,7 @@ export default function Pacientes({ onSelectPatient }) {
                     variant="secondary"
                     onClick={() => openModal("nuevoPaciente")}
                     className={styles.actionButton}
-                    disabled={loading}
-                  >
+                    disabled={loading}>
                     <span className={styles.buttonIcon}>➕</span>
                     Nuevo Paciente
                   </Button>
@@ -203,12 +219,15 @@ export default function Pacientes({ onSelectPatient }) {
                       }
                     }}
                     className={styles.actionButton}
-                    disabled={loading || (!selectedPatient && filteredPatients.length > 0)}
-                    title={selectedPatient ? 
-                      `Crear plan para ${selectedPatient.nombre}` : 
-                      "Selecciona un paciente primero"
+                    disabled={
+                      loading ||
+                      (!selectedPatient && filteredPatients.length > 0)
                     }
-                  >
+                    title={
+                      selectedPatient
+                        ? `Crear plan para ${selectedPatient.nombre}`
+                        : "Selecciona un paciente primero"
+                    }>
                     <span className={styles.buttonIcon}>📋</span>
                     Crear Plan
                   </Button>
@@ -218,29 +237,32 @@ export default function Pacientes({ onSelectPatient }) {
           </div>
         </div>
 
-        {/* Estadísticas */}
         {!loading && !error && (
           <div className={styles.stats}>
             <div className={styles.statItem}>
               <span className={styles.statIcon}>👥</span>
               <div className={styles.statContent}>
-                <span className={styles.statValue}>{filteredPatients.length}</span>
+                <span className={styles.statValue}>
+                  {filteredPatients.length}
+                </span>
                 <span className={styles.statLabel}>pacientes</span>
               </div>
             </div>
-            
+
             {selectedPatient && (
               <div className={styles.statItem}>
                 <span className={styles.statIcon}>🎯</span>
                 <div className={styles.statContent}>
-                  <span className={styles.statValue} title={selectedPatient.nombre}>
+                  <span
+                    className={styles.statValue}
+                    title={selectedPatient.nombre}>
                     {selectedPatient.nombre?.split(" ")[0] || "Seleccionado"}
                   </span>
                   <span className={styles.statLabel}>seleccionado</span>
                 </div>
               </div>
             )}
-            
+
             {searchQuery && (
               <div className={styles.statItem}>
                 <span className={styles.statIcon}>🔍</span>
@@ -254,7 +276,6 @@ export default function Pacientes({ onSelectPatient }) {
         )}
       </div>
 
-      {/* Contenido Principal */}
       <div className={styles.content}>
         {loading ? (
           <div className={styles.loadingState}>
@@ -270,8 +291,7 @@ export default function Pacientes({ onSelectPatient }) {
               <Button
                 variant="secondary"
                 onClick={() => fetchPatients(buildParams())}
-                className={styles.retryButton}
-              >
+                className={styles.retryButton}>
                 Reintentar
               </Button>
             </div>
@@ -283,7 +303,9 @@ export default function Pacientes({ onSelectPatient }) {
                 {searchQuery ? "🔍" : "👥"}
               </span>
               <h3 className={styles.emptyTitle}>
-                {searchQuery ? "No se encontraron pacientes" : "No hay pacientes asignados"}
+                {searchQuery
+                  ? "No se encontraron pacientes"
+                  : "No hay pacientes asignados"}
               </h3>
               <p className={styles.emptyDescription}>
                 {searchQuery
@@ -296,8 +318,7 @@ export default function Pacientes({ onSelectPatient }) {
                 <Button
                   variant="primary"
                   onClick={() => openModal("nuevoPaciente")}
-                  className={styles.emptyAction}
-                >
+                  className={styles.emptyAction}>
                   Agregar Primer Paciente
                 </Button>
               )}
@@ -309,11 +330,11 @@ export default function Pacientes({ onSelectPatient }) {
               <Card
                 key={patient.id_paciente || patient.id}
                 className={`${styles.patientCard} ${
-                  selectedPatient?.id_paciente === patient.id_paciente ? styles.selected : ""
+                  selectedPatient?.id_paciente === patient.id_paciente
+                    ? styles.selected
+                    : ""
                 }`}
-                onClick={() => handleSelectPatient(patient)}
-              >
-                {/* Encabezado del Paciente */}
+                onClick={() => handleSelectPatient(patient)}>
                 <div className={styles.cardHeader}>
                   <div className={styles.patientAvatar}>
                     <div className={styles.avatarCircle}>
@@ -321,7 +342,7 @@ export default function Pacientes({ onSelectPatient }) {
                     </div>
                     {getStatusBadge(patient.estado)}
                   </div>
-                  
+
                   <div className={styles.patientInfo}>
                     <h3 className={styles.patientName}>
                       {patient.nombre || "Sin nombre"} {patient.apellido || ""}
@@ -341,48 +362,54 @@ export default function Pacientes({ onSelectPatient }) {
                   </div>
                 </div>
 
-                {/* Información del Paciente */}
                 <div className={styles.cardBody}>
                   <div className={styles.infoGrid}>
                     {patient.telefono && (
                       <div className={styles.infoItem}>
                         <span className={styles.infoIcon}>📞</span>
                         <span className={styles.infoLabel}>Teléfono:</span>
-                        <span className={styles.infoValue}>{patient.telefono}</span>
+                        <span className={styles.infoValue}>
+                          {patient.telefono}
+                        </span>
                       </div>
                     )}
-                    
+
                     {patient.direccion && (
                       <div className={styles.infoItem}>
                         <span className={styles.infoIcon}>📍</span>
                         <span className={styles.infoLabel}>Dirección:</span>
-                        <span className={styles.infoValue} title={patient.direccion}>
-                          {patient.direccion.length > 30 
-                            ? `${patient.direccion.slice(0, 30)}...` 
+                        <span
+                          className={styles.infoValue}
+                          title={patient.direccion}>
+                          {patient.direccion.length > 30
+                            ? `${patient.direccion.slice(0, 30)}...`
                             : patient.direccion}
                         </span>
                       </div>
                     )}
-                    
+
                     {patient.alergias && (
                       <div className={styles.infoItem}>
                         <span className={styles.infoIcon}>⚠️</span>
                         <span className={styles.infoLabel}>Alergias:</span>
-                        <span className={styles.infoValue}>{patient.alergias}</span>
+                        <span className={styles.infoValue}>
+                          {patient.alergias}
+                        </span>
                       </div>
                     )}
-                    
+
                     {patient.condiciones_cronicas && (
                       <div className={styles.infoItem}>
                         <span className={styles.infoIcon}>❤️</span>
                         <span className={styles.infoLabel}>Condiciones:</span>
-                        <span className={styles.infoValue}>{patient.condiciones_cronicas}</span>
+                        <span className={styles.infoValue}>
+                          {patient.condiciones_cronicas}
+                        </span>
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Acciones */}
                 <div className={styles.cardFooter}>
                   <div className={styles.footerActions}>
                     <Button
@@ -390,13 +417,27 @@ export default function Pacientes({ onSelectPatient }) {
                       size="small"
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleSelectPatient(patient)
+                        openViewPaciente(patient) // <-- Cambiado de handleSelectPatient(patient) a openViewPaciente
                       }}
-                      className={styles.actionButton}
-                    >
+                      className={styles.actionButton}>
                       <span className={styles.buttonIcon}>👁️</span>
                       Ver detalles
                     </Button>
+
+                    {/* Botón de Editar Paciente - visible para médicos y gestores */}
+                    {(isMedico || isGestor) && (
+                      <Button
+                        variant="secondary"
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          openEditPaciente(patient)
+                        }}
+                        className={styles.actionButton}>
+                        <span className={styles.buttonIcon}>✏️</span>
+                        Editar
+                      </Button>
+                    )}
 
                     {isMedico && (
                       <>
@@ -407,8 +448,7 @@ export default function Pacientes({ onSelectPatient }) {
                             e.stopPropagation()
                             handleSelectPatient(patient, "asignarGestor")
                           }}
-                          className={styles.actionButton}
-                        >
+                          className={styles.actionButton}>
                           <span className={styles.buttonIcon}>👨‍⚕️</span>
                           Asignar gestor
                         </Button>
@@ -420,8 +460,7 @@ export default function Pacientes({ onSelectPatient }) {
                             e.stopPropagation()
                             handleSelectPatient(patient, "crearPlan")
                           }}
-                          className={styles.actionButton}
-                        >
+                          className={styles.actionButton}>
                           <span className={styles.buttonIcon}>📋</span>
                           Crear plan
                         </Button>
@@ -433,8 +472,7 @@ export default function Pacientes({ onSelectPatient }) {
                             e.stopPropagation()
                             handleSelectPatient(patient, "registro")
                           }}
-                          className={styles.actionButton}
-                        >
+                          className={styles.actionButton}>
                           <span className={styles.buttonIcon}>📝</span>
                           Nuevo Registro
                         </Button>

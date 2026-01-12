@@ -1,3 +1,4 @@
+// Modal.module.jsx (reemplaza el contenido con esto)
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import styles from './Modal.module.css';
@@ -18,7 +19,12 @@ const Modal = ({ open, onClose, title, children, size = 'md' }) => {
       document.body.style.overflow = 'hidden';
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      // contamos cuantos modales con el atributo data-modal-open existen.
+      // Si hay 1 o 0 (este se cerró), restauramos el overflow.
+      const count = document.querySelectorAll('[data-modal-open]').length;
+      if (count <= 1) {
+        document.body.style.overflow = 'unset';
+      }
     };
   }, [open]);
 
@@ -35,7 +41,8 @@ const Modal = ({ open, onClose, title, children, size = 'md' }) => {
   return ReactDOM.createPortal(
     <>
       <div className={styles.overlay} onClick={onClose} />
-      <div className={styles.wrapper}>
+      {/* marcamos wrapper con data-modal-open */}
+      <div className={styles.wrapper} data-modal-open>
         <div className={`${styles.modal} ${sizeClass}`} onClick={(e) => e.stopPropagation()}>
           <div className={styles.header}>
             <h2 className={styles.title}>{title}</h2>

@@ -18,8 +18,9 @@ import EditPlanModal from "../modals/EditPlanModal/EditPlanModal"
 import EditPrescripcionModal from "../modals/EditPrescripcionModal/EditPrescripcionModal"
 import AsignarGestorModal from "../modals/AsignarGestorModal/AsignarGestorModal"
 import NuevoPacienteModal from "../modals/NuevoPacienteModal/NuevoPacienteModal"
-
-// Services (fallback si profile no trae id_paciente)
+import EditPacienteModal from "../modals/EditPacienteModal/EditPacienteModal" 
+import ViewPacienteModal from "../modals/ViewPacienteModal/ViewPacienteModal"
+// Services
 import { PatientService } from "../../services/patientService"
 
 import styles from "./Dashboard.module.css"
@@ -360,6 +361,9 @@ export default function Dashboard() {
       <EditPrescripcionModal />
       <AsignarGestorModal />
       <NuevoPacienteModal />
+      <EditPacienteModal /> 
+      <ViewPacienteModal />
+
     </div>
   )
 }

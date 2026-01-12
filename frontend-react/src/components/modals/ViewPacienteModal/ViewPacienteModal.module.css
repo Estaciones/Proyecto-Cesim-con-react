@@ -1,0 +1,162 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.patientInfoHeader {
+  background: var(--background-section, #f8fdf9);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e1f5ea;
+  margin-bottom: 10px;
+}
+
+.patientBasicInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.patientName {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary, #1a3c34);
+}
+
+.patientCI {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary, #2d4a43);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.infoLabel {
+  font-weight: 500;
+  color: var(--text-primary, #1a3c34);
+}
+
+.formSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: var(--background-section, #f8fdf9);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e1f5ea;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #1a3c34);
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--border-section, #c6f0d9);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sectionIcon {
+  font-size: 18px;
+  opacity: 0.8;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary, #2d4a43);
+}
+
+.readonlyField {
+  padding: 12px 14px;
+  border: 1px solid var(--border-input, #cde9dc);
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: #f9f9f9;
+  color: var(--text-primary, #1a3c34);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-section, #e1f5ea);
+  margin-top: 8px;
+}
+
+.closeButton {
+  padding: 12px 28px;
+  background: linear-gradient(135deg, var(--primary-color, #2ecc71) 0%, var(--primary-dark, #27ae60) 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+}
+
+.closeButton:hover {
+  background: linear-gradient(135deg, var(--primary-hover, #27ae60) 0%, var(--primary-dark-hover, #219653) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(46, 204, 113, 0.25);
+}
+
+.closeButton:active {
+  transform: translateY(0);
+}
+
+/* Variables CSS para tema saludable */
+:root {
+  --primary-color: #2ecc71;
+  --primary-dark: #27ae60;
+  --primary-hover: #27ae60;
+  --primary-dark-hover: #219653;
+  --background-section: #f8fdf9;
+  --border-section: #e1f5ea;
+  --border-input: #cde9dc;
+  --text-primary: #1a3c34;
+  --text-secondary: #2d4a43;
+}
+
+@media (max-width: 640px) {
+  .formSection {
+    padding: 16px;
+  }
+  
+  .formActions {
+    justify-content: center;
+  }
+  
+  .closeButton {
+    width: 100%;
+  }
+}
