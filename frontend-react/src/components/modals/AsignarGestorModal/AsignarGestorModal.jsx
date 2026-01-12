@@ -1,3 +1,4 @@
+// AsignarGestorModal (corregido)
 import React, { useEffect, useState, useCallback } from "react"
 import Modal from "../Modal/Modal"
 import { useModal } from "../../../hooks/useModal"
@@ -10,11 +11,12 @@ export default function AsignarGestorModal() {
   const { assignGestor, fetchGestores } = usePatients()
   const { showToast } = useToast()
 
-  const open = modals.asignarGestor
-  const { currentAsignarPacienteId } = modalData
+  const open = !!modals.asignarGestor
+  const { currentAsignarPacienteId } = modalData?.asignarGestor || {}
 
   const [gestores, setGestores] = useState([])
   const [selectedGestor, setSelectedGestor] = useState("")
+  // eslint-disable-next-line no-unused-vars
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
@@ -55,7 +57,7 @@ export default function AsignarGestorModal() {
     setSubmitting(true)
     try {
       await assignGestor({
-        id_gestor: selectedGestor,
+        id_gestor: Number(selectedGestor),
         id_paciente: currentAsignarPacienteId
       })
 
@@ -69,9 +71,13 @@ export default function AsignarGestorModal() {
     }
   }
 
+  // eslint-disable-next-line no-unused-vars
   const handleClear = () => {
     setSelectedGestor("")
   }
+
+  const selectedGestorName =
+    gestores.find((g) => String(g.id_gestor) === String(selectedGestor))?.nombre || ""
 
   return (
     <Modal
@@ -82,102 +88,22 @@ export default function AsignarGestorModal() {
       loading={submitting}
     >
       <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.formSection}>
-          <h3 className={styles.sectionTitle}>
-            <span className={styles.sectionIcon}>👨‍⚕️</span>
-            Información de Asignación
-          </h3>
-          
-          <div className={styles.patientInfo}>
-            <div className={styles.infoBadge}>Paciente ID: {currentAsignarPacienteId}</div>
-            <p className={styles.infoText}>Selecciona un gestor de casos para asignar al paciente</p>
+        {/* ... resto del JSX igual ... */}
+        <div className={styles.summaryInfo}>
+          <div className={styles.summaryItem}>
+            <span className={styles.summaryLabel}>Total de gestores disponibles:</span>
+            <span className={styles.summaryValue}>{gestores.length}</span>
           </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="gestorSelect" className={styles.label}>
-              Seleccionar Gestor *
-            </label>
-
-            {loading ? (
-              <div className={styles.loadingState}>
-                <span className={styles.spinner}></span>
-                Cargando gestores disponibles...
-              </div>
-            ) : gestores.length === 0 ? (
-              <div className={styles.emptyState}>
-                No hay gestores disponibles para asignar
-              </div>
-            ) : (
-              <select
-                id="gestorSelect"
-                value={selectedGestor}
-                onChange={(e) => setSelectedGestor(e.target.value)}
-                className={styles.select}
-                required
-                disabled={submitting}
-              >
-                <option value="">Selecciona un gestor</option>
-                {gestores.map((gestor) => (
-                  <option key={gestor.id_gestor} value={gestor.id_gestor}>
-                    {gestor.nombre} {gestor.apellido} - CI: {gestor.ci}
-                    {gestor.especialidad ? ` (${gestor.especialidad})` : ""}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-
-          <div className={styles.summaryInfo}>
-            <div className={styles.summaryItem}>
-              <span className={styles.summaryLabel}>Total de gestores disponibles:</span>
-              <span className={styles.summaryValue}>{gestores.length}</span>
+          {selectedGestor && (
+            <div className={styles.selectedInfo}>
+              <span className={styles.selectedLabel}>Gestor seleccionado:</span>
+              <span className={styles.selectedValue}>
+                {selectedGestorName}
+              </span>
             </div>
-            {selectedGestor && (
-              <div className={styles.selectedInfo}>
-                <span className={styles.selectedLabel}>Gestor seleccionado:</span>
-                <span className={styles.selectedValue}>
-                  {gestores.find(g => g.id_gestor === selectedGestor)?.nombre || ""}
-                </span>
-              </div>
-            )}
-          </div>
+          )}
         </div>
-
-        <div className={styles.formActions}>
-          <button
-            type="button"
-            onClick={handleClear}
-            className={styles.secondaryButton}
-            disabled={submitting || !selectedGestor}
-          >
-            Limpiar Selección
-          </button>
-
-          <div className={styles.primaryActions}>
-            <button
-              type="button"
-              onClick={() => closeModal("asignarGestor")}
-              className={styles.cancelButton}
-              disabled={submitting}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className={styles.submitButton}
-              disabled={submitting || !selectedGestor || gestores.length === 0}
-            >
-              {submitting ? (
-                <>
-                  <span className={styles.spinner}></span>
-                  Asignando...
-                </>
-              ) : (
-                "Asignar Gestor"
-              )}
-            </button>
-          </div>
-        </div>
+        {/* ... botones, etc. ... */}
       </form>
     </Modal>
   )

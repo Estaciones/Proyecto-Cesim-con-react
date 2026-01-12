@@ -1,35 +1,32 @@
-// src/components/auth/Register/Register.jsx
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useToast } from '../../../hooks/useToast';
-import styles from './Register.module.css';
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useToast } from "../../../hooks/useToast";
+import { useAuthContext } from "../../../context/AuthContext";
+import styles from "./Register.module.css";
 
 export default function Register() {
   const navigate = useNavigate();
-  const { showToast } = useToast(); // Usar hook de toast
-  const API_URL = 'http://localhost:3000/api/auth/register';
+  const { showToast } = useToast();
+  const { register } = useAuthContext();
 
-  // Estados del formulario
   const [formData, setFormData] = useState({
-    nombre_usuario: '',
-    nombre: '',
-    apellidos: '',
-    genero: '',
-    ci: '',
-    telefono: '',
-    email: '',
-    tipo_usuario: '',
-    password: '',
-    confirmPassword: '',
+    nombre_usuario: "",
+    nombre: "",
+    apellidos: "",
+    genero: "",
+    ci: "",
+    telefono: "",
+    email: "",
+    tipo_usuario: "",
+    password: "",
+    confirmPassword: ""
   });
 
-  // UI states
   const [message, setMessage] = useState(null);
   const [emailErrorVisible, setEmailErrorVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [passwordScore, setPasswordScore] = useState(0);
 
-  // Calcular fortaleza de contraseña
   const calculatePasswordStrength = (password) => {
     let score = 0;
     if (password.length >= 8) score++;
@@ -39,191 +36,102 @@ export default function Register() {
     return score;
   };
 
-  // Efecto para actualizar score de contraseña
   useEffect(() => {
     setPasswordScore(calculatePasswordStrength(formData.password));
   }, [formData.password]);
 
-  // Manejar cambios en el formulario
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: value
     }));
   };
 
-  // Validar formulario
-  const validateForm = () => {
-    const {
-      email,
-      password,
-      tipo_usuario,
-      nombre_usuario,
-      nombre,
-      apellidos,
-      genero,
-      telefono,
-      ci,
-      confirmPassword,
-    } = formData;
-
-    if (
-      !email ||
-      !password ||
-      !tipo_usuario ||
-      !nombre_usuario ||
-      !nombre ||
-      !apellidos ||
-      !genero ||
-      !telefono ||
-      !ci
-    ) {
-      return { ok: false, msg: 'Todos los campos son obligatorios.' };
-    }
-
-    if (password !== confirmPassword) {
-      return { ok: false, msg: 'Las contraseñas no coinciden.' };
-    }
-
-    if (password.length < 8) {
-      return { ok: false, msg: 'La contraseña debe tener al menos 8 caracteres.' };
-    }
-
-    if (!/[A-Z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
-      return {
-        ok: false,
-        msg: 'La contraseña debe incluir mayúscula, número y carácter especial.',
-      };
-    }
-
-    if (!/^\d{10,11}$/.test(ci)) {
-      return { ok: false, msg: 'CI inválido. Debe ser 10 o 11 dígitos (solo números).' };
-    }
-
-    if (!/^\d{7,10}$/.test(telefono)) {
-      return { ok: false, msg: 'Teléfono inválido. Solo dígitos (7-10).' };
-    }
-
-    return { ok: true };
-  };
-
-  // Mostrar mensaje
-  const showMessage = (text, type = 'info') => {
+  const showMessage = (text, type = "info") => {
     setMessage({ text, type });
     setTimeout(() => setMessage(null), 6000);
   };
 
-  // Enviar formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
     setEmailErrorVisible(false);
     setMessage(null);
 
-    const validation = validateForm();
-    if (!validation.ok) {
-      showMessage(validation.msg, 'error');
-      return;
-    }
-
     setSubmitting(true);
-
-    const payload = {
-      email: formData.email.trim(),
-      password: formData.password,
-      tipo_usuario: formData.tipo_usuario,
-      nombre_usuario: formData.nombre_usuario.trim(),
-      nombre: formData.nombre.trim(),
-      apellido: formData.apellidos.trim(),
-      genero: formData.genero.trim(),
-      telefono: formData.telefono.trim(),
-      ci: formData.ci.trim(),
-    };
-
     try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      // Delegamos validación y registro al hook useAuth.register
+      await register(formData);
+
+      showMessage("✅ Registro exitoso. Redirigiendo al login...", "success");
+      showToast("Registro exitoso", "success", 1500);
+
+      setFormData({
+        nombre_usuario: "",
+        nombre: "",
+        apellidos: "",
+        genero: "",
+        ci: "",
+        telefono: "",
+        email: "",
+        tipo_usuario: "",
+        password: "",
+        confirmPassword: ""
       });
 
-      const json = await res.json().catch(() => ({}));
-
-      if (res.ok) {
-        showMessage('✅ Registro exitoso. Redirigiendo al login...', 'success');
-        showToast('Registro exitoso', 'success', 1500);
-        
-        // Resetear formulario
-        setFormData({
-          nombre_usuario: '',
-          nombre: '',
-          apellidos: '',
-          genero: '',
-          ci: '',
-          telefono: '',
-          email: '',
-          tipo_usuario: '',
-          password: '',
-          confirmPassword: '',
-        });
-        
-        // Redirigir después de 1.5 segundos
-        setTimeout(() => navigate('/login'), 1500);
-      } else {
-        if (res.status === 400) {
-          showMessage('❌ ' + (json.error || 'Datos inválidos'), 'error');
-          showToast(json.error || 'Datos inválidos', 'error');
-        } else if (res.status === 409) {
-          showMessage('❌ ' + (json.error || 'El email o nombre de usuario ya existe'), 'error');
-          showToast(json.error || 'El email o nombre de usuario ya existe', 'error');
-          if (json.error && json.error.toLowerCase().includes('email')) {
-            setEmailErrorVisible(true);
-          }
-        } else {
-          showMessage('❌ ' + (json.error || 'Error del servidor'), 'error');
-          showToast(json.error || 'Error del servidor', 'error');
-        }
-      }
+      setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
-      console.error('Error al conectar al backend:', err);
-      showMessage('❌ No se pudo conectar con el servidor. ¿Está corriendo?', 'error');
-      showToast('No se pudo conectar con el servidor', 'error');
+      console.error("Register - Error:", err);
+      const text = err.message || "Error desconocido";
+
+      showMessage("❌ " + text, "error");
+      showToast(text, "error");
+
+      // Si el backend indicó que el email ya existe, mostrar nota específica
+      if (text.toLowerCase().includes("email")) {
+        setEmailErrorVisible(true);
+      }
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Configuración de colores para la barra de contraseña
   const passwordPercent = `${(passwordScore / 4) * 100}%`;
-  let passwordColor = '#ef4444';
-  let passwordText = 'Muy débil';
+  let passwordColor = "#ef4444";
+  let passwordText = "Muy débil";
 
   if (passwordScore <= 1) {
-    passwordColor = '#ef4444';
-    passwordText = 'Muy débil';
+    passwordColor = "#ef4444";
+    passwordText = "Muy débil";
   } else if (passwordScore === 2) {
-    passwordColor = '#f59e0b';
-    passwordText = 'Débil';
+    passwordColor = "#f59e0b";
+    passwordText = "Débil";
   } else if (passwordScore === 3) {
-    passwordColor = '#10b981';
-    passwordText = 'Buena';
+    passwordColor = "#10b981";
+    passwordText = "Buena";
   } else {
-    passwordColor = '#059669';
-    passwordText = 'Fuerte';
+    passwordColor = "#059669";
+    passwordText = "Fuerte";
   }
 
   return (
     <div className={styles.container}>
       <div className={styles.card}>
         <div className={styles.header}>
-          <div className={styles.brand}>HS</div>
+          <div className={styles.logo}>
+            <div className={styles.logoIcon}>🏥</div>
+            <div className={styles.logoContent}>
+              <span className={styles.logoTitle}>Health System</span>
+              <span className={styles.logoSubtitle}>Salud Integral</span>
+            </div>
+          </div>
+
           <h1 className={styles.title}>Crear cuenta</h1>
           <p className={styles.subtitle}>Registra tu usuario para acceder a la plataforma</p>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form} noValidate>
           <div className={styles.grid}>
-            {/* Columna 1 */}
             <div className={styles.column}>
               <div className={styles.inputGroup}>
                 <label htmlFor="nombre_usuario">Nombre de usuario *</label>
@@ -303,7 +211,6 @@ export default function Register() {
               </div>
             </div>
 
-            {/* Columna 2 */}
             <div className={styles.column}>
               <div className={styles.inputGroup}>
                 <label htmlFor="telefono">Teléfono *</label>
@@ -377,7 +284,7 @@ export default function Register() {
                       className={styles.passwordFill}
                       style={{
                         width: passwordPercent,
-                        backgroundColor: passwordColor,
+                        backgroundColor: passwordColor
                       }}
                     />
                   </div>
@@ -408,9 +315,9 @@ export default function Register() {
           <button
             type="submit"
             disabled={submitting}
-            className={`${styles.button} ${submitting ? styles.loading : ''}`}
+            className={`${styles.button} ${submitting ? styles.loading : ""}`}
           >
-            {submitting ? 'Registrando...' : 'Registrarse'}
+            {submitting ? "Registrando..." : "Registrarse"}
           </button>
 
           {message && (
@@ -420,7 +327,7 @@ export default function Register() {
           )}
 
           <p className={styles.footer}>
-            ¿Ya tienes cuenta?{' '}
+            ¿Ya tienes cuenta?{" "}
             <Link to="/login" className={styles.link}>
               Inicia Sesión
             </Link>

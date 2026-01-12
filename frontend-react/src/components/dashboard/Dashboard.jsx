@@ -26,7 +26,6 @@ import styles from "./Dashboard.module.css"
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  // ahora pedimos loadProfile desde el contexto para poder refrescar perfil si hace falta
   const { user, profile, logout, loadProfile } = useAuthContext()
   const { toast, showToast } = useToast()
   const [activeSection, setActiveSection] = useState("historia")
@@ -35,12 +34,10 @@ export default function Dashboard() {
 
   const handleLogout = useCallback(() => {
     logout()
-    // limpiar selección al cerrar sesión
     setSelectedPatient(null)
     navigate("/login")
   }, [logout, navigate])
 
-  // Determinar userType - priorizar profile, luego user
   const userType = useMemo(() => {
     if (profile?.tipo_usuario) return profile.tipo_usuario
     if (user?.tipo_usuario) return user.tipo_usuario
@@ -48,7 +45,6 @@ export default function Dashboard() {
     return null
   }, [user, profile])
 
-  // Restricciones de acceso a secciones
   const isSectionAllowed = useCallback(
     (section) => {
       if (!userType) return false
@@ -89,14 +85,12 @@ export default function Dashboard() {
     [isSectionAllowed]
   )
 
-  // Si cambia el tipo de usuario, limpiar selección y re-inicializar
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedPatient(null)
     setInitialized(false)
   }, [userType])
 
-  // Inicializar dashboard - ahora con loadProfile + fallback a PatientService
   useEffect(() => {
     if (!user) {
       navigate("/login")
@@ -123,9 +117,7 @@ export default function Dashboard() {
           )
         }
 
-        // Si el usuario es paciente: necesitamos el id_paciente real
         if (mounted && userType === "paciente") {
-          // 1) Si el profile ya trae id_paciente, úsalo
           const existingPatientId =
             profile?.id_paciente ||
             profile?.idPaciente ||
@@ -146,12 +138,10 @@ export default function Dashboard() {
             }
             if (mounted) setSelectedPatient(p)
           } else {
-            // 2) Intentar recargar profile desde backend (loadProfile expuesto por contexto)
             try {
               const profileId = user?.id_usuario || user?.id
               if (profileId) {
                 const refreshed = await loadProfile(profileId)
-                // loadProfile puede retornar null; si trae id_paciente la usamos
                 const refreshedId =
                   refreshed?.id_paciente || refreshed?.idPaciente || null
                 if (refreshedId) {
@@ -168,7 +158,6 @@ export default function Dashboard() {
                   }
                   if (mounted) setSelectedPatient(p)
                 } else {
-                  // 3) Fallback: buscar paciente vía PatientService por CI o por user_id
                   const searchKey =
                     profile?.ci || refreshed?.ci || profile?.persona_ci || null
                   let patientsResponse = null
@@ -178,7 +167,6 @@ export default function Dashboard() {
                       { signal: controller.signal }
                     )
                   } else {
-                    // intentar por user_id (si el backend soporta el parámetro)
                     const uid =
                       profile?.id_usuario || user?.id_usuario || user?.id
                     if (uid) {
@@ -189,7 +177,6 @@ export default function Dashboard() {
                     }
                   }
 
-                  // Normalización simple de resultados (Array o { data: [...] } etc)
                   let arr = []
                   if (Array.isArray(patientsResponse)) arr = patientsResponse
                   else if (
@@ -260,7 +247,6 @@ export default function Dashboard() {
       }
     }
 
-    // pequeña espera para asegurar que profile esté listo
     const t = setTimeout(() => {
       initializeDashboard()
     }, 50)
@@ -297,8 +283,11 @@ export default function Dashboard() {
     if (activeSection === "comunicacion" && isSectionAllowed("comunicacion")) {
       return (
         <section className={styles.comingSoonSection}>
-          <h2>Comunicación</h2>
-          <p>Esta sección estará disponible próximamente.</p>
+          <div className={styles.comingSoonIcon}>💬</div>
+          <h2 className={styles.comingSoonTitle}>Comunicación</h2>
+          <p className={styles.comingSoonText}>
+            Esta sección estará disponible próximamente.
+          </p>
         </section>
       )
     }
@@ -306,8 +295,11 @@ export default function Dashboard() {
     if (!isSectionAllowed(activeSection)) {
       return (
         <section className={styles.accessDeniedSection}>
-          <h2>Acceso Restringido</h2>
-          <p>No tienes permiso para acceder a esta sección.</p>
+          <div className={styles.accessDeniedIcon}>🚫</div>
+          <h2 className={styles.accessDeniedTitle}>Acceso Restringido</h2>
+          <p className={styles.accessDeniedText}>
+            No tienes permiso para acceder a esta sección.
+          </p>
         </section>
       )
     }
@@ -321,7 +313,6 @@ export default function Dashboard() {
     handleSelectPatient
   ])
 
-  // Mostrar loading si no hay usuario
   if (!user) {
     return (
       <div className={styles.loadingContainer}>
@@ -349,14 +340,17 @@ export default function Dashboard() {
         </main>
       </div>
 
-      {/* Toast Notifications */}
       {toast && (
         <div className={`${styles.toast} ${styles[toast.type]}`}>
-          <span>{toast.message}</span>
+          <span className={styles.toastIcon}>
+            {toast.type === "success" ? "✅" : 
+             toast.type === "error" ? "❌" : 
+             toast.type === "warning" ? "⚠️" : "ℹ️"}
+          </span>
+          <span className={styles.toastMessage}>{toast.message}</span>
         </div>
       )}
 
-      {/* Modales */}
       <RegistroModal />
       <ViewHistoriaModal />
       <EditHistoriaModal />
