@@ -8,7 +8,6 @@ import styles from "./Planes.module.css"
 
 export default function Planes({ selectedPatient }) {
   const { profile } = useAuthContext()
-  // añadimos openViewPrescripcion y openEditPrescripcion
   const { openCrearPlanWithPatient, openViewPlan, openEditPlan, openViewPrescripcion, openEditPrescripcion } = useModal()
   const { plans, loading, error, fetchPlans } = usePlans()
 
@@ -53,15 +52,12 @@ export default function Planes({ selectedPatient }) {
       params.gestor_id
 
     if (!hasValidParams) {
-      console.log("⏭️ Planes - No hay parámetros válidos, omitiendo fetch")
       return () => controller.abort()
     }
 
-    console.log("🚀 Planes - Iniciando fetch con params:", params)
-
     fetchPlans(params, { signal: controller.signal }).catch((err) => {
       if (err?.name !== "AbortError") {
-        console.error("❌ Planes - Error fetching plans:", err)
+        console.error("Error fetching plans:", err)
       }
     })
 
@@ -69,23 +65,17 @@ export default function Planes({ selectedPatient }) {
   }, [fetchPlans, buildParams])
 
   const handleViewPlan = useCallback((plan) => {
-    console.log("👁️ Planes - Ver plan:", plan)
     openViewPlan(plan)
   }, [openViewPlan])
 
   const handleEditPlan = useCallback((plan) => {
-    console.log("✏️ Planes - Editar plan:", plan)
     openEditPlan(plan)
   }, [openEditPlan])
 
   const handleCreatePlan = useCallback(() => {
-    console.log("➕ Planes - Crear plan para paciente:", selectedPatient)
-
     if (selectedPatient?.id_paciente) {
-      console.log("🎯 Planes - Llamando openCrearPlanWithPatient con ID:", selectedPatient.id_paciente)
       openCrearPlanWithPatient(selectedPatient.id_paciente)
     } else {
-      console.log("⚠️ Planes - No hay paciente seleccionado")
       openCrearPlanWithPatient(undefined)
     }
   }, [selectedPatient, openCrearPlanWithPatient])
@@ -152,25 +142,15 @@ export default function Planes({ selectedPatient }) {
     })
   }, [plans, searchQuery])
 
-  // handlers para prescripciones
-  const handleViewPrescription = useCallback((e, pres, plan) => {
+  const handleViewPrescription = useCallback((e, pres) => {
     e.stopPropagation()
-    console.log("👁️ Prescripción - Ver:", pres, "plan:", plan?.id_plan)
     if (typeof openViewPrescripcion === "function") openViewPrescripcion(pres)
   }, [openViewPrescripcion])
 
-  const handleEditPrescription = useCallback((e, pres, plan) => {
+  const handleEditPrescription = useCallback((e, pres) => {
     e.stopPropagation()
-    console.log("✏️ Prescripción - Editar:", pres, "plan:", plan?.id_plan)
     if (typeof openEditPrescripcion === "function") openEditPrescripcion(pres)
   }, [openEditPrescripcion])
-
-  console.log("📊 Planes - Estado actual:", {
-    plansCount: filteredPlans.length,
-    loading,
-    error: error ? error.substring(0, 100) : null,
-    selectedPatient: selectedPatient?.id_paciente
-  })
 
   return (
     <section className={styles.container}>

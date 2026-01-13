@@ -21,7 +21,7 @@ export default function Login() {
     setLoading(true)
 
     try {
-      console.log("Login - Intentando login con:", { username, password })
+     
 
       await login({ identifier: username.trim(), password })
 

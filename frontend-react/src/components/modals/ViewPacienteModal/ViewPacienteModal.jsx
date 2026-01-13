@@ -1,178 +1,192 @@
-import React, { useEffect, useState } from "react"
-import Modal from "../Modal/Modal"
-import { useModal } from "../../../hooks/useModal"
-import styles from "./ViewPacienteModal.module.css"
+// ViewPacienteModal.jsx
+import React, { useEffect, useState } from 'react';
+import Modal from '../Modal/Modal';
+import { useModal } from '../../../hooks/useModal';
+import styles from './ViewPacienteModal.module.css';
 
 export default function ViewPacienteModal() {
-  const { modals, closeModal, modalData } = useModal()
+  const { modals, closeModal, modalData } = useModal();
 
-  const open = !!modals.viewPaciente
-  const patient = modalData.viewPaciente?.currentPatientData
-
-  console.log("📋 ViewPacienteModal - patient data:", patient) // Para depuración
-  console.log("📋 ViewPacienteModal - género raw:", patient?.genero) // Ver el valor crudo
+  const open = !!modals.viewPaciente;
+  const patient = modalData.viewPaciente?.currentPatientData;
 
   const [formData, setFormData] = useState({
-    direccion: "",
-    alergias: "",
-    condiciones_cronicas: "",
-    contacto_emergencia_nombre: "",
-    contacto_emergencia_telefono: "",
-    telefono: "",
-    email: "",
-    genero: ""
-  })
+    direccion: '',
+    alergias: '',
+    condiciones_cronicas: '',
+    contacto_emergencia_nombre: '',
+    contacto_emergencia_telefono: '',
+    telefono: '',
+    email: '',
+    genero: ''
+  });
 
   useEffect(() => {
     if (open && patient) {
-      console.log("🔄 ViewPacienteModal - Setting form data from patient:", patient)
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
-        direccion: patient.direccion || "",
-        alergias: patient.alergias || "",
-        condiciones_cronicas: patient.condiciones_cronicas || "",
-        contacto_emergencia_nombre: patient.contacto_emergencia_nombre || "",
-        contacto_emergencia_telefono: patient.contacto_emergencia_telefono || "",
-        telefono: patient.telefono || "",
-        email: patient.email || "",
-        genero: patient.genero || ""
-      })
+        direccion: patient.direccion || '',
+        alergias: patient.alergias || '',
+        condiciones_cronicas: patient.condiciones_cronicas || '',
+        contacto_emergencia_nombre: patient.contacto_emergencia_nombre || '',
+        contacto_emergencia_telefono: patient.contacto_emergencia_telefono || '',
+        telefono: patient.telefono || '',
+        email: patient.email || '',
+        genero: patient.genero || ''
+      });
     }
-  }, [open, patient])
+  }, [open, patient]);
 
   const getGeneroTexto = (genero) => {
-    // Limpiar el valor: remover espacios en blanco y convertir a mayúscula
-    const generoLimpio = genero ? genero.trim().toUpperCase() : ''
-    
-    console.log("🔍 getGeneroTexto - valor limpio:", generoLimpio, "original:", genero)
+    const generoLimpio = genero ? genero.trim().toUpperCase() : '';
     
     switch(generoLimpio) {
-      case 'M': return 'Masculino'
-      case 'F': return 'Femenino'
-      case 'O': return 'Otro'
-      default: return 'No especificado'
+      case 'M': return 'Masculino';
+      case 'F': return 'Femenino';
+      case 'O': return 'Otro';
+      default: return 'No especificado';
     }
-  }
+  };
 
   if (!patient) {
-    console.log("❌ ViewPacienteModal - No patient data available")
-    return null
+    return (
+      <Modal
+        open={open}
+        onClose={() => closeModal('viewPaciente')}
+        title="Información del Paciente"
+        size="lg"
+      >
+        <div className={styles.container}>
+          <div className={styles.emptyState}>
+            <div className={styles.emptyIcon}>👤</div>
+            <h3>No hay datos del paciente</h3>
+            <p>No se pudo cargar la información del paciente seleccionado.</p>
+          </div>
+          <div className={styles.formActions}>
+            <button
+              type="button"
+              onClick={() => closeModal('viewPaciente')}
+              className={styles.closeButton}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </Modal>
+    );
   }
+
+  const fullName = `${patient.nombre || ''} ${patient.apellido || ''}`.trim();
 
   return (
     <Modal
       open={open}
-      onClose={() => closeModal("viewPaciente")}
-      title={`Información del Paciente: ${patient.nombre || ''} ${patient.apellido || ''}`}
+      onClose={() => closeModal('viewPaciente')}
+      title={`Paciente: ${fullName || 'Sin nombre'}`}
       size="lg"
     >
       <div className={styles.container}>
-        {/* Información del paciente */}
-        <div className={styles.patientInfoHeader}>
-          <div className={styles.patientBasicInfo}>
-            <h4 className={styles.patientName}>
-              {patient.nombre || ''} {patient.apellido || ''}
-            </h4>
-            <p className={styles.patientCI}>
-              <span className={styles.infoLabel}>CI:</span> {patient.ci || "No especificado"}
-            </p>
+        {/* Encabezado del Paciente */}
+        <div className={styles.headerSection}>
+          <div className={styles.avatar}>
+            {fullName.charAt(0)}
           </div>
-        </div>
-
-        {/* Sección 1: Información Básica */}
-        <div className={styles.formSection}>
-          <h3 className={styles.sectionTitle}>
-            <span className={styles.sectionIcon}>👤</span>
-            Información Básica
-          </h3>
-          <div className={styles.formGrid}>
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Género</label>
-              <div className={styles.readonlyField}>
-                {getGeneroTexto(patient.genero || formData.genero)}
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Teléfono</label>
-              <div className={styles.readonlyField}>
-                {patient.telefono || formData.telefono || "No especificado"}
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Email</label>
-              <div className={styles.readonlyField}>
-                {patient.email || formData.email || "No especificado"}
-              </div>
+          <div className={styles.headerInfo}>
+            <h3 className={styles.patientName}>{fullName || 'Paciente'}</h3>
+            <div className={styles.metaInfo}>
+              <span className={styles.metaItem}>
+                <strong>CI:</strong> {patient.ci || 'No especificado'}
+              </span>
+              <span className={styles.metaItem}>
+                <strong>Género:</strong> {getGeneroTexto(patient.genero || formData.genero)}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Sección 2: Información de Contacto y Salud */}
-        <div className={styles.formSection}>
-          <h3 className={styles.sectionTitle}>
+        {/* Información Básica */}
+        <div className={styles.infoSection}>
+          <h4 className={styles.sectionTitle}>
+            <span className={styles.sectionIcon}>📱</span>
+            Información de Contacto
+          </h4>
+          <div className={styles.infoGrid}>
+            <div className={styles.infoItem}>
+              <label className={styles.infoLabel}>Teléfono</label>
+              <div className={styles.infoValue}>
+                {patient.telefono || formData.telefono || 'No especificado'}
+              </div>
+            </div>
+            <div className={styles.infoItem}>
+              <label className={styles.infoLabel}>Email</label>
+              <div className={styles.infoValue}>
+                {patient.email || formData.email || 'No especificado'}
+              </div>
+            </div>
+            <div className={styles.infoItem}>
+              <label className={styles.infoLabel}>Dirección</label>
+              <div className={styles.infoValue}>
+                {patient.direccion || formData.direccion || 'No especificada'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Información de Salud */}
+        <div className={styles.infoSection}>
+          <h4 className={styles.sectionTitle}>
             <span className={styles.sectionIcon}>🏥</span>
-            Información de Contacto y Salud
-          </h3>
-          <div className={styles.formGrid}>
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Dirección</label>
-              <div className={styles.readonlyField}>
-                {patient.direccion || formData.direccion || "No especificada"}
+            Información Médica
+          </h4>
+          <div className={styles.infoGrid}>
+            <div className={styles.infoItem}>
+              <label className={styles.infoLabel}>Alergias</label>
+              <div className={`${styles.infoValue} ${styles.largeField}`}>
+                {patient.alergias || formData.alergias || 'No especificadas'}
               </div>
             </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Alergias Conocidas</label>
-              <div className={styles.readonlyField}>
-                {patient.alergias || formData.alergias || "No especificadas"}
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Condiciones Crónicas</label>
-              <div className={styles.readonlyField}>
-                {patient.condiciones_cronicas || formData.condiciones_cronicas || "No especificadas"}
+            <div className={styles.infoItem}>
+              <label className={styles.infoLabel}>Condiciones Crónicas</label>
+              <div className={`${styles.infoValue} ${styles.largeField}`}>
+                {patient.condiciones_cronicas || formData.condiciones_cronicas || 'No especificadas'}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Sección 3: Contacto de Emergencia */}
-        <div className={styles.formSection}>
-          <h3 className={styles.sectionTitle}>
+        {/* Contacto de Emergencia */}
+        <div className={styles.infoSection}>
+          <h4 className={styles.sectionTitle}>
             <span className={styles.sectionIcon}>🆘</span>
             Contacto de Emergencia
-          </h3>
-          <div className={styles.formGrid}>
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Nombre del Contacto</label>
-              <div className={styles.readonlyField}>
-                {patient.contacto_emergencia_nombre || formData.contacto_emergencia_nombre || "No especificado"}
+          </h4>
+          <div className={styles.infoGrid}>
+            <div className={styles.infoItem}>
+              <label className={styles.infoLabel}>Nombre</label>
+              <div className={styles.infoValue}>
+                {patient.contacto_emergencia_nombre || formData.contacto_emergencia_nombre || 'No especificado'}
               </div>
             </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Teléfono de Emergencia</label>
-              <div className={styles.readonlyField}>
-                {patient.contacto_emergencia_telefono || formData.contacto_emergencia_telefono || "No especificado"}
+            <div className={styles.infoItem}>
+              <label className={styles.infoLabel}>Teléfono</label>
+              <div className={styles.infoValue}>
+                {patient.contacto_emergencia_telefono || formData.contacto_emergencia_telefono || 'No especificado'}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Acciones del modal */}
+        {/* Acciones */}
         <div className={styles.formActions}>
           <button
             type="button"
-            onClick={() => closeModal("viewPaciente")}
+            onClick={() => closeModal('viewPaciente')}
             className={styles.closeButton}
           >
-            Cerrar
+            Cerrar Vista
           </button>
         </div>
       </div>
     </Modal>
-  )
+  );
 }

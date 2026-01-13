@@ -1,3 +1,4 @@
+/* Button.module.css - Versión Verde */
 .button {
   display: inline-flex;
   align-items: center;
@@ -17,15 +18,16 @@
   outline: none;
 }
 
-/* Variantes */
+/* Variantes en verde */
 .primary {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
   color: white;
 }
 
 .primary:hover:not(:disabled):not(.loading) {
+  background: linear-gradient(135deg, #27ae60 0%, #219653 100%);
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 10px 20px rgba(46, 204, 113, 0.3);
 }
 
 .primary:active:not(:disabled):not(.loading) {
@@ -34,15 +36,15 @@
 
 .secondary {
   background: white;
-  color: #4b5563;
-  border-color: #d1d5db;
+  color: #2d4a43;
+  border: 2px solid #e1f5ea;
 }
 
 .secondary:hover:not(:disabled):not(.loading) {
-  background: #f9fafb;
-  border-color: #9ca3af;
+  background: #f8fdf9;
+  border-color: #2ecc71;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(46, 204, 113, 0.15);
 }
 
 .danger {
@@ -135,7 +137,7 @@
 
 /* Focus states */
 .button:focus-visible {
-  outline: 2px solid #4f46e5;
+  outline: 2px solid #2ecc71;
   outline-offset: 2px;
 }
 
@@ -148,10 +150,6 @@
 
 /* Responsive */
 @media (max-width: 640px) {
-  .button {
-    width: 100%;
-  }
-  
   .small, .medium, .large {
     padding: 0.75rem 1rem;
   }

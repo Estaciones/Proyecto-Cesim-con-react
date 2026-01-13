@@ -1,73 +1,108 @@
-.form {
+/* EditPacienteModal.module.css */
+.container {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 24px;
 }
 
-.patientInfoHeader {
-  background: var(--background-section, #f8fdf9);
+/* Encabezado del Paciente */
+.headerSection {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 24px;
+  background: linear-gradient(135deg, #e9f7ef 0%, #d4f1e3 100%);
   border-radius: 12px;
-  padding: 20px;
-  border: 1px solid #e1f5ea;
-  margin-bottom: 10px;
+  border: 1px solid #c6f0d9;
+  margin-bottom: 8px;
 }
 
-.patientBasicInfo {
+.avatar {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  border-radius: 50%;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+  flex-shrink: 0;
+}
+
+.headerInfo {
+  flex: 1;
 }
 
 .patientName {
-  margin: 0;
-  font-size: 18px;
+  margin: 0 0 12px 0;
+  font-size: 22px;
   font-weight: 600;
-  color: var(--text-primary, #1a3c34);
+  color: #1a3c34;
+  line-height: 1.2;
 }
 
-.patientCI {
-  margin: 0;
+.metaInfo {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.metaItem {
   font-size: 14px;
-  color: var(--text-secondary, #2d4a43);
+  color: #2d4a43;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(198, 240, 217, 0.6);
 }
 
-.formSection {
+.metaItem strong {
+  color: #1a3c34;
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+/* Formulario */
+.form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  background: var(--background-section, #f8fdf9);
+  gap: 24px;
+}
+
+/* Secciones del formulario */
+.formSection {
+  background: white;
   border-radius: 12px;
-  padding: 20px;
   border: 1px solid #e1f5ea;
+  padding: 24px;
 }
 
 .sectionTitle {
-  margin: 0;
+  margin: 0 0 20px 0;
   font-size: 16px;
   font-weight: 600;
-  color: var(--text-primary, #1a3c34);
-  padding-bottom: 12px;
-  border-bottom: 2px solid var(--border-section, #c6f0d9);
+  color: #1a3c34;
   display: flex;
   align-items: center;
   gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e9f7ef;
 }
 
 .sectionIcon {
   font-size: 18px;
-  opacity: 0.8;
+  opacity: 0.9;
 }
 
+/* Grid de formulario */
 .formGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
-}
-
-@media (max-width: 768px) {
-  .formGrid {
-    grid-template-columns: 1fr;
-  }
+  margin-top: 20px;
 }
 
 .formGroup {
@@ -77,80 +112,141 @@
 }
 
 .label {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
-  color: var(--text-secondary, #2d4a43);
-}
-
-.label::after {
-  content: '';
-  margin-left: 2px;
+  color: #2d4a43;
 }
 
 .input,
 .select {
-  padding: 12px 14px;
-  border: 1px solid var(--border-input, #cde9dc);
+  padding: 12px 16px;
+  background: #f8fdf9;
+  border: 1px solid #e1f5ea;
   border-radius: 8px;
-  font-size: 14px;
-  transition: all 0.3s ease;
-  background-color: white;
-  color: var(--text-primary, #1a3c34);
+  font-size: 15px;
+  color: #1a3c34;
+  transition: all 0.2s ease;
+  font-family: inherit;
 }
 
 .input:focus,
 .select:focus {
   outline: none;
-  border-color: var(--primary-color, #2ecc71);
-  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.15);
+  border-color: #2ecc71;
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
+}
+
+.input::placeholder {
+  color: #a0aec0;
 }
 
 .input:disabled,
 .select:disabled {
-  background-color: var(--background-disabled, #f0f9f4);
+  opacity: 0.6;
   cursor: not-allowed;
-  color: var(--text-disabled, #7a9c8e);
+  background: #f1f1f1;
+}
+
+.input[readonly] {
+  background: #f8fdf9;
+  color: #6c8981;
+  cursor: not-allowed;
 }
 
 .select {
   cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%231a3c34' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 16px;
-  padding-right: 40px;
   appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231a3c34' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
 }
 
+/* Información de campos */
+.inputInfo {
+  font-size: 12px;
+  color: #6c8981;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.inputInfo::before {
+  content: '📝';
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.inputHelp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #6c8981;
+  margin-top: 4px;
+}
+
+.helpIcon {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* Estado vacío */
+.emptyState {
+  text-align: center;
+  padding: 60px 40px;
+  background: #f8fdf9;
+  border-radius: 12px;
+  border: 1px solid #e1f5ea;
+}
+
+.emptyIcon {
+  font-size: 56px;
+  margin-bottom: 20px;
+  display: block;
+  color: #c6f0d9;
+}
+
+.emptyState h3 {
+  margin: 0 0 12px 0;
+  color: #1a3c34;
+  font-size: 20px;
+}
+
+.emptyState p {
+  margin: 0 0 24px 0;
+  color: #6c8981;
+  font-size: 15px;
+}
+
+/* Acciones del formulario */
 .formActions {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding-top: 20px;
-  border-top: 1px solid var(--border-section, #e1f5ea);
+  border-top: 1px solid #e9f7ef;
   margin-top: 8px;
 }
 
-.primaryActions {
-  display: flex;
-  gap: 12px;
-}
-
 .secondaryButton {
-  padding: 12px 24px;
-  background-color: var(--secondary-bg, #f0f9f4);
-  color: var(--secondary-text, #27ae60);
-  border: 1px solid var(--secondary-border, #b8e6cc);
+  padding: 10px 20px;
+  background: white;
+  color: #2ecc71;
+  border: 1px solid #2ecc71;
   border-radius: 8px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .secondaryButton:hover:not(:disabled) {
-  background-color: var(--secondary-hover, #e3f7ec);
-  border-color: var(--secondary-border-hover, #a3dbb9);
+  background: #f8fdf9;
   transform: translateY(-1px);
 }
 
@@ -159,22 +255,31 @@
   cursor: not-allowed;
 }
 
+.buttonIcon {
+  font-size: 16px;
+}
+
+.primaryActions {
+  display: flex;
+  gap: 12px;
+}
+
 .cancelButton {
   padding: 12px 24px;
-  background-color: var(--cancel-bg, #fff5f5);
-  color: var(--cancel-text, #e74c3c);
-  border: 1px solid var(--cancel-border, #ffd1d1);
+  background: white;
+  color: #6c8981;
+  border: 1px solid #e1f5ea;
   border-radius: 8px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .cancelButton:hover:not(:disabled) {
-  background-color: var(--cancel-hover, #ffeaea);
-  border-color: var(--cancel-border-hover, #ffb8b8);
-  transform: translateY(-1px);
+  background: #f8fdf9;
+  border-color: #2ecc71;
+  color: #1a3c34;
 }
 
 .cancelButton:disabled {
@@ -184,79 +289,96 @@
 
 .submitButton {
   padding: 12px 28px;
-  background: linear-gradient(135deg, var(--primary-color, #2ecc71) 0%, var(--primary-dark, #27ae60) 100%);
+  background: #2ecc71;
   color: white;
   border: none;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
+  gap: 8px;
+  min-width: 150px;
   justify-content: center;
-  gap: 10px;
-  min-width: 160px;
 }
 
 .submitButton:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--primary-hover, #27ae60) 0%, var(--primary-dark-hover, #219653) 100%);
+  background: #27ae60;
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(46, 204, 113, 0.25);
-}
-
-.submitButton:active:not(:disabled) {
-  transform: translateY(0);
+  box-shadow: 0 6px 20px rgba(46, 204, 113, 0.3);
 }
 
 .submitButton:disabled {
   opacity: 0.7;
   cursor: not-allowed;
-  transform: none !important;
 }
 
 .spinner {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
   border-top-color: white;
+  border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-:root {
-  --primary-color: #2ecc71;
-  --primary-dark: #27ae60;
-  --primary-hover: #27ae60;
-  --primary-dark-hover: #219653;
-  --secondary-bg: #f0f9f4;
-  --secondary-text: #27ae60;
-  --secondary-border: #b8e6cc;
-  --secondary-hover: #e3f7ec;
-  --secondary-border-hover: #a3dbb9;
-  --cancel-bg: #fff5f5;
-  --cancel-text: #e74c3c;
-  --cancel-border: #ffd1d1;
-  --cancel-hover: #ffeaea;
-  --cancel-border-hover: #ffb8b8;
-  --background-section: #f8fdf9;
-  --border-section: #e1f5ea;
-  --border-input: #cde9dc;
-  --text-primary: #1a3c34;
-  --text-secondary: #2d4a43;
-  --text-muted: #6c8981;
-  --text-disabled: #7a9c8e;
-  --background-disabled: #f0f9f4;
-  --error-color: #e74c3c;
+/* Botón de cerrar en estado vacío */
+.closeButton {
+  padding: 12px 32px;
+  background: #2ecc71;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 150px;
 }
 
-@media (max-width: 640px) {
+.closeButton:hover {
+  background: #27ae60;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(46, 204, 113, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    gap: 20px;
+  }
+  
+  .headerSection {
+    flex-direction: column;
+    text-align: center;
+    padding: 20px;
+    gap: 16px;
+  }
+  
+  .avatar {
+    align-self: center;
+  }
+  
+  .metaInfo {
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+  
   .formSection {
-    padding: 16px;
+    padding: 20px;
   }
   
   .formActions {
@@ -265,23 +387,42 @@
   }
   
   .secondaryButton {
-    order: 2;
     width: 100%;
-    text-align: center;
+    justify-content: center;
   }
   
   .primaryActions {
-    order: 1;
     width: 100%;
+    flex-direction: column;
   }
   
   .cancelButton,
   .submitButton {
-    flex: 1;
-    text-align: center;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .headerSection,
+  .formSection {
+    padding: 16px;
   }
   
-  .submitButton {
-    min-width: auto;
+  .patientName {
+    font-size: 20px;
+  }
+  
+  .sectionTitle {
+    font-size: 15px;
+  }
+  
+  .input,
+  .select {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+  
+  .emptyState {
+    padding: 40px 20px;
   }
 }

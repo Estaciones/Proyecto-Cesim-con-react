@@ -66,7 +66,7 @@ export default function Dashboard() {
 
   const handleSelectPatient = useCallback(
     (patient) => {
-      console.log("👤 Dashboard - handleSelectPatient llamado con:", patient)
+
 
       const selectedPatientData = {
         id_paciente: patient.id_paciente || patient.id,
@@ -76,11 +76,10 @@ export default function Dashboard() {
         email: patient.email
       }
 
-      console.log("📝 Dashboard - Guardando paciente:", selectedPatientData)
       setSelectedPatient(selectedPatientData)
 
       if (isSectionAllowed("historia")) {
-        console.log("📊 Dashboard - Cambiando a sección historia")
+       
         setActiveSection("historia")
       }
     },

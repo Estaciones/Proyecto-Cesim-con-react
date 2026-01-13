@@ -1,155 +1,234 @@
+/* ViewPacienteModal.module.css */
 .container {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 24px;
 }
 
-.patientInfoHeader {
-  background: var(--background-section, #f8fdf9);
-  border-radius: 12px;
-  padding: 20px;
-  border: 1px solid #e1f5ea;
-  margin-bottom: 10px;
-}
-
-.patientBasicInfo {
+/* Encabezado del Paciente */
+.headerSection {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  background: linear-gradient(135deg, #e9f7ef 0%, #d4f1e3 100%);
+  border-radius: 12px;
+  border: 1px solid #c6f0d9;
+  margin-bottom: 8px;
+}
+
+.avatar {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+  flex-shrink: 0;
+}
+
+.headerInfo {
+  flex: 1;
 }
 
 .patientName {
-  margin: 0;
-  font-size: 18px;
+  margin: 0 0 12px 0;
+  font-size: 22px;
   font-weight: 600;
-  color: var(--text-primary, #1a3c34);
+  color: #1a3c34;
+  line-height: 1.2;
 }
 
-.patientCI {
-  margin: 0;
-  font-size: 14px;
-  color: var(--text-secondary, #2d4a43);
+.metaInfo {
   display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.infoLabel {
-  font-weight: 500;
-  color: var(--text-primary, #1a3c34);
-}
-
-.formSection {
-  display: flex;
-  flex-direction: column;
   gap: 20px;
-  background: var(--background-section, #f8fdf9);
+  flex-wrap: wrap;
+}
+
+.metaItem {
+  font-size: 14px;
+  color: #2d4a43;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(198, 240, 217, 0.6);
+}
+
+.metaItem strong {
+  color: #1a3c34;
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+/* Secciones de información */
+.infoSection {
+  background: white;
   border-radius: 12px;
-  padding: 20px;
   border: 1px solid #e1f5ea;
+  padding: 24px;
 }
 
 .sectionTitle {
-  margin: 0;
+  margin: 0 0 20px 0;
   font-size: 16px;
   font-weight: 600;
-  color: var(--text-primary, #1a3c34);
-  padding-bottom: 12px;
-  border-bottom: 2px solid var(--border-section, #c6f0d9);
+  color: #1a3c34;
   display: flex;
   align-items: center;
   gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e9f7ef;
 }
 
 .sectionIcon {
   font-size: 18px;
-  opacity: 0.8;
+  opacity: 0.9;
 }
 
-.formGrid {
+/* Grid de información */
+.infoGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
 }
 
-@media (max-width: 768px) {
-  .formGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.formGroup {
+.infoItem {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.label {
+.infoLabel {
   font-size: 13px;
   font-weight: 500;
-  color: var(--text-secondary, #2d4a43);
+  color: #6c8981;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.readonlyField {
-  padding: 12px 14px;
-  border: 1px solid var(--border-input, #cde9dc);
+.infoValue {
+  padding: 12px 16px;
+  background: #f8fdf9;
+  border: 1px solid #e1f5ea;
   border-radius: 8px;
-  font-size: 14px;
-  background-color: #f9f9f9;
-  color: var(--text-primary, #1a3c34);
+  font-size: 15px;
+  color: #1a3c34;
   min-height: 44px;
   display: flex;
   align-items: center;
+  line-height: 1.4;
 }
 
+.largeField {
+  min-height: 60px;
+  align-items: flex-start;
+  line-height: 1.6;
+}
+
+/* Estado vacío */
+.emptyState {
+  text-align: center;
+  padding: 60px 40px;
+  background: #f8fdf9;
+  border-radius: 12px;
+  border: 1px solid #e1f5ea;
+}
+
+.emptyIcon {
+  font-size: 56px;
+  margin-bottom: 20px;
+  display: block;
+  color: #c6f0d9;
+}
+
+.emptyState h3 {
+  margin: 0 0 12px 0;
+  color: #1a3c34;
+  font-size: 20px;
+}
+
+.emptyState p {
+  margin: 0;
+  color: #6c8981;
+  font-size: 15px;
+}
+
+/* Acciones */
 .formActions {
   display: flex;
   justify-content: flex-end;
-  align-items: center;
   padding-top: 20px;
-  border-top: 1px solid var(--border-section, #e1f5ea);
+  border-top: 1px solid #e9f7ef;
   margin-top: 8px;
 }
 
 .closeButton {
-  padding: 12px 28px;
-  background: linear-gradient(135deg, var(--primary-color, #2ecc71) 0%, var(--primary-dark, #27ae60) 100%);
+  padding: 12px 32px;
+  background: #2ecc71;
   color: white;
   border: none;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  min-width: 120px;
+  transition: all 0.2s ease;
+  min-width: 150px;
 }
 
 .closeButton:hover {
-  background: linear-gradient(135deg, var(--primary-hover, #27ae60) 0%, var(--primary-dark-hover, #219653) 100%);
+  background: #27ae60;
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(46, 204, 113, 0.25);
+  box-shadow: 0 6px 20px rgba(46, 204, 113, 0.3);
 }
 
 .closeButton:active {
   transform: translateY(0);
 }
 
-/* Variables CSS para tema saludable */
-:root {
-  --primary-color: #2ecc71;
-  --primary-dark: #27ae60;
-  --primary-hover: #27ae60;
-  --primary-dark-hover: #219653;
-  --background-section: #f8fdf9;
-  --border-section: #e1f5ea;
-  --border-input: #cde9dc;
-  --text-primary: #1a3c34;
-  --text-secondary: #2d4a43;
-}
-
-@media (max-width: 640px) {
-  .formSection {
-    padding: 16px;
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    gap: 20px;
+  }
+  
+  .headerSection {
+    flex-direction: column;
+    text-align: center;
+    padding: 20px;
+    gap: 16px;
+  }
+  
+  .avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 20px;
+  }
+  
+  .patientName {
+    font-size: 20px;
+  }
+  
+  .metaInfo {
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .metaItem {
+    text-align: center;
+  }
+  
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .infoSection {
+    padding: 20px;
   }
   
   .formActions {
@@ -158,5 +237,20 @@
   
   .closeButton {
     width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .headerSection {
+    padding: 16px;
+  }
+  
+  .infoSection {
+    padding: 16px;
+  }
+  
+  .infoValue {
+    padding: 10px 14px;
+    font-size: 14px;
   }
 }

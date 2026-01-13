@@ -1,7 +1,4 @@
 // src/utils/api.js
-let apiCallCount = 0
-let fetchCallCount = 0
-
 export const API_BASE = "http://localhost:4000/api".replace(/\/$/, "")
 
 export function apiUrl(path = "") {
@@ -49,7 +46,6 @@ export function getHeaders(contentType = "application/json") {
  * no es JSON válido (ej. HTML dev server, página de login, etc).
  */
 export async function handleResponse(response) {
-  const callId = fetchCallCount
   const contentType = (response.headers.get("content-type") || "").toLowerCase()
 
   if (!response.ok) {
@@ -58,7 +54,7 @@ export async function handleResponse(response) {
     try {
       const errorData = await response.json()
       errorMessage = errorData.error || errorData.message || errorMessage
-      console.error(`❌ handleResponse #${callId} - Error JSON:`, errorData)
+      console.error(`❌ Error JSON:`, errorData)
     } catch {
       // No era JSON: tomar texto crudo
       try {
@@ -67,17 +63,11 @@ export async function handleResponse(response) {
           errorMessage = text.slice(0, 2000)
         }
       } catch (err2) {
-        console.error(
-          `❌ handleResponse #${callId} - Error leyendo body:`,
-          err2
-        )
+        console.error(`❌ Error leyendo body:`, err2)
       }
     }
 
-    console.error(
-      `❌ handleResponse #${callId} - Lanzando error:`,
-      errorMessage
-    )
+    console.error(`❌ Lanzando error:`, errorMessage)
     throw new Error(errorMessage)
   }
 
@@ -98,18 +88,12 @@ export async function handleResponse(response) {
       // JSON parsing failed even si content-type decía JSON: log raw text
       try {
         const raw = await response.text()
-        console.error(
-          `❌ handleResponse #${callId} - Error parseando JSON. RAW:`,
-          raw.slice(0, 2000)
-        )
+        console.error(`Error parseando JSON. RAW:`, raw.slice(0, 2000))
         throw new Error(
           `Error parseando JSON de la respuesta: se recibió texto. Revisa RAW response (console).`
         )
       } catch (err2) {
-        console.error(
-          `❌ handleResponse #${callId} - Error leyendo body despues de fallo JSON:`,
-          err2
-        )
+        console.error(`Error leyendo body despues de fallo JSON:`, err2)
         throw new Error(`Error parseando respuesta JSON: ${error.message}`)
       }
     }
@@ -118,17 +102,14 @@ export async function handleResponse(response) {
     try {
       const raw = await response.text()
       console.warn(
-        `⚠️ handleResponse #${callId} - Response no es JSON. Content-Type: ${contentType}. RAW:`,
+        `Response no es JSON. Content-Type: ${contentType}. RAW:`,
         raw.slice(0, 2000)
       )
       throw new Error(
         `La API devolvió Content-Type="${contentType}" (no JSON). Revisa la respuesta RAW en consola.`
       )
     } catch (err) {
-      console.error(
-        `❌ handleResponse #${callId} - Error leyendo body no-JSON:`,
-        err
-      )
+      console.error(`Error leyendo body no-JSON:`, err)
       throw new Error(
         "La API devolvió una respuesta no-JSON y no se pudo leer el body."
       )
@@ -137,9 +118,6 @@ export async function handleResponse(response) {
 }
 
 export async function apiFetch(url, options = {}) {
-  fetchCallCount++
-  const callId = fetchCallCount
-
   try {
     const response = await fetch(url, options)
 
@@ -147,7 +125,7 @@ export async function apiFetch(url, options = {}) {
 
     return result
   } catch (error) {
-    console.error(`❌ apiFetch #${callId} - ERROR:`, {
+    console.error(`ERROR:`, {
       message: error.message,
       name: error.name
     })
@@ -158,9 +136,6 @@ export async function apiFetch(url, options = {}) {
 // Métodos HTTP convenience
 export const api = {
   get: (path, options = {}) => {
-    apiCallCount++
-    const callId = apiCallCount
-
     const url = apiUrl(path)
     const headers = getHeaders()
 
@@ -169,15 +144,12 @@ export const api = {
       method: "GET",
       headers: headers
     }).catch((error) => {
-      console.error(`❌ API.GET #${callId} - Error:`, error.message)
+      console.error(`Error:`, error.message)
       throw error
     })
   },
 
   post: (path, data, options = {}) => {
-    apiCallCount++
-    const callId = apiCallCount
-
     const url = apiUrl(path)
     const headers = getHeaders()
 
@@ -187,15 +159,12 @@ export const api = {
       headers: headers,
       body: JSON.stringify(data)
     }).catch((error) => {
-      console.error(`❌ API.POST #${callId} - Error:`, error.message)
+      console.error(`Error:`, error.message)
       throw error
     })
   },
 
   patch: (path, data, options = {}) => {
-    apiCallCount++
-    const callId = apiCallCount
-
     const url = apiUrl(path)
     const headers = getHeaders()
 
@@ -205,15 +174,12 @@ export const api = {
       headers: headers,
       body: JSON.stringify(data)
     }).catch((error) => {
-      console.error(`❌ API.PATCH #${callId} - Error:`, error.message)
+      console.error(`Error:`, error.message)
       throw error
     })
   },
 
   delete: (path, options = {}) => {
-    apiCallCount++
-    const callId = apiCallCount
-
     const url = apiUrl(path)
     const headers = getHeaders(null) // DELETE puede no necesitar Content-Type
 
@@ -222,7 +188,7 @@ export const api = {
       method: "DELETE",
       headers: headers
     }).catch((error) => {
-      console.error(`❌ API.DELETE #${callId} - Error:`, error.message)
+      console.error(`Error:`, error.message)
       throw error
     })
   }

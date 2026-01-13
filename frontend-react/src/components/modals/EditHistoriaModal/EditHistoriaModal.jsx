@@ -1,348 +1,348 @@
-import React, { useEffect, useState } from "react"
-import Modal from "../Modal/Modal"
-import { useModal } from "../../../hooks/useModal"
-import { useHistory } from "../../../hooks/useHistory"
-import { useToast } from "../../../hooks/useToast"
-import styles from "./EditHistoriaModal.module.css"
+// EditHistoriaModal.jsx
+import React, { useEffect, useState } from 'react';
+import Modal from '../Modal/Modal';
+import { useModal } from '../../../hooks/useModal';
+import { useHistory } from '../../../hooks/useHistory';
+import { useToast } from '../../../hooks/useToast';
+import styles from './EditHistoriaModal.module.css';
 
 export default function EditHistoriaModal() {
-  const { modals, closeModal, modalData } = useModal()
-  const { updateRegistro } = useHistory()
-  const { showToast } = useToast()
+  const { modals, closeModal, modalData } = useModal();
+  const { updateRegistro } = useHistory();
+  const { showToast } = useToast();
 
-  const open = !!modals.editHistoria
-  const { currentEditHistoria } = modalData?.editHistoria || {}
+  const open = !!modals.editHistoria;
+  const { currentEditHistoria } = modalData?.editHistoria || {};
 
   const [formData, setFormData] = useState({
-    recordId: "",
-    titulo: "",
-    descripcion: "",
-    tipo: "general"
-  })
+    recordId: '',
+    titulo: '',
+    descripcion: '',
+    tipo: 'general'
+  });
 
-  const [submitting, setSubmitting] = useState(false)
-  const [recordInfo, setRecordInfo] = useState(null)
+  const [submitting, setSubmitting] = useState(false);
+  const [recordInfo, setRecordInfo] = useState(null);
 
-// En EditHistoriaModal.js, asegúrate de que el ID se obtenga correctamente:
-useEffect(() => {
-  if (open && currentEditHistoria) {
-    console.log("📋 EditHistoriaModal - Datos recibidos:", currentEditHistoria)
-    
-    const fechaCreacion = currentEditHistoria.fecha_creacion
-      ? new Date(currentEditHistoria.fecha_creacion).toLocaleString("es-ES", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit"
-        })
-      : "No disponible"
+  useEffect(() => {
+    if (open && currentEditHistoria) {
+      const fechaCreacion = currentEditHistoria.fecha_creacion
+        ? new Date(currentEditHistoria.fecha_creacion).toLocaleString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        : 'No disponible';
 
-    const fechaActualizacion = currentEditHistoria.fecha_actualizacion
-      ? new Date(currentEditHistoria.fecha_actualizacion).toLocaleString("es-ES", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit"
-        })
-      : "No disponible"
+      const fechaActualizacion = currentEditHistoria.fecha_actualizacion
+        ? new Date(currentEditHistoria.fecha_actualizacion).toLocaleString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        : 'No disponible';
 
-    // Usar id_registro si está disponible, de lo contrario usar id
-    const recordId = currentEditHistoria.id_registro || currentEditHistoria.id || ""
-    
-    setFormData({
-      recordId: recordId,
-      titulo: currentEditHistoria.titulo || "",
-      descripcion: currentEditHistoria.descripcion || "",
-      tipo: currentEditHistoria.tipo || "general"
-    })
-    setRecordInfo({ fechaCreacion, fechaActualizacion })
-  } else {
-    setFormData({
-      recordId: "",
-      titulo: "",
-      descripcion: "",
-      tipo: "general"
-    })
-    setRecordInfo(null)
-  }
-}, [open, currentEditHistoria])
+      const recordId = currentEditHistoria.id_registro || currentEditHistoria.id || '';
+      
+      setFormData({
+        recordId: recordId,
+        titulo: currentEditHistoria.titulo || '',
+        descripcion: currentEditHistoria.descripcion || '',
+        tipo: currentEditHistoria.tipo || 'general'
+      });
+      setRecordInfo({ fechaCreacion, fechaActualizacion });
+    } else {
+      setFormData({
+        recordId: '',
+        titulo: '',
+        descripcion: '',
+        tipo: 'general'
+      });
+      setRecordInfo(null);
+    }
+  }, [open, currentEditHistoria]);
+
   const handleInputChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value
-    }))
-  }
+    }));
+  };
 
   const handleClear = () => {
     if (currentEditHistoria) {
       setFormData({
-        recordId: currentEditHistoria.id_registro || currentEditHistoria.id || "",
-        titulo: currentEditHistoria.titulo || "",
-        descripcion: currentEditHistoria.descripcion || "",
-        tipo: currentEditHistoria.tipo || "general"
-      })
+        recordId: currentEditHistoria.id_registro || currentEditHistoria.id || '',
+        titulo: currentEditHistoria.titulo || '',
+        descripcion: currentEditHistoria.descripcion || '',
+        tipo: currentEditHistoria.tipo || 'general'
+      });
       
-      // Actualizar recordInfo al restaurar
       if (currentEditHistoria.fecha_creacion || currentEditHistoria.fecha_actualizacion) {
         const fechaCreacion = currentEditHistoria.fecha_creacion
-          ? new Date(currentEditHistoria.fecha_creacion).toLocaleString("es-ES", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit"
+          ? new Date(currentEditHistoria.fecha_creacion).toLocaleString('es-ES', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
             })
-          : "No disponible"
+          : 'No disponible';
 
         const fechaActualizacion = currentEditHistoria.fecha_actualizacion
-          ? new Date(currentEditHistoria.fecha_actualizacion).toLocaleString("es-ES", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit"
+          ? new Date(currentEditHistoria.fecha_actualizacion).toLocaleString('es-ES', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
             })
-          : "No disponible"
+          : 'No disponible';
 
-        setRecordInfo({ fechaCreacion, fechaActualizacion })
+        setRecordInfo({ fechaCreacion, fechaActualizacion });
       }
     }
-  }
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!formData.titulo.trim()) {
-      showToast("El título es obligatorio", "error")
-      return
+      showToast('El título es obligatorio', 'error');
+      return;
     }
 
     if (!formData.descripcion.trim()) {
-      showToast("La descripción es obligatoria", "error")
-      return
+      showToast('La descripción es obligatoria', 'error');
+      return;
     }
 
     if (!formData.recordId) {
-      showToast("No se pudo identificar el registro", "error")
-      return
+      showToast('No se pudo identificar el registro', 'error');
+      return;
     }
 
-    setSubmitting(true)
+    setSubmitting(true);
     try {
       await updateRegistro(formData.recordId, {
         titulo: formData.titulo,
         descripcion: formData.descripcion,
         tipo: formData.tipo
-      })
+      });
 
-      showToast("Registro actualizado exitosamente", "success")
-      closeModal("editHistoria")
+      showToast('Registro actualizado exitosamente', 'success');
+      closeModal('editHistoria');
     } catch (error) {
-      console.error("Error actualizando historia:", error)
-      showToast(error.message || "Error al actualizar el registro", "error")
+      showToast(error.message || 'Error al actualizar el registro', 'error');
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const getTipoLabel = (tipo) => {
     const tipos = {
-      general: "General",
-      consulta: "Consulta",
-      evaluacion: "Evaluación",
-      seguimiento: "Seguimiento",
-      tratamiento: "Tratamiento",
-      diagnostico: "Diagnóstico"
-    }
-    return tipos[tipo] || tipo
-  }
+      general: 'General',
+      consulta: 'Consulta',
+      evaluacion: 'Evaluación',
+      seguimiento: 'Seguimiento',
+      tratamiento: 'Tratamiento',
+      diagnostico: 'Diagnóstico'
+    };
+    return tipos[tipo] || tipo;
+  };
 
   return (
     <Modal
       open={open}
-      onClose={() => closeModal("editHistoria")}
-      title="Editar Registro de Historia Clínica"
+      onClose={() => closeModal('editHistoria')}
+      title="Editar Registro Clínico"
       size="lg"
-      loading={submitting}
     >
-      <form onSubmit={handleSubmit} className={styles.form}>
-        {/* Sección: Información del Registro */}
-        <div className={styles.formSection}>
-          <h3 className={styles.sectionTitle}>
-            <span className={styles.sectionIcon}>📝</span>
-            Información del Registro
-          </h3>
-          
-          {recordInfo && (
-            <div className={styles.recordInfo}>
-              <div className={styles.infoGrid}>
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>
-                    <span className={styles.infoIcon}>📅</span>
-                    Creado:
-                  </span>
-                  <span className={styles.infoValue}>
-                    {recordInfo.fechaCreacion}
+      <div className={styles.container}>
+        {/* Información del Registro */}
+        <div className={styles.headerSection}>
+          <div className={styles.headerIcon}>📝</div>
+          <div className={styles.headerInfo}>
+            <h3>Editar Registro</h3>
+            {recordInfo && (
+              <div className={styles.recordMeta}>
+                <span className={styles.metaItem}>
+                  <strong>Creado:</strong> {recordInfo.fechaCreacion}
+                </span>
+                <span className={styles.metaItem}>
+                  <strong>Actualizado:</strong> {recordInfo.fechaActualizacion}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className={styles.form}>
+          {/* Información Básica */}
+          <div className={styles.formSection}>
+            <h4 className={styles.sectionTitle}>
+              <span className={styles.sectionIcon}>📋</span>
+              Información del Registro
+            </h4>
+            
+            <div className={styles.formGrid}>
+              <div className={styles.formGroup}>
+                <label htmlFor="titulo" className={styles.label}>
+                  Título *
+                </label>
+                <input
+                  type="text"
+                  id="titulo"
+                  name="titulo"
+                  value={formData.titulo}
+                  onChange={handleInputChange}
+                  placeholder="Título del registro clínico"
+                  className={styles.input}
+                  required
+                  disabled={submitting}
+                />
+                <div className={styles.inputInfo}>
+                  {formData.titulo.length > 0 && (
+                    <span className={styles.charCount}>{formData.titulo.length} caracteres</span>
+                  )}
+                </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="tipo" className={styles.label}>
+                  Tipo de Registro
+                </label>
+                <select
+                  id="tipo"
+                  name="tipo"
+                  value={formData.tipo}
+                  onChange={handleInputChange}
+                  className={styles.select}
+                  disabled={submitting}
+                >
+                  <option value="general">General</option>
+                  <option value="consulta">Consulta</option>
+                  <option value="evaluacion">Evaluación</option>
+                  <option value="seguimiento">Seguimiento</option>
+                  <option value="tratamiento">Tratamiento</option>
+                  <option value="diagnostico">Diagnóstico</option>
+                </select>
+                <div className={styles.selectedTipo}>
+                  <span className={styles.tipoBadge}>
+                    {getTipoLabel(formData.tipo)}
                   </span>
                 </div>
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>
-                    <span className={styles.infoIcon}>🔄</span>
-                    Última actualización:
-                  </span>
-                  <span className={styles.infoValue}>
-                    {recordInfo.fechaActualizacion}
-                  </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Descripción */}
+          <div className={styles.formSection}>
+            <h4 className={styles.sectionTitle}>
+              <span className={styles.sectionIcon}>📄</span>
+              Descripción Detallada
+            </h4>
+            
+            <div className={styles.formGroup}>
+              <label htmlFor="descripcion" className={styles.label}>
+                Descripción *
+              </label>
+              <textarea
+                id="descripcion"
+                name="descripcion"
+                value={formData.descripcion}
+                onChange={handleInputChange}
+                placeholder="Descripción detallada del registro clínico..."
+                className={styles.textarea}
+                rows={6}
+                required
+                disabled={submitting}
+              />
+              <div className={styles.textareaInfo}>
+                <div className={styles.charCount}>
+                  <span>{formData.descripcion.length} caracteres</span>
                 </div>
+                <div className={styles.lineCount}>
+                  <span>{formData.descripcion.split('\n').length} líneas</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Vista Previa */}
+          {(formData.titulo || formData.descripcion) && (
+            <div className={styles.formSection}>
+              <h4 className={styles.sectionTitle}>
+                <span className={styles.sectionIcon}>👁️</span>
+                Vista Previa
+              </h4>
+              
+              <div className={styles.previewCard}>
+                {formData.titulo && (
+                  <div className={styles.previewHeader}>
+                    <h5 className={styles.previewTitle}>{formData.titulo}</h5>
+                    <span className={styles.previewTipo}>
+                      {getTipoLabel(formData.tipo)}
+                    </span>
+                  </div>
+                )}
+                {formData.descripcion && (
+                  <div className={styles.previewContent}>
+                    {formData.descripcion.split('\n').map((line, index) => (
+                      <p key={index} className={styles.previewLine}>
+                        {line || <br />}
+                      </p>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          <div className={styles.formGrid}>
-            <div className={styles.formGroup}>
-              <label htmlFor="titulo" className={styles.label}>
-                Título del Registro *
-              </label>
-              <input
-                type="text"
-                id="titulo"
-                name="titulo"
-                value={formData.titulo}
-                onChange={handleInputChange}
-                placeholder="Título del registro clínico"
-                className={styles.input}
-                required
-                disabled={submitting}
-              />
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="tipo" className={styles.label}>
-                Tipo de Registro
-              </label>
-              <select
-                id="tipo"
-                name="tipo"
-                value={formData.tipo}
-                onChange={handleInputChange}
-                className={styles.select}
-                disabled={submitting}
-              >
-                <option value="general">General</option>
-                <option value="consulta">Consulta</option>
-                <option value="evaluacion">Evaluación</option>
-                <option value="seguimiento">Seguimiento</option>
-                <option value="tratamiento">Tratamiento</option>
-                <option value="diagnostico">Diagnóstico</option>
-              </select>
-              <div className={styles.selectedTipo}>
-                <span className={styles.tipoBadge}>
-                  {getTipoLabel(formData.tipo)}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Sección: Descripción Detallada */}
-        <div className={styles.formSection}>
-          <h3 className={styles.sectionTitle}>
-            <span className={styles.sectionIcon}>📄</span>
-            Descripción Detallada
-          </h3>
-          
-          <div className={styles.formGroup}>
-            <label htmlFor="descripcion" className={styles.label}>
-              Descripción Detallada *
-            </label>
-            <textarea
-              id="descripcion"
-              name="descripcion"
-              value={formData.descripcion}
-              onChange={handleInputChange}
-              placeholder="Descripción detallada del registro..."
-              className={styles.textarea}
-              rows={8}
-              required
-              disabled={submitting}
-            />
-            <div className={styles.textInfo}>
-              <div className={styles.charCount}>
-                <span>{formData.descripcion.length} caracteres</span>
-              </div>
-              <div className={styles.lineCount}>
-                <span>{formData.descripcion.split('\n').length} líneas</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Sección: Vista Previa */}
-        {formData.titulo && (
-          <div className={styles.formSection}>
-            <h3 className={styles.sectionTitle}>
-              <span className={styles.sectionIcon}>👁️</span>
-              Vista Previa
-            </h3>
-            
-            <div className={styles.preview}>
-              <div className={styles.previewHeader}>
-                <h4 className={styles.previewTitle}>{formData.titulo}</h4>
-                <span className={styles.previewTipo}>
-                  {getTipoLabel(formData.tipo)}
-                </span>
-              </div>
-              <div className={styles.previewContent}>
-                {formData.descripcion.split('\n').map((line, index) => (
-                  <p key={index} className={styles.previewParagraph}>
-                    {line || <br />}
-                  </p>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Acciones */}
-        <div className={styles.formActions}>
-          <button
-            type="button"
-            onClick={handleClear}
-            className={styles.secondaryButton}
-            disabled={submitting}
-          >
-            Restaurar Original
-          </button>
-
-          <div className={styles.primaryActions}>
+          {/* Acciones */}
+          <div className={styles.formActions}>
             <button
               type="button"
-              onClick={() => closeModal("editHistoria")}
-              className={styles.cancelButton}
+              onClick={handleClear}
+              className={styles.secondaryButton}
               disabled={submitting}
             >
-              Cancelar
+              <span className={styles.buttonIcon}>↺</span>
+              Restaurar Original
             </button>
-            <button
-              type="submit"
-              className={styles.submitButton}
-              disabled={submitting}
-            >
-              {submitting ? (
-                <>
-                  <span className={styles.spinner}></span>
-                  Guardando...
-                </>
-              ) : (
-                "Guardar Cambios"
-              )}
-            </button>
+            
+            <div className={styles.primaryActions}>
+              <button
+                type="button"
+                onClick={() => closeModal('editHistoria')}
+                className={styles.cancelButton}
+                disabled={submitting}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className={styles.submitButton}
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <>
+                    <span className={styles.spinner}></span>
+                    Guardando...
+                  </>
+                ) : (
+                  'Guardar Cambios'
+                )}
+              </button>
+            </div>
           </div>
-        </div>
-      </form>
+        </form>
+      </div>
     </Modal>
-  )
+  );
 }

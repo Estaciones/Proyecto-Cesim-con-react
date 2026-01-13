@@ -126,8 +126,6 @@ export default function NuevoPacienteModal() {
         contacto_emergencia_telefono: formData.contacto_emergencia_telefono || "",
         id_medico: profile.id_usuario
       }
-
-      console.log("📤 NuevoPacienteModal - Enviando datos:", pacienteData)
       
       await createPatient(pacienteData)
       showToast("Paciente creado y asignado", "success")
@@ -231,23 +229,6 @@ export default function NuevoPacienteModal() {
               </select>
             </div>
 
-            {/* Eliminar campo de fecha de nacimiento */}
-            {/* <div className={styles.formGroup}>
-              <label htmlFor="fecha_nacimiento" className={styles.label}>
-                Fecha de Nacimiento
-              </label>
-              <input
-                type="date"
-                id="fecha_nacimiento"
-                name="fecha_nacimiento"
-                value={formData.fecha_nacimiento}
-                onChange={handleInputChange}
-                className={styles.input}
-                max={new Date().toISOString().split("T")[0]}
-                disabled={submitting}
-              />
-            </div> */}
-
             <div className={styles.formGroup}>
               <label htmlFor="telefono" className={styles.label}>
                 Teléfono
@@ -264,23 +245,6 @@ export default function NuevoPacienteModal() {
                 disabled={submitting}
               />
             </div>
-
-            {/* Eliminar campo de email - no se crea aquí */}
-            {/* <div className={styles.formGroup}>
-              <label htmlFor="email" className={styles.label}>
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="Ingrese el email"
-                className={styles.input}
-                disabled={submitting}
-              />
-            </div> */}
           </div>
         </div>
 

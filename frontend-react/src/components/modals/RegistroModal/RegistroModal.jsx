@@ -8,8 +8,6 @@ import { usePatients } from "../../../hooks/usePatients";
 import styles from "./RegistroModal.module.css";
 
 export default function RegistroModal() {
-  console.log("🔵 RegistroModal - RENDER");
-
   const { modals, closeModal, getModalData } = useModal();
   const { createRegistro } = useHistory();
   const { showToast } = useToast();
@@ -19,15 +17,6 @@ export default function RegistroModal() {
   const open = !!modals.registro;
   const registroData = getModalData("registro");
   const currentRegistroPacienteId = registroData.currentRegistroPacienteId;
-
-  console.log("🔵 RegistroModal - Datos recibidos:", {
-    open,
-    currentRegistroPacienteId,
-    tipoId: typeof currentRegistroPacienteId,
-    profileId: profile?.id_paciente,
-    profileTipo: profile?.tipo_usuario,
-    pacientesCount: patients?.length || 0,
-  });
 
   const [formData, setFormData] = useState({
     titulo: "",
@@ -44,26 +33,20 @@ export default function RegistroModal() {
 
     if (currentRegistroPacienteId) {
       targetId = currentRegistroPacienteId;
-      console.log("🎯 RegistroModal - Buscando paciente por ID del modal:", targetId);
     } else if (formData.id_paciente) {
       targetId = parseInt(formData.id_paciente);
-      console.log("📋 RegistroModal - Buscando por ID del formulario:", targetId);
     } else if (profile?.id_paciente) {
       targetId = profile.id_paciente;
-      console.log("👤 RegistroModal - Buscando por ID del perfil:", targetId);
     }
 
     if (targetId && Array.isArray(patients)) {
       const patient = patients.find((p) => p.id_paciente === targetId);
       if (patient) {
-        console.log("✅ RegistroModal - Paciente encontrado:", patient.nombre);
         return {
           id: patient.id_paciente,
           nombre: `${patient.nombre} ${patient.apellido}`,
           ci: patient.ci,
         };
-      } else {
-        console.warn("⚠️ RegistroModal - No se encontró paciente con ID:", targetId);
       }
     }
     return null;
@@ -72,15 +55,11 @@ export default function RegistroModal() {
   // Efecto para inicializar
   useEffect(() => {
     if (open && !initialized) {
-      console.log("📝 RegistroModal - Inicializando...");
-
       let initialPatientId = "";
       if (currentRegistroPacienteId) {
         initialPatientId = String(currentRegistroPacienteId);
-        console.log("🎯 RegistroModal - Usando ID del modal:", initialPatientId);
       } else if (profile?.id_paciente) {
         initialPatientId = String(profile.id_paciente);
-        console.log("👤 RegistroModal - Usando ID del perfil:", initialPatientId);
       }
 
       setFormData({
@@ -92,9 +71,8 @@ export default function RegistroModal() {
 
       // Cargar pacientes si es médico y no tiene pacientes
       if (profile?.tipo_usuario === "medico" && (!patients || patients.length === 0)) {
-        console.log("📥 RegistroModal - Cargando pacientes para médico");
         fetchPatients().catch((err) => {
-          console.error("❌ RegistroModal - Error cargando pacientes:", err);
+          console.error("Error cargando pacientes:", err);
         });
       }
 
@@ -118,7 +96,6 @@ export default function RegistroModal() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("🚀 RegistroModal - Enviando formulario");
 
     if (!formData.titulo.trim()) {
       showToast("El título es obligatorio", "error");
@@ -132,13 +109,10 @@ export default function RegistroModal() {
     let id_paciente = null;
     if (currentRegistroPacienteId) {
       id_paciente = currentRegistroPacienteId;
-      console.log("🎯 RegistroModal - Usando ID del modal:", id_paciente);
     } else if (formData.id_paciente) {
       id_paciente = parseInt(formData.id_paciente);
-      console.log("📋 RegistroModal - Usando ID del select:", id_paciente);
     } else if (profile?.id_paciente) {
       id_paciente = profile.id_paciente;
-      console.log("👤 RegistroModal - Usando ID del perfil:", id_paciente);
     }
 
     if (!id_paciente) {
@@ -158,8 +132,6 @@ export default function RegistroModal() {
       return;
     }
 
-    console.log("📡 RegistroModal - Creando registro:", { id_paciente, ci });
-
     setSubmitting(true);
     try {
       await createRegistro({
@@ -170,10 +142,9 @@ export default function RegistroModal() {
         ci,
       });
       showToast("Registro creado exitosamente", "success");
-      console.log("✅ RegistroModal - Registro creado");
       closeModal("registro");
     } catch (err) {
-      console.error("❌ RegistroModal - Error:", err);
+      console.error("Error creando registro:", err);
       showToast(err.message || "Error al crear registro", "error");
     } finally {
       setSubmitting(false);
@@ -185,11 +156,8 @@ export default function RegistroModal() {
     : [];
 
   if (!open) {
-    console.log("👻 RegistroModal - Cerrado, no renderizar");
     return null;
   }
-
-  console.log("🎨 RegistroModal - Renderizando modal");
 
   return (
     <Modal

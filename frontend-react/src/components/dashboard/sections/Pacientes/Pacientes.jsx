@@ -64,12 +64,6 @@ export default function Pacientes({ onSelectPatient }) {
 
   const handleSelectPatient = useCallback(
     (patient, action = null) => {
-      console.log("👤 Pacientes - Seleccionando paciente:", {
-        id: patient.id_paciente,
-        nombre: patient.nombre,
-        action
-      })
-
       const patientData = {
         id_paciente: patient.id_paciente || patient.id,
         ci: patient.ci,
@@ -417,14 +411,13 @@ export default function Pacientes({ onSelectPatient }) {
                       size="small"
                       onClick={(e) => {
                         e.stopPropagation()
-                        openViewPaciente(patient) // <-- Cambiado de handleSelectPatient(patient) a openViewPaciente
+                        openViewPaciente(patient)
                       }}
                       className={styles.actionButton}>
                       <span className={styles.buttonIcon}>👁️</span>
                       Ver detalles
                     </Button>
 
-                    {/* Botón de Editar Paciente - visible para médicos y gestores */}
                     {(isMedico || isGestor) && (
                       <Button
                         variant="secondary"
