@@ -15,6 +15,7 @@ import EditHistoriaModal from "../modals/EditHistoriaModal/EditHistoriaModal"
 import CrearPlanModal from "../modals/CrearPlanModal/CrearPlanModal"
 import ViewPlanModal from "../modals/ViewPlanModal/ViewPlanModal"
 import EditPlanModal from "../modals/EditPlanModal/EditPlanModal"
+import ViewPrescripcionModal from "../modals/ViewPrescripcionModal/ViewPrescripcionModal"
 import EditPrescripcionModal from "../modals/EditPrescripcionModal/EditPrescripcionModal"
 import AsignarGestorModal from "../modals/AsignarGestorModal/AsignarGestorModal"
 import NuevoPacienteModal from "../modals/NuevoPacienteModal/NuevoPacienteModal"
@@ -358,6 +359,7 @@ export default function Dashboard() {
       <CrearPlanModal />
       <ViewPlanModal />
       <EditPlanModal />
+      <ViewPrescripcionModal/>
       <EditPrescripcionModal />
       <AsignarGestorModal />
       <NuevoPacienteModal />

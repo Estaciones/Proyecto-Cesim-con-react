@@ -18,8 +18,8 @@ export const PlanService = {
   delete: (id) => api.delete(`planes/${id}`),
 
   updatePrescription: (presId, prescriptionData) =>
-    api.patch(`prescripcion/${presId}`, prescriptionData),
+    api.patch(`prescripciones/${presId}`, prescriptionData),
 
   getPrescription: (presId, options = {}) =>
-    api.get(`prescripcion/${presId}`, options)
+    api.get(`prescripciones/${presId}`, options)
 }

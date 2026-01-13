@@ -14,25 +14,20 @@ export default function ViewPrescripcionModal() {
 
   if (!open) return null;
 
-  if (!currentViewPres) {
+  if (open && !currentViewPres) {
     return (
-      <Modal 
-        open={open} 
-        onClose={() => closeModal("viewPres")} 
-        title="Prescripción"
-        size="md"
-      >
+      <Modal open={open} onClose={() => closeModal("viewPres")} title="Prescripción" size="md">
         <div className={styles.loadingContainer}>
-          <div className={styles.spinner}></div>
+          <div className={styles.spinner} />
           <p>Cargando información de la prescripción...</p>
         </div>
       </Modal>
     );
   }
 
-  const isGestor = profile?.tipo_usuario === "gestor_casos" || 
-                  (typeof profile?.tipo_usuario === "string" && profile.tipo_usuario.includes("gestor"));
-  const isMedico = profile?.tipo_usuario === "medico";
+  const isGestor =
+    profile?.tipo_usuario === "gestor_casos" ||
+    (typeof profile?.tipo_usuario === "string" && profile.tipo_usuario.includes("gestor"));
 
   const toBool = (v) => {
     if (v === true || v === 1) return true;
@@ -45,118 +40,60 @@ export default function ViewPrescripcionModal() {
     return Boolean(v);
   };
 
-  const handleEdit = () => {
-    openEditPrescripcion(currentViewPres);
-  };
-
-  // eslint-disable-next-line no-unused-vars
-  const formatDate = (dateString) => {
-    if (!dateString) return "No disponible";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleString("es-ES", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
-  const getCumplimientoColor = (cumplimiento) => {
-    return toBool(cumplimiento) ? "#27ae60" : "#e74c3c";
-  };
-
-  const getCumplimientoLabel = (cumplimiento) => {
-    return toBool(cumplimiento) ? "Cumplido" : "No cumplido";
-  };
-
-  const getTipoIcon = (tipo) => {
-    const icons = {
-      "Tratamiento": "💉",
-      "Indicacion": "📋",
-      "Medicacion": "💊",
-      "Ejercicio": "🏃",
-      "Dieta": "🍎",
-      "default": "📝"
-    };
-    return icons[tipo] || icons["default"];
-  };
+  const getCumplimientoColor = (cumplimiento) => (toBool(cumplimiento) ? "#27ae60" : "#e74c3c");
+  const getCumplimientoLabel = (cumplimiento) => (toBool(cumplimiento) ? "Cumplido" : "No cumplido");
 
   const tipo = currentViewPres.tipo || "Prescripción";
-  const tipoIcon = getTipoIcon(tipo);
+
+  const handleEdit = () => {
+    if (typeof openEditPrescripcion === "function") openEditPrescripcion(currentViewPres);
+  };
 
   return (
-    <Modal
-      open={open}
-      onClose={() => closeModal("viewPres")}
-      title={`${tipo} - Detalles`}
-      size="md"
-    >
-      <div className={styles.content}>
-        {/* Encabezado */}
+    <Modal open={open} onClose={() => closeModal("viewPres")} title={`${tipo} - Detalles`} size="md">
+      <div className={styles.wrap}>
         <div className={styles.header}>
-          <div className={styles.headerContent}>
-            <div className={styles.titleSection}>
-              <div className={styles.tipoDisplay}>
-                <span className={styles.tipoIcon}>{tipoIcon}</span>
-                <h1 className={styles.title}>{tipo}</h1>
+          <div className={styles.left}>
+            <div className={styles.tipo}>
+              <span className={styles.icon}>{tipo === "Medicacion" ? "💊" : "📝"}</span>
+              <div>
+                <div className={styles.title}>{tipo}</div>
+                <div className={styles.subtitle}>ID: {currentViewPres.id_prescripcion ?? currentViewPres.id}</div>
               </div>
-              <div className={styles.subtitle}>
-                <span 
-                  className={styles.cumplimientoBadge}
-                  style={{ backgroundColor: getCumplimientoColor(currentViewPres.cumplimiento) }}
-                >
-                  {getCumplimientoLabel(currentViewPres.cumplimiento)}
-                </span>
-                {currentViewPres.id_prescripcion && (
-                  <span className={styles.idBadge}>ID: {currentViewPres.id_prescripcion}</span>
-                )}
-              </div>
+            </div>
+          </div>
+
+          <div className={styles.right}>
+            <div className={styles.badge} style={{ backgroundColor: getCumplimientoColor(currentViewPres.cumplimiento) }}>
+              {getCumplimientoLabel(currentViewPres.cumplimiento)}
             </div>
           </div>
         </div>
 
-        {/* ... resto del componente sin cambios funcionales ... */}
+        <div className={styles.section}>
+          <div className={styles.label}>Descripciónn</div>
+          <div className={styles.text}>{currentViewPres.descripcion || "(sin descripción)"}</div>
+        </div>
 
-        <div className={styles.actionsSection}>
-          <div className={styles.actions}>
-            {isGestor && (
-              <button
-                type="button"
-                onClick={handleEdit}
-                className={styles.editButton}
-              >
-                <span className={styles.buttonIcon}>✏️</span>
-                Editar Prescripción
-              </button>
-            )}
-            
-            {(isMedico && !isGestor) && (
-              <button
-                type="button"
-                onClick={() => {
-                  // Aquí normalmente llamarías a una función para ver el plan completo
-                }}
-                className={styles.viewPlanButton}
-              >
-                <span className={styles.buttonIcon}>📋</span>
-                Ver Plan Completo
-              </button>
-            )}
-            
-            <button
-              type="button"
-              onClick={() => closeModal("viewPres")}
-              className={styles.closeButton}
-            >
-              <span className={styles.buttonIcon}>✕</span>
-              Cerrar
+        <div className={styles.section}>
+          <div className={styles.label}>Observaciones</div>
+          <div className={styles.text}>{currentViewPres.observaciones || "(sin observaciones)"}</div>
+        </div>
+
+        <div className={styles.metaRow}>
+          <div className={styles.metaItem}>Frecuencia: {currentViewPres.frecuencia || "-"}</div>
+          <div className={styles.metaItem}>Duración: {currentViewPres.duracion || "-"}</div>
+        </div>
+
+        <div className={styles.actions}>
+          {isGestor && (
+            <button type="button" className={styles.editButton} onClick={handleEdit}>
+              ✏️ Editar
             </button>
-          </div>
+          )}
+          <button type="button" className={styles.closeButton} onClick={() => closeModal("viewPres")}>
+            ✕ Cerrar
+          </button>
         </div>
       </div>
     </Modal>
