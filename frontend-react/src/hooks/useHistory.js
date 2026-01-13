@@ -11,7 +11,6 @@ export function useHistory() {
     setError(null)
     try {
       const data = await HistoryService.getAll(params, options)
-      console.log("📊 useHistory.fetchHistoria - respuesta raw:", data)
 
       // Normalización robusta: acepta array directo o wrappers comunes
       let arr = []
@@ -28,28 +27,20 @@ export function useHistory() {
       } else if (data && typeof data === 'object') {
         // Si es un solo objeto (no array), lo convertimos en array
         arr = [data]
-        console.log("🔄 useHistory.fetchHistoria - Objeto único convertido a array")
       } else {
-        console.warn(
-          "⚠️ useHistory.fetchHistoria - payload inesperado, se normaliza a []",
-          data
-        )
         arr = []
       }
 
       // Asegurar que cada registro tenga al menos un identificador
       arr = arr.map(item => ({
         ...item,
-        // Asegurar que tenga un id para usar como key
         _id: item.id_registro || item.id || Math.random().toString(36).substr(2, 9)
       }))
 
-      console.log(`✅ useHistory.fetchHistoria - ${arr.length} registros cargados`)
       setHistoria(arr)
       return arr
     } catch (err) {
       if (err && err.name === "AbortError") {
-        console.log("⏹️ useHistory.fetchHistoria - aborted")
         return null
       }
       console.error("❌ useHistory.fetchHistoria - ERROR", err)
@@ -60,8 +51,6 @@ export function useHistory() {
     }
   }, [])
 
-
-  // resto de CRUD (opcional: si quieres que acepten options, los podemos añadir)
   const createRegistro = useCallback(async (historyData) => {
     setLoading(true)
     try {
@@ -69,6 +58,7 @@ export function useHistory() {
       setHistoria((prev) => [...prev, newRegistro])
       return newRegistro
     } catch (err) {
+      console.error("❌ useHistory.createRegistro - ERROR", err)
       setError(err?.message || String(err))
       throw err
     } finally {
@@ -85,6 +75,7 @@ export function useHistory() {
       )
       return updatedRegistro
     } catch (err) {
+      console.error("❌ useHistory.updateRegistro - ERROR", err)
       setError(err?.message || String(err))
       throw err
     } finally {
@@ -98,6 +89,7 @@ export function useHistory() {
       await HistoryService.delete(id)
       setHistoria((prev) => prev.filter((r) => r.id_registro !== id))
     } catch (err) {
+      console.error("❌ useHistory.deleteRegistro - ERROR", err)
       setError(err?.message || String(err))
       throw err
     } finally {

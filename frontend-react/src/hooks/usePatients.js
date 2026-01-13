@@ -1,13 +1,7 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { PatientService } from "../services/patientService";
 
-let hookCallCount = 0;
-let fetchPatientsCallCount = 0;
-
 export function usePatients() {
-  hookCallCount++;
-  console.log(`🟡 usePatients - HOOK LLAMADO #${hookCallCount}`);
-
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -16,14 +10,7 @@ export function usePatients() {
   const inFlightRef = useRef(null);
 
   const fetchPatients = useCallback(async (params = {}, options = {}) => {
-    fetchPatientsCallCount++;
-    console.log(`🔄 usePatients.fetchPatients - LLAMADA #${fetchPatientsCallCount}`, {
-      params,
-      hasSignal: !!options.signal,
-    });
-
     if (inFlightRef.current && !options.signal) {
-      console.log("🔒 usePatients.fetchPatients - petición ya en curso (reuso)");
       return inFlightRef.current;
     }
 
@@ -32,7 +19,6 @@ export function usePatients() {
       setError(null);
       try {
         const data = await serviceRef.current.getAll(params, options);
-        console.log("usePatients.fetchPatients - respuesta raw:", data);
 
         let arr = [];
         if (Array.isArray(data)) arr = data;
@@ -41,7 +27,6 @@ export function usePatients() {
         else if (data && Array.isArray(data.results)) arr = data.results;
         else if (data && Array.isArray(data.items)) arr = data.items;
         else {
-          console.warn("usePatients.fetchPatients - payload inesperado, se normaliza a []", data);
           arr = [];
         }
 
@@ -49,7 +34,6 @@ export function usePatients() {
         return data;
       } catch (err) {
         if (err && err.name === "AbortError") {
-          console.log("usePatients.fetchPatients - aborted");
           return null;
         }
         console.error("❌ usePatients.fetchPatients - ERROR:", err);
@@ -72,6 +56,7 @@ export function usePatients() {
       setPatients((prev) => [...prev, newPatient]);
       return newPatient;
     } catch (err) {
+      console.error("❌ usePatients.createPatient - ERROR:", err);
       setError(err?.message || String(err));
       throw err;
     } finally {
@@ -86,6 +71,7 @@ export function usePatients() {
       setPatients((prev) => prev.map((p) => (p.id_paciente === id ? updated : p)));
       return updated;
     } catch (err) {
+      console.error("❌ usePatients.updatePatient - ERROR:", err);
       setError(err?.message || String(err));
       throw err;
     } finally {
@@ -99,6 +85,7 @@ export function usePatients() {
       await serviceRef.current.delete(id);
       setPatients((prev) => prev.filter((p) => p.id_paciente !== id));
     } catch (err) {
+      console.error("❌ usePatients.deletePatient - ERROR:", err);
       setError(err?.message || String(err));
       throw err;
     } finally {
@@ -112,6 +99,7 @@ export function usePatients() {
       const result = await serviceRef.current.assignGestor(data);
       return result;
     } catch (err) {
+      console.error("❌ usePatients.assignGestor - ERROR:", err);
       setError(err?.message || String(err));
       throw err;
     } finally {
@@ -125,16 +113,12 @@ export function usePatients() {
       const data = await serviceRef.current.getGestores(options);
       return data;
     } catch (err) {
+      console.error("❌ usePatients.fetchGestores - ERROR:", err);
       setError(err?.message || String(err));
       throw err;
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  useEffect(() => {
-    console.log("🎯 usePatients - EFECTO DE MONTAJE (hook creado)");
-    return () => console.log("🧹 usePatients - EFECTO DE DESMONTAJE (hook destruido)");
   }, []);
 
   return {

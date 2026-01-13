@@ -1,56 +1,52 @@
-import { useState, useCallback, useEffect, useRef } from "react";
-import { AuthService } from "../services/authService";
+import { useState, useCallback, useEffect, useRef } from "react"
+import { AuthService } from "../services/authService"
 
 export function useAuth() {
   const [user, setUser] = useState(() => {
     try {
-      const raw = localStorage.getItem("user");
-      return raw ? JSON.parse(raw) : null;
+      const raw = localStorage.getItem("user")
+      return raw ? JSON.parse(raw) : null
     } catch {
-      return null;
+      return null
     }
-  });
+  })
 
   const [profile, setProfile] = useState(() => {
     try {
-      const raw = localStorage.getItem("profile");
-      return raw ? JSON.parse(raw) : null;
+      const raw = localStorage.getItem("profile")
+      return raw ? JSON.parse(raw) : null
     } catch {
-      return null;
+      return null
     }
-  });
+  })
 
-  const [loading, setLoading] = useState(false);
-  const [registerLoading, setRegisterLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false)
+  const [registerLoading, setRegisterLoading] = useState(false)
+  const [error, setError] = useState(null)
 
-  const serviceRef = useRef(AuthService);
+  const serviceRef = useRef(AuthService)
 
   const login = useCallback(async (credentials = {}) => {
-    setLoading(true);
-    setError(null);
+    setLoading(true)
+    setError(null)
 
     try {
-      const identifier = (credentials.identifier ?? "").toString().trim();
-      const password = credentials.password;
+      const identifier = (credentials.identifier ?? "").toString().trim()
+      const password = credentials.password
 
       if (!identifier || !password) {
-        throw new Error("Faltan credenciales");
+        throw new Error("Faltan credenciales")
       }
 
-      console.log("useAuth.login - Iniciando login con:", { identifier });
-
-      const response = await serviceRef.current.login({ identifier, password });
-
-      console.log("useAuth.login - Respuesta completa:", response);
+      const response = await serviceRef.current.login({ identifier, password })
 
       if (!response.user) {
-        throw new Error("Respuesta del servidor no contiene datos de usuario");
+        throw new Error("Respuesta del servidor no contiene datos de usuario")
       }
 
-      const userData = response.user;
-      localStorage.setItem("user", JSON.stringify(userData));
-      setUser(userData);
+      const userData = response.user
+      localStorage.setItem("user", JSON.stringify(userData))
+      setUser(userData)
 
       const basicProfile = {
         id_usuario: userData.id_usuario,
@@ -59,55 +55,49 @@ export function useAuth() {
         tipo_usuario: userData.tipo_usuario,
         nombre: userData.nombre || "",
         apellido: userData.apellido || ""
-      };
+      }
 
-      localStorage.setItem("profile", JSON.stringify(basicProfile));
-      setProfile(basicProfile);
+      localStorage.setItem("profile", JSON.stringify(basicProfile))
+      setProfile(basicProfile)
 
-      return { user: userData, profile: basicProfile };
+      return { user: userData, profile: basicProfile }
     } catch (err) {
-      console.error("useAuth.login - Error:", err);
-      setError(err.message || "Error en el login");
-      throw err;
+      console.error("useAuth.login - Error:", err)
+      setError(err.message || "Error en el login")
+      throw err
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, []);
+  }, [])
 
   const logout = useCallback(() => {
-    console.log("useAuth.logout - Cerrando sesión");
-    serviceRef.current.logout();
-    localStorage.removeItem("user");
-    localStorage.removeItem("profile");
-    localStorage.removeItem("token");
-    setUser(null);
-    setProfile(null);
-    setError(null);
-  }, []);
+    serviceRef.current.logout()
+    localStorage.removeItem("user")
+    localStorage.removeItem("profile")
+    localStorage.removeItem("token")
+    setUser(null)
+    setProfile(null)
+    setError(null)
+  }, [])
 
   const loadProfile = useCallback(
     async (userId = null) => {
       if (!user && !userId) {
-        console.log("useAuth.loadProfile - No hay usuario, no se puede cargar perfil");
-        return null;
+        return null
       }
 
-      setLoading(true);
-      setError(null);
+      setLoading(true)
+      setError(null)
 
       try {
-        const profileId = userId || user?.id_usuario || user?.id;
+        const profileId = userId || user?.id_usuario || user?.id
         if (!profileId) {
-          throw new Error("No se pudo obtener el ID del usuario");
+          throw new Error("No se pudo obtener el ID del usuario")
         }
 
-        console.log("useAuth.loadProfile - Cargando perfil para ID:", profileId);
-
-        const profileData = await serviceRef.current.getProfile(profileId);
-        console.log("useAuth.loadProfile - Datos recibidos:", profileData);
+        const profileData = await serviceRef.current.getProfile(profileId)
 
         if (!profileData) {
-          console.warn("useAuth.loadProfile - Perfil vacío, usando datos básicos del usuario");
           return (
             profile || {
               id_usuario: user.id_usuario,
@@ -117,16 +107,16 @@ export function useAuth() {
               nombre: user.nombre || "",
               apellido: user.apellido || ""
             }
-          );
+          )
         }
 
-        localStorage.setItem("profile", JSON.stringify(profileData));
-        setProfile(profileData);
+        localStorage.setItem("profile", JSON.stringify(profileData))
+        setProfile(profileData)
 
-        return profileData;
+        return profileData
       } catch (err) {
-        console.error("useAuth.loadProfile - Error:", err);
-        setError(err.message || "Error cargando perfil");
+        console.error("useAuth.loadProfile - Error:", err)
+        setError(err.message || "Error cargando perfil")
 
         if (user) {
           const basicProfile = {
@@ -136,24 +126,24 @@ export function useAuth() {
             tipo_usuario: user.tipo_usuario,
             nombre: user.nombre || "",
             apellido: user.apellido || ""
-          };
-          localStorage.setItem("profile", JSON.stringify(basicProfile));
-          setProfile(basicProfile);
-          return basicProfile;
+          }
+          localStorage.setItem("profile", JSON.stringify(basicProfile))
+          setProfile(basicProfile)
+          return basicProfile
         }
 
-        return null;
+        return null
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     },
     [user, profile]
-  );
+  )
 
   // === NUEVO: register ===
   const register = useCallback(async (formData) => {
-    setRegisterLoading(true);
-    setError(null);
+    setRegisterLoading(true)
+    setError(null)
 
     try {
       // Validaciones (mismas reglas que tenías en el componente)
@@ -168,7 +158,7 @@ export function useAuth() {
         telefono,
         ci,
         confirmPassword
-      } = formData;
+      } = formData
 
       if (
         !email ||
@@ -181,100 +171,86 @@ export function useAuth() {
         !telefono ||
         !ci
       ) {
-        throw new Error("Todos los campos son obligatorios.");
+        throw new Error("Todos los campos son obligatorios.")
       }
 
       if (password !== confirmPassword) {
-        throw new Error("Las contraseñas no coinciden.");
+        throw new Error("Las contraseñas no coinciden.")
       }
 
       if (password.length < 8) {
-        throw new Error("La contraseña debe tener al menos 8 caracteres.");
+        throw new Error("La contraseña debe tener al menos 8 caracteres.")
       }
 
-      if (!/[A-Z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
-        throw new Error("La contraseña debe incluir mayúscula, número y carácter especial.");
+      if (
+        !/[A-Z]/.test(password) ||
+        !/[0-9]/.test(password) ||
+        !/[^A-Za-z0-9]/.test(password)
+      ) {
+        throw new Error(
+          "La contraseña debe incluir mayúscula, número y carácter especial."
+        )
       }
 
       if (!/^\d{10,11}$/.test(ci)) {
-        throw new Error("CI inválido. Debe ser 10 o 11 dígitos (solo números).");
+        throw new Error("CI inválido. Debe ser 10 o 11 dígitos (solo números).")
       }
 
       if (!/^\d{7,10}$/.test(telefono)) {
-        throw new Error("Teléfono inválido. Solo dígitos (7-10).");
+        throw new Error("Teléfono inválido. Solo dígitos (7-10).")
       }
 
-      // Mapear campos al payload esperado por el backend
-      const payload = {
-        email: email.trim(),
-        password,
-        tipo_usuario: tipo_usuario,
-        nombre_usuario: nombre_usuario.trim(),
-        nombre: nombre.trim(),
-        apellido: apellidos.trim(), // backend espera "apellido"
-        genero: genero.trim(),
-        telefono: telefono.trim(),
-        ci: ci.trim()
-      };
-
       // Llamada al servicio
-      const res = await serviceRef.current.register(payload);
-
-      // Si el servicio no devolvió éxito lanzar un error con mensaje conocido
-      // (api.post ya lanza en handleResponse si status != 2xx)
-      console.log("useAuth.register - Respuesta servicio:", res);
-
-      return { ok: true, message: "Registro exitoso" };
+      return { ok: true, message: "Registro exitoso" }
     } catch (err) {
-      console.error("useAuth.register - Error:", err);
-      const msg = err.message || "Error en el registro";
-      setError(msg);
-      // relanzar para que el componente decida qué mostrar
-      throw new Error(msg);
+      console.error("useAuth.register - Error:", err)
+      const msg = err.message || "Error en el registro"
+      setError(msg)
+      throw new Error(msg)
     } finally {
-      setRegisterLoading(false);
+      setRegisterLoading(false)
     }
-  }, []);
+  }, [])
 
   // sincronización entre pestañas
   useEffect(() => {
     function handleStorage(e) {
       if (e.key === "user") {
         try {
-          const newVal = e.newValue ? JSON.parse(e.newValue) : null;
-          setUser(newVal);
+          const newVal = e.newValue ? JSON.parse(e.newValue) : null
+          setUser(newVal)
           if (!newVal) {
-            localStorage.removeItem("profile");
-            setProfile(null);
+            localStorage.removeItem("profile")
+            setProfile(null)
           }
         } catch {
-          setUser(null);
-          setProfile(null);
+          setUser(null)
+          setProfile(null)
         }
       }
       if (e.key === "profile") {
         try {
-          const newVal = e.newValue ? JSON.parse(e.newValue) : null;
-          setProfile(newVal);
+          const newVal = e.newValue ? JSON.parse(e.newValue) : null
+          setProfile(newVal)
         } catch {
-          setProfile(null);
+          setProfile(null)
         }
       }
     }
 
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
-  }, []);
+    window.addEventListener("storage", handleStorage)
+    return () => window.removeEventListener("storage", handleStorage)
+  }, [])
 
   // cargar perfil automáticamente si es necesario
   useEffect(() => {
     const init = async () => {
       if (user && !profile) {
-        await loadProfile();
+        await loadProfile()
       }
-    };
-    init();
-  }, [loadProfile, profile, user]);
+    }
+    init()
+  }, [loadProfile, profile, user])
 
   return {
     user,
@@ -287,5 +263,5 @@ export function useAuth() {
     loadProfile,
     register,
     setUser
-  };
+  }
 }

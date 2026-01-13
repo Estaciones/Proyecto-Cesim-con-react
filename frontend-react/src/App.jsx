@@ -13,12 +13,6 @@ import Register from "./components/auth/Register/Register"
 // Dashboard
 import Dashboard from "./components/dashboard/Dashboard"
 
-// Importar estilos globales
-import "./styles/index.css"
-import "./styles/variables.css"
-import "./styles/reset.css"
-import "./styles/utilities.css"
-
 // Componente para rutas protegidas
 import ProtectedRoute from "./components/auth/ProtectedRoute/ProtectedRoute"
 

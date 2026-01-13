@@ -1,30 +1,16 @@
-import { useState, useCallback, useRef, useEffect } from "react"
+import { useState, useCallback, useRef } from "react"
 import { PlanService } from "../services/planService"
 
-let hookCallCount = 0
-let fetchPlansCallCount = 0
-
 export function usePlans() {
-  hookCallCount++
-  console.log(`🟡 usePlans - HOOK LLAMADO #${hookCallCount}`)
-
   const [plans, setPlans] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
   const serviceRef = useRef(PlanService)
-  // inFlightRef guarda la promesa de la llamada *cuando es deduplicable*
   const inFlightRef = useRef(null)
 
   const fetchPlans = useCallback(async (params = {}, options = {}) => {
-    fetchPlansCallCount++
-    console.log(`🔄 usePlans.fetchPlans - LLAMADA #${fetchPlansCallCount}`, {
-      params,
-      hasSignal: !!options.signal
-    })
-
     if (inFlightRef.current && !options.signal) {
-      console.log("🔒 usePlans.fetchPlans - petición ya en curso (reuso)")
       return inFlightRef.current
     }
 
@@ -33,7 +19,6 @@ export function usePlans() {
       setError(null)
       try {
         const data = await serviceRef.current.getAll(params, options)
-        console.log("usePlans.fetchPlans - respuesta raw:", data)
 
         let arr = []
         if (Array.isArray(data)) arr = data
@@ -42,10 +27,6 @@ export function usePlans() {
         else if (data && Array.isArray(data.results)) arr = data.results
         else if (data && Array.isArray(data.items)) arr = data.items
         else {
-          console.warn(
-            "usePlans.fetchPlans - payload inesperado, se normaliza a []",
-            data
-          )
           arr = []
         }
 
@@ -53,7 +34,6 @@ export function usePlans() {
         return data
       } catch (err) {
         if (err && err.name === "AbortError") {
-          console.log("usePlans.fetchPlans - aborted")
           return null
         }
         console.error("❌ usePlans.fetchPlans - ERROR:", err)
@@ -76,6 +56,7 @@ export function usePlans() {
       setPlans((prev) => [...prev, newPlan])
       return newPlan
     } catch (err) {
+      console.error("❌ usePlans.createPlan - ERROR:", err)
       setError(err?.message || String(err))
       throw err
     } finally {
@@ -94,6 +75,7 @@ export function usePlans() {
       )
       return updated
     } catch (err) {
+      console.error("❌ usePlans.updatePlan - ERROR:", err)
       setError(err?.message || String(err))
       throw err
     } finally {
@@ -109,6 +91,7 @@ export function usePlans() {
         prev.filter((p) => !(p.id_plan === id_plan || p.id === id_plan))
       )
     } catch (err) {
+      console.error("❌ usePlans.deletePlan - ERROR:", err)
       setError(err?.message || String(err))
       throw err
     } finally {
@@ -124,8 +107,6 @@ export function usePlans() {
         prescriptionData
       )
 
-      // Update the prescripciones array inside the plan that contains this prescripción.
-      // We keep the API field names (prescripciones, id_prescripcion) intact.
       setPlans((prev) =>
         prev.map((plan) => {
           if (
@@ -149,17 +130,12 @@ export function usePlans() {
 
       return updatedPres
     } catch (err) {
+      console.error("❌ usePlans.updatePrescription - ERROR:", err)
       setError(err?.message || String(err))
       throw err
     } finally {
       setLoading(false)
     }
-  }, [])
-
-  useEffect(() => {
-    console.log("🎯 usePlans - EFECTO DE MONTAJE (hook creado)")
-    return () =>
-      console.log("🧹 usePlans - EFECTO DE DESMONTAJE (hook destruido)")
   }, [])
 
   return {
