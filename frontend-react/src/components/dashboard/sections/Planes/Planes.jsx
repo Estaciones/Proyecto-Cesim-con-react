@@ -8,7 +8,7 @@ import styles from "./Planes.module.css"
 
 export default function Planes({ selectedPatient }) {
   const { profile } = useAuthContext()
-  const { openCrearPlanWithPatient, openViewPlan } = useModal()
+  const { openCrearPlanWithPatient, openViewPlan, openEditPlan } = useModal() // Añadir openEditPlan
   const { plans, loading, error, fetchPlans } = usePlans()
 
   const [searchQuery, setSearchQuery] = useState("")
@@ -68,14 +68,23 @@ export default function Planes({ selectedPatient }) {
   }, [fetchPlans, buildParams])
 
   const handleViewPlan = useCallback((plan) => {
-    console.log("👁️ Planes - Ver plan:", plan.id_plan)
+    console.log("👁️ Planes - Ver plan:", plan)
     openViewPlan(plan)
   }, [openViewPlan])
 
+  const handleEditPlan = useCallback((plan) => {
+    console.log("✏️ Planes - Editar plan:", plan)
+    openEditPlan(plan)
+  }, [openEditPlan])
+
   const handleCreatePlan = useCallback(() => {
+    console.log("➕ Planes - Crear plan para paciente:", selectedPatient)
+    
     if (selectedPatient?.id_paciente) {
+      console.log("🎯 Planes - Llamando openCrearPlanWithPatient con ID:", selectedPatient.id_paciente)
       openCrearPlanWithPatient(selectedPatient.id_paciente)
     } else {
+      console.log("⚠️ Planes - No hay paciente seleccionado")
       openCrearPlanWithPatient(undefined)
     }
   }, [selectedPatient, openCrearPlanWithPatient])
@@ -445,7 +454,7 @@ export default function Planes({ selectedPatient }) {
                         size="small"
                         onClick={(e) => {
                           e.stopPropagation()
-                          console.log("Editar plan:", plan.id_plan)
+                          handleEditPlan(plan)
                         }}
                         className={styles.actionButton}
                       >

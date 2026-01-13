@@ -1,321 +1,289 @@
-import React from "react";
-import Modal from "../Modal/Modal";
-import { useModal } from "../../../hooks/useModal";
-import { useAuthContext } from "../../../context/AuthContext";
-import styles from "./ViewPlanModal.module.css";
+import React from 'react';
+import { useModal } from '../../../hooks/useModal';
+import Button from '../../ui/Button/Button';
+import styles from './ViewPlanModal.module.css';
 
 export default function ViewPlanModal() {
-  const { modals, getModalData, closeModal, openEditPlan, openViewPrescripcion, openEditPrescripcion } = useModal();
-  const { profile } = useAuthContext();
+  const { closeModal, getModalData } = useModal();
+  const modalData = getModalData('viewPlan');
+  const planData = modalData?.currentViewPlan;
 
-  const open = !!modals.viewPlan;
-  const payload = getModalData("viewPlan") || {};
-  const currentViewPlan = payload.currentViewPlan || null;
-
-  if (!open) return null;
-
-  if (!currentViewPlan) {
-    return (
-      <Modal 
-        open={open} 
-        onClose={() => closeModal("viewPlan")} 
-        title="Plan de Tratamiento"
-        size="md"
-      >
-        <div className={styles.loadingContainer}>
-          <div className={styles.spinner}></div>
-          <p>Cargando información del plan...</p>
-        </div>
-      </Modal>
-    );
+  if (!planData) {
+    console.log('❌ ViewPlanModal - No hay datos del plan');
+    return null;
   }
 
-  const isMedico = profile?.tipo_usuario === "medico";
-  const isGestor = profile?.tipo_usuario === "gestor_casos" || 
-                  (typeof profile?.tipo_usuario === "string" && profile.tipo_usuario.includes("gestor"));
-
-  // --- Helper para normalizar booleanos / flags que vienen como string/number/boolean ---
-  const toBool = (v) => {
-    if (v === true || v === 1) return true;
-    if (v === false || v === 0) return false;
-    if (typeof v === "string") {
-      const s = v.trim().toLowerCase();
-      if (s === "true" || s === "1") return true;
-      if (s === "false" || s === "0" || s === "") return false;
-    }
-    return Boolean(v);
-  };
+  console.log('📋 ViewPlanModal - Datos recibidos:', planData);
 
   const formatDate = (dateString) => {
-    if (!dateString) return "No disponible";
+    if (!dateString) return 'No definida';
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString("es-ES", { 
-        day: "2-digit", 
-        month: "2-digit", 
-        year: "numeric" 
+      return date.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
       });
     } catch {
-      return dateString;
+      return 'Fecha inválida';
     }
   };
 
-  const formatDateTime = (dateString) => {
-    if (!dateString) return "No disponible";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleString("es-ES", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
-      });
-    } catch {
-      return dateString;
-    }
+  const getStatusBadge = (estado) => {
+    const isActive = estado === true || estado === "activo" || estado === 1;
+    
+    return (
+      <span 
+        className={`${styles.statusBadge} ${isActive ? styles.active : styles.inactive}`}
+      >
+        {isActive ? 'Activo' : 'Inactivo'}
+      </span>
+    );
   };
 
-  const getEstadoColor = (estado) => {
-    return toBool(estado) ? "#27ae60" : "#e74c3c";
-  };
-
-  const getEstadoLabel = (estado) => {
-    return toBool(estado) ? "Activo" : "Inactivo";
-  };
-
-  const handleEditPlan = () => {
-    openEditPlan(currentViewPlan);
-  };
-
-  const handleViewPres = (pres) => {
-    openViewPrescripcion(pres);
-  };
-
-  const handleEditPres = (pres) => {
-    openEditPrescripcion(pres);
-  };
-
-  const prescripciones = Array.isArray(currentViewPlan.prescripciones) 
-    ? currentViewPlan.prescripciones 
-    : [];
-
-  // contar cumplidas normalizando
-  const cumplidasCount = prescripciones.filter(p => toBool(p?.cumplimiento)).length;
+  // Calcular estadísticas de prescripciones
+  const totalPrescripciones = Array.isArray(planData.prescripciones) ? planData.prescripciones.length : 0;
+  const prescripcionesCumplidas = Array.isArray(planData.prescripciones) 
+    ? planData.prescripciones.filter(p => p.cumplimiento === true).length 
+    : 0;
 
   return (
-    <Modal
-      open={open}
-      onClose={() => closeModal("viewPlan")}
-      title={currentViewPlan.titulo || "Plan de Tratamiento"}
-      size="lg"
-    >
-      <div className={styles.content}>
-        {/* Encabezado del Plan */}
-        <div className={styles.header}>
+    <div className={styles.modalOverlay} onClick={() => closeModal('viewPlan')}>
+      <div className={styles.modalContainer} onClick={(e) => e.stopPropagation()}>
+        
+        {/* Header */}
+        <div className={styles.modalHeader}>
           <div className={styles.headerContent}>
-            <div className={styles.titleSection}>
-              <h1 className={styles.title}>
-                {currentViewPlan.titulo || "Plan de Tratamiento"}
-              </h1>
-              <div className={styles.subtitle}>
-                <span className={styles.dateRange}>
-                  {formatDate(currentViewPlan.fecha_inicio)}
-                  {currentViewPlan.fecha_fin && (
-                    <>
-                      <span className={styles.dateSeparator}>—</span>
-                      {formatDate(currentViewPlan.fecha_fin)}
-                    </>
-                  )}
-                </span>
-                <span 
-                  className={styles.estadoBadge}
-                  style={{ backgroundColor: getEstadoColor(currentViewPlan.estado) }}
-                >
-                  {getEstadoLabel(currentViewPlan.estado)}
+            <h2 className={styles.modalTitle}>
+              <span className={styles.titleIcon}>📋</span>
+              {planData.titulo || 'Plan de Tratamiento'}
+            </h2>
+            <div className={styles.headerInfo}>
+              {getStatusBadge(planData.estado)}
+              <span className={styles.planId}>ID: {planData.id_plan}</span>
+            </div>
+          </div>
+          <button 
+            className={styles.closeButton} 
+            onClick={() => closeModal('viewPlan')}
+            aria-label="Cerrar modal"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className={styles.modalBody}>
+          {/* Información Básica */}
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>
+              <span className={styles.sectionIcon}>📄</span>
+              Información del Plan
+            </h3>
+            
+            <div className={styles.infoGrid}>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Título</span>
+                <span className={styles.infoValue}>{planData.titulo || 'Sin título'}</span>
+              </div>
+              
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Estado</span>
+                <span className={styles.infoValue}>
+                  {getStatusBadge(planData.estado)}
                 </span>
               </div>
-            </div>
-            
-            <div className={styles.headerActions}>
-              {isMedico && (
-                <button 
-                  type="button" 
-                  onClick={handleEditPlan} 
-                  className={styles.editPlanButton}
-                >
-                  <span className={styles.buttonIcon}>✏️</span>
-                  Editar Plan
-                </button>
+              
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Fecha de Inicio</span>
+                <span className={styles.infoValue}>{formatDate(planData.fecha_inicio)}</span>
+              </div>
+              
+              {planData.fecha_fin && (
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>Fecha de Fin</span>
+                  <span className={styles.infoValue}>{formatDate(planData.fecha_fin)}</span>
+                </div>
               )}
             </div>
           </div>
-        </div>
 
-        {/* ... resto del componente sin cambios exceptuando referencias a cumplimiento ... */}
+          {/* Descripción */}
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>
+              <span className={styles.sectionIcon}>📝</span>
+              Descripción
+            </h3>
+            <div className={styles.description}>
+              {planData.descripcion || 'No hay descripción disponible.'}
+            </div>
+          </div>
 
-        {/* Prescripciones */}
-        <div className={styles.prescripcionesSection}>
-          <div className={styles.sectionHeader}>
+          {/* Resumen de Egreso */}
+          {planData.resumen_egreso && (
+            <div className={styles.section}>
+              <h3 className={styles.sectionTitle}>
+                <span className={styles.sectionIcon}>✅</span>
+                Resumen de Egreso
+              </h3>
+              <div className={styles.resumen}>
+                {planData.resumen_egreso}
+              </div>
+            </div>
+          )}
+
+          {/* Prescripciones */}
+          <div className={styles.section}>
             <h3 className={styles.sectionTitle}>
               <span className={styles.sectionIcon}>💊</span>
-              Prescripciones ({prescripciones.length})
+              Prescripciones
+              <span className={styles.prescriptionCount}>
+                ({totalPrescripciones})
+              </span>
             </h3>
-            {currentViewPlan.resumen_egreso && (
-              <div className={styles.egresoBadge}>
-                <span className={styles.egresoIcon}>✅</span>
-                Egreso Completado
+            
+            {totalPrescripciones > 0 ? (
+              <>
+                {/* Estadísticas */}
+                <div className={styles.stats}>
+                  <div className={styles.statItem}>
+                    <span className={styles.statIcon}>📊</span>
+                    <div className={styles.statContent}>
+                      <span className={styles.statValue}>{totalPrescripciones}</span>
+                      <span className={styles.statLabel}>prescripciones totales</span>
+                    </div>
+                  </div>
+                  
+                  <div className={styles.statItem}>
+                    <span className={styles.statIcon}>✅</span>
+                    <div className={styles.statContent}>
+                      <span className={styles.statValue}>{prescripcionesCumplidas}</span>
+                      <span className={styles.statLabel}>cumplidas</span>
+                    </div>
+                  </div>
+                  
+                  <div className={styles.statItem}>
+                    <span className={styles.statIcon}>📈</span>
+                    <div className={styles.statContent}>
+                      <span className={styles.statValue}>
+                        {totalPrescripciones > 0 
+                          ? Math.round((prescripcionesCumplidas / totalPrescripciones) * 100) 
+                          : 0}%
+                      </span>
+                      <span className={styles.statLabel}>tasa de cumplimiento</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Lista de Prescripciones */}
+                <div className={styles.prescriptionsList}>
+                  {planData.prescripciones.map((prescripcion, index) => (
+                    <div key={index} className={styles.prescriptionCard}>
+                      <div className={styles.prescriptionHeader}>
+                        <div className={styles.prescriptionTitle}>
+                          <span className={styles.prescriptionType}>
+                            {prescripcion.tipo || 'Prescripción'} #{index + 1}
+                          </span>
+                          <span className={`${styles.prescriptionStatus} ${prescripcion.cumplimiento ? styles.completed : styles.pending}`}>
+                            {prescripcion.cumplimiento ? '✅ Cumplida' : '⏳ Pendiente'}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className={styles.prescriptionDescription}>
+                        {prescripcion.descripcion}
+                      </div>
+                      
+                      <div className={styles.prescriptionDetails}>
+                        {prescripcion.frecuencia && (
+                          <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Frecuencia:</span>
+                            <span className={styles.detailValue}>{prescripcion.frecuencia}</span>
+                          </div>
+                        )}
+                        
+                        {prescripcion.duracion && (
+                          <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Duración:</span>
+                            <span className={styles.detailValue}>{prescripcion.duracion}</span>
+                          </div>
+                        )}
+                        
+                        {prescripcion.fecha_creacion && (
+                          <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Creada:</span>
+                            <span className={styles.detailValue}>{formatDate(prescripcion.fecha_creacion)}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {prescripcion.observaciones && (
+                        <div className={styles.prescriptionObservations}>
+                          <span className={styles.observationsLabel}>Observaciones:</span>
+                          <span className={styles.observationsValue}>{prescripcion.observaciones}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className={styles.emptyState}>
+                <span className={styles.emptyIcon}>💊</span>
+                <p>No hay prescripciones registradas para este plan.</p>
               </div>
             )}
           </div>
 
-          {prescripciones.length === 0 ? (
-            <div className={styles.emptyPrescripciones}>
-              <div className={styles.emptyIcon}>💊</div>
-              <p>No hay prescripciones en este plan.</p>
-            </div>
-          ) : (
-            <div className={styles.prescripcionesList}>
-              {prescripciones.map((pres, index) => (
-                <div key={pres.id_prescripcion || pres.id || index} className={styles.prescripcionCard}>
-                  <div className={styles.prescripcionHeader}>
-                    <div className={styles.prescripcionInfo}>
-                      <div className={styles.prescripcionNumber}>#{index + 1}</div>
-                      <div className={styles.prescripcionType}>{pres.tipo || "Prescripción"}</div>
-                      {typeof pres.cumplimiento !== "undefined" && (
-                        <div 
-                          className={styles.cumplimientoBadge}
-                          style={{ backgroundColor: toBool(pres.cumplimiento) ? "#27ae60" : "#e74c3c" }}
-                        >
-                          {toBool(pres.cumplimiento) ? "Cumplido" : "Pendiente"}
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className={styles.prescripcionActions}>
-                      <button
-                        type="button"
-                        onClick={() => handleViewPres(pres)}
-                        className={styles.viewPresButton}
-                      >
-                        <span className={styles.buttonIcon}>👁️</span>
-                        Ver
-                      </button>
-                      
-                      {isGestor && (
-                        <button
-                          type="button"
-                          onClick={() => handleEditPres(pres)}
-                          className={styles.editPresButton}
-                        >
-                          <span className={styles.buttonIcon}>✏️</span>
-                          Editar
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className={styles.prescripcionBody}>
-                    <div className={styles.prescripcionDesc}>{pres.descripcion}</div>
-
-                    {(pres.frecuencia || pres.duracion) && (
-                      <div className={styles.prescripcionMeta}>
-                        {pres.frecuencia && (
-                          <div className={styles.metaItem}>
-                            <span className={styles.metaIcon}>⏱️</span>
-                            <span className={styles.metaLabel}>Frecuencia:</span>
-                            <span className={styles.metaValue}>{pres.frecuencia}</span>
-                          </div>
-                        )}
-                        
-                        {pres.duracion && (
-                          <div className={styles.metaItem}>
-                            <span className={styles.metaIcon}>📅</span>
-                            <span className={styles.metaLabel}>Duración:</span>
-                            <span className={styles.metaValue}>{pres.duracion}</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {pres.observaciones && (
-                      <div className={styles.observaciones}>
-                        <div className={styles.observacionesLabel}>
-                          <span className={styles.observacionesIcon}>💬</span>
-                          Observaciones:
-                        </div>
-                        <div className={styles.observacionesText}>{pres.observaciones}</div>
-                      </div>
-                    )}
-
-                    {pres.fecha_creacion && (
-                      <div className={styles.prescripcionDates}>
-                        <span className={styles.dateItem}>Creada: {formatDateTime(pres.fecha_creacion)}</span>
-                        {pres.fecha_actualizacion && pres.fecha_actualizacion !== pres.fecha_creacion && (
-                          <span className={styles.dateItem}>Actualizada: {formatDateTime(pres.fecha_actualizacion)}</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Estadísticas del Plan */}
-        <div className={styles.statsSection}>
-          <div className={styles.statsGrid}>
-            <div className={styles.statItem}>
-              <div className={styles.statIcon}>💊</div>
-              <div className={styles.statContent}>
-                <div className={styles.statValue}>{prescripciones.length}</div>
-                <div className={styles.statLabel}>Prescripciones</div>
+          {/* Información del Sistema */}
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>
+              <span className={styles.sectionIcon}>⚙️</span>
+              Información del Sistema
+            </h3>
+            
+            <div className={styles.systemInfo}>
+              <div className={styles.systemInfoItem}>
+                <span className={styles.systemInfoLabel}>ID del Plan:</span>
+                <span className={styles.systemInfoValue}>{planData.id_plan}</span>
               </div>
-            </div>
-
-            <div className={styles.statItem}>
-              <div className={styles.statIcon}>✅</div>
-              <div className={styles.statContent}>
-                <div className={styles.statValue}>{cumplidasCount}</div>
-                <div className={styles.statLabel}>Cumplidas</div>
+              
+              <div className={styles.systemInfoItem}>
+                <span className={styles.systemInfoLabel}>ID del Médico:</span>
+                <span className={styles.systemInfoValue}>{planData.id_medico}</span>
               </div>
-            </div>
-
-            <div className={styles.statItem}>
-              <div className={styles.statIcon}>📅</div>
-              <div className={styles.statContent}>
-                <div className={styles.statValue}>
-                  {currentViewPlan.resumen_egreso ? "Completado" : "En curso"}
-                </div>
-                <div className={styles.statLabel}>Estado</div>
+              
+              <div className={styles.systemInfoItem}>
+                <span className={styles.systemInfoLabel}>CI del Médico:</span>
+                <span className={styles.systemInfoValue}>{planData.medico_ci}</span>
               </div>
-            </div>
-
-            <div className={styles.statItem}>
-              <div className={styles.statIcon}>📝</div>
-              <div className={styles.statContent}>
-                <div className={styles.statValue}>{currentViewPlan.descripcion?.length || 0}</div>
-                <div className={styles.statLabel}>Caracteres</div>
+              
+              <div className={styles.systemInfoItem}>
+                <span className={styles.systemInfoLabel}>ID del Paciente:</span>
+                <span className={styles.systemInfoValue}>{planData.id_paciente}</span>
+              </div>
+              
+              <div className={styles.systemInfoItem}>
+                <span className={styles.systemInfoLabel}>CI del Paciente:</span>
+                <span className={styles.systemInfoValue}>{planData.paciente_ci}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Acciones */}
-        <div className={styles.actionsSection}>
-          <div className={styles.actions}>
-            <button
-              type="button"
-              onClick={() => closeModal("viewPlan")}
+        {/* Footer */}
+        <div className={styles.modalFooter}>
+          <div className={styles.footerActions}>
+            <Button
+              variant="secondary"
+              onClick={() => closeModal('viewPlan')}
               className={styles.closeButton}
             >
-              <span className={styles.buttonIcon}>✕</span>
               Cerrar
-            </button>
+            </Button>
           </div>
         </div>
       </div>
-    </Modal>
+    </div>
   );
 }
