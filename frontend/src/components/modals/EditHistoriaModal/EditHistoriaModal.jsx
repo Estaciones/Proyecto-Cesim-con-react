@@ -212,32 +212,6 @@ export default function EditHistoriaModal() {
                   )}
                 </div>
               </div>
-
-              <div className={styles.formGroup}>
-                <label htmlFor="tipo" className={styles.label}>
-                  Tipo de Registro
-                </label>
-                <select
-                  id="tipo"
-                  name="tipo"
-                  value={formData.tipo}
-                  onChange={handleInputChange}
-                  className={styles.select}
-                  disabled={submitting}
-                >
-                  <option value="general">General</option>
-                  <option value="consulta">Consulta</option>
-                  <option value="evaluacion">Evaluación</option>
-                  <option value="seguimiento">Seguimiento</option>
-                  <option value="tratamiento">Tratamiento</option>
-                  <option value="diagnostico">Diagnóstico</option>
-                </select>
-                <div className={styles.selectedTipo}>
-                  <span className={styles.tipoBadge}>
-                    {getTipoLabel(formData.tipo)}
-                  </span>
-                </div>
-              </div>
             </div>
           </div>
 

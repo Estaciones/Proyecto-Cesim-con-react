@@ -25,19 +25,6 @@ export default function ViewHistoriaModal() {
       return 'Fecha inválida';
     }
   };
-
-  const getTipoLabel = (tipo) => {
-    const tipos = {
-      general: 'General',
-      consulta: 'Consulta',
-      evaluacion: 'Evaluación',
-      seguimiento: 'Seguimiento',
-      tratamiento: 'Tratamiento',
-      diagnostico: 'Diagnóstico'
-    };
-    return tipos[tipo] || tipo || 'No especificado';
-  };
-
   if (!record) {
     return (
       <Modal
@@ -83,9 +70,6 @@ export default function ViewHistoriaModal() {
               <span className={styles.metaItem}>
                 <strong>ID:</strong> {record.id_registro || record.id || 'N/A'}
               </span>
-              <span className={styles.metaItem}>
-                <strong>Tipo:</strong> {getTipoLabel(record.tipo)}
-              </span>
             </div>
           </div>
         </div>
@@ -108,10 +92,6 @@ export default function ViewHistoriaModal() {
                   ? formatDate(record.fecha_actualizacion)
                   : 'Sin actualizaciones'}
               </div>
-            </div>
-            <div className={styles.infoItem}>
-              <label className={styles.infoLabel}>Médico Responsable</label>
-              <div className={styles.infoValue}>{record.medico_ci || 'No especificado'}</div>
             </div>
           </div>
         </div>

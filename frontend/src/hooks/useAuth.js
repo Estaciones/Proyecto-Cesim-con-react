@@ -139,79 +139,97 @@ export function useAuth() {
     },
     [user, profile]
   )
+const register = useCallback(async (formData) => {
+  setRegisterLoading(true);
+  setError(null);
 
-  // === NUEVO: register ===
-  const register = useCallback(async (formData) => {
-    setRegisterLoading(true)
-    setError(null)
+  try {
+    // Validaciones (mismas reglas que tenías en el componente)
+    const {
+      email,
+      password,
+      tipo_usuario,
+      nombre_usuario,
+      nombre,
+      apellidos,  // Nota: el backend espera "apellido", no "apellidos"
+      genero,
+      telefono,
+      ci,
+      confirmPassword  // Nota: esto viene del formData
+    } = formData;
 
-    try {
-      // Validaciones (mismas reglas que tenías en el componente)
-      const {
-        email,
-        password,
-        tipo_usuario,
-        nombre_usuario,
-        nombre,
-        apellidos,
-        genero,
-        telefono,
-        ci,
-        confirmPassword
-      } = formData
-
-      if (
-        !email ||
-        !password ||
-        !tipo_usuario ||
-        !nombre_usuario ||
-        !nombre ||
-        !apellidos ||
-        !genero ||
-        !telefono ||
-        !ci
-      ) {
-        throw new Error("Todos los campos son obligatorios.")
-      }
-
-      if (password !== confirmPassword) {
-        throw new Error("Las contraseñas no coinciden.")
-      }
-
-      if (password.length < 8) {
-        throw new Error("La contraseña debe tener al menos 8 caracteres.")
-      }
-
-      if (
-        !/[A-Z]/.test(password) ||
-        !/[0-9]/.test(password) ||
-        !/[^A-Za-z0-9]/.test(password)
-      ) {
-        throw new Error(
-          "La contraseña debe incluir mayúscula, número y carácter especial."
-        )
-      }
-
-      if (!/^\d{10,11}$/.test(ci)) {
-        throw new Error("CI inválido. Debe ser 10 o 11 dígitos (solo números).")
-      }
-
-      if (!/^\d{7,10}$/.test(telefono)) {
-        throw new Error("Teléfono inválido. Solo dígitos (7-10).")
-      }
-
-      // Llamada al servicio
-      return { ok: true, message: "Registro exitoso" }
-    } catch (err) {
-      console.error("useAuth.register - Error:", err)
-      const msg = err.message || "Error en el registro"
-      setError(msg)
-      throw new Error(msg)
-    } finally {
-      setRegisterLoading(false)
+    if (
+      !email ||
+      !password ||
+      !tipo_usuario ||
+      !nombre_usuario ||
+      !nombre ||
+      !apellidos ||
+      !genero ||
+      !telefono ||
+      !ci
+    ) {
+      throw new Error("Todos los campos son obligatorios.");
     }
-  }, [])
 
+    // Verificar que las contraseñas coincidan
+    if (password !== confirmPassword) {
+      throw new Error("Las contraseñas no coinciden.");
+    }
+
+    if (password.length < 8) {
+      throw new Error("La contraseña debe tener al menos 8 caracteres.");
+    }
+
+    if (
+      !/[A-Z]/.test(password) ||
+      !/[0-9]/.test(password) ||
+      !/[^A-Za-z0-9]/.test(password)
+    ) {
+      throw new Error(
+        "La contraseña debe incluir mayúscula, número y carácter especial."
+      );
+    }
+
+    if (!/^\d{10,11}$/.test(ci)) {
+      throw new Error("CI inválido. Debe ser 10 o 11 dígitos (solo números).");
+    }
+
+    if (!/^\d{7,10}$/.test(telefono)) {
+      throw new Error("Teléfono inválido. Solo dígitos (7-10).");
+    }
+
+    // Preparar los datos para enviar al backend
+    // IMPORTANTE: El backend espera "apellido", no "apellidos"
+    const userDataForBackend = {
+      email,
+      password,
+      tipo_usuario,
+      nombre_usuario,
+      nombre,
+      apellido: apellidos,  // Convertimos "apellidos" a "apellido"
+      genero,
+      telefono,
+      ci
+    };
+
+    console.log("Enviando datos de registro:", userDataForBackend);
+
+    // Llamada REAL al servicio de registro
+    const response = await serviceRef.current.register(userDataForBackend);
+
+    console.log("Respuesta del registro:", response);
+
+    return response;
+  } catch (err) {
+    console.error("useAuth.register - Error:", err);
+    const msg = err.message || "Error en el registro";
+    setError(msg);
+    throw new Error(msg);
+  } finally {
+    setRegisterLoading(false);
+  }
+}, []);
   // sincronización entre pestañas
   useEffect(() => {
     function handleStorage(e) {

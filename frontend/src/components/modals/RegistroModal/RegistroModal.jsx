@@ -21,7 +21,6 @@ export default function RegistroModal() {
   const [formData, setFormData] = useState({
     titulo: "",
     descripcion: "",
-    tipo: "general",
     id_paciente: "",
   });
   const [submitting, setSubmitting] = useState(false);
@@ -65,7 +64,6 @@ export default function RegistroModal() {
       setFormData({
         titulo: "",
         descripcion: "",
-        tipo: "general",
         id_paciente: initialPatientId,
       });
 
@@ -82,7 +80,6 @@ export default function RegistroModal() {
       setFormData({
         titulo: "",
         descripcion: "",
-        tipo: "general",
         id_paciente: "",
       });
       setSubmitting(false);
@@ -231,28 +228,6 @@ export default function RegistroModal() {
             placeholder="Título del registro"
           />
         </div>
-
-        <div className={styles.formGroup}>
-          <label htmlFor="tipo" className={styles.label}>
-            Tipo
-          </label>
-          <select
-            id="tipo"
-            name="tipo"
-            value={formData.tipo}
-            onChange={handleInputChange}
-            className={styles.select}
-            disabled={submitting}
-          >
-            <option value="general">General</option>
-            <option value="consulta">Consulta</option>
-            <option value="evaluacion">Evaluación</option>
-            <option value="seguimiento">Seguimiento</option>
-            <option value="tratamiento">Tratamiento</option>
-            <option value="diagnostico">Diagnóstico</option>
-          </select>
-        </div>
-
         <div className={styles.formGroup}>
           <label htmlFor="descripcion" className={styles.label}>
             Descripción *

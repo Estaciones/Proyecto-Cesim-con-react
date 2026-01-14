@@ -156,7 +156,6 @@
 .userRole {
   font-size: 12px;
   color: var(--text-muted);
-  text-transform: capitalize;
 }
 
 /* Botón de Cerrar Sesión */

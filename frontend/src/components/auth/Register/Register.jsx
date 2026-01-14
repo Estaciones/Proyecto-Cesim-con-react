@@ -7,7 +7,7 @@ import styles from "./Register.module.css";
 export default function Register() {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { register } = useAuthContext();
+  const { register, registerLoading, error } = useAuthContext();
 
   const [formData, setFormData] = useState({
     nombre_usuario: "",
@@ -54,47 +54,64 @@ export default function Register() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setEmailErrorVisible(false);
-    setMessage(null);
+  e.preventDefault();
+  setEmailErrorVisible(false);
+  setMessage(null);
 
-    setSubmitting(true);
-    try {
-      // Delegamos validación y registro al hook useAuth.register
-      await register(formData);
+  // Validación de contraseñas
+  if (formData.password !== formData.confirmPassword) {
+    showMessage("❌ Las contraseñas no coinciden", "error");
+    showToast("Las contraseñas no coinciden", "error");
+    return;
+  }
 
-      showMessage("✅ Registro exitoso. Redirigiendo al login...", "success");
-      showToast("Registro exitoso", "success", 1500);
+  setSubmitting(true);
+  try {
+    // NO excluyas confirmPassword - la función register lo necesita
+    const registerData = { ...formData };
 
-      setFormData({
-        nombre_usuario: "",
-        nombre: "",
-        apellidos: "",
-        genero: "",
-        ci: "",
-        telefono: "",
-        email: "",
-        tipo_usuario: "",
-        password: "",
-        confirmPassword: ""
-      });
+    // Llamamos a la función register del context
+    await register(registerData);
 
-      setTimeout(() => navigate("/login"), 1500);
-    } catch (err) {
-      console.error("Register - Error:", err);
-      const text = err.message || "Error desconocido";
+    showMessage("✅ Registro exitoso. Redirigiendo al login...", "success");
+    showToast("Registro exitoso", "success", 1500);
 
-      showMessage("❌ " + text, "error");
-      showToast(text, "error");
+    // Limpiamos el formulario
+    setFormData({
+      nombre_usuario: "",
+      nombre: "",
+      apellidos: "",
+      genero: "",
+      ci: "",
+      telefono: "",
+      email: "",
+      tipo_usuario: "",
+      password: "",
+      confirmPassword: ""
+    });
 
-      // Si el backend indicó que el email ya existe, mostrar nota específica
-      if (text.toLowerCase().includes("email")) {
-        setEmailErrorVisible(true);
-      }
-    } finally {
-      setSubmitting(false);
+    // Redirigimos al login después de 1.5 segundos
+    setTimeout(() => navigate("/login"), 1500);
+  } catch (err) {
+    console.error("Register - Error:", err);
+    
+    // Usamos el error del contexto si está disponible, o el error capturado
+    const errorMessage = error?.message || err?.message || "Error en el registro";
+    const text = errorMessage.toString();
+
+    showMessage("❌ " + text, "error");
+    showToast(text, "error");
+
+    // Si el backend indicó que el email ya existe, mostrar nota específica
+    if (text.toLowerCase().includes("email") || text.toLowerCase().includes("correo")) {
+      setEmailErrorVisible(true);
     }
-  };
+  } finally {
+    setSubmitting(false);
+  }
+};
+  // Usamos el estado de carga del contexto
+  const isLoading = submitting || registerLoading;
 
   const passwordPercent = `${(passwordScore / 4) * 100}%`;
   let passwordColor = "#ef4444";
@@ -314,10 +331,10 @@ export default function Register() {
 
           <button
             type="submit"
-            disabled={submitting}
-            className={`${styles.button} ${submitting ? styles.loading : ""}`}
+            disabled={isLoading}
+            className={`${styles.button} ${isLoading ? styles.loading : ""}`}
           >
-            {submitting ? "Registrando..." : "Registrarse"}
+            {isLoading ? "Registrando..." : "Registrarse"}
           </button>
 
           {message && (
