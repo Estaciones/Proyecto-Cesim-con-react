@@ -39,25 +39,11 @@ export default function DashboardSidebar({ activeSection, onNavigate }) {
       icon: "💬",
       allowed: ["medico", "gestor_casos", "paciente"],
       description: "Mensajes y notificaciones"
-    },
-    {
-      id: "analiticas",
-      label: "Analíticas",
-      icon: "📊",
-      allowed: ["medico", "gestor_casos"],
-      description: "Estadísticas y reportes"
-    },
-    {
-      id: "configuracion",
-      label: "Configuración",
-      icon: "⚙️",
-      allowed: ["medico", "gestor_casos", "paciente"],
-      description: "Ajustes del sistema"
     }
   ]
 
   // Filtrar ítems según tipo de usuario
-  const menuItems = baseMenuItems.filter(item => 
+  const menuItems = baseMenuItems.filter((item) =>
     item.allowed.includes(userType)
   )
 
@@ -89,14 +75,16 @@ export default function DashboardSidebar({ activeSection, onNavigate }) {
     }
   ]
 
-  const filteredQuickActions = quickActions.filter(action => 
+  const filteredQuickActions = quickActions.filter((action) =>
     action.allowed.includes(userType)
   )
 
   // Función para obtener las iniciales del nombre
   const getUserInitials = () => {
     if (profile?.nombre && profile?.apellido) {
-      return `${profile.nombre.charAt(0)}${profile.apellido.charAt(0)}`.toUpperCase()
+      return `${profile.nombre.charAt(0)}${profile.apellido.charAt(
+        0
+      )}`.toUpperCase()
     }
     if (user?.nombre_usuario) {
       return user.nombre_usuario.charAt(0).toUpperCase()
@@ -107,17 +95,16 @@ export default function DashboardSidebar({ activeSection, onNavigate }) {
   // Función para formatear el tipo de usuario
   const formatUserType = (type) => {
     const types = {
-      "medico": "Médico",
-      "paciente": "Paciente",
-      "gestor_casos": "Gestor",
-      "admin": "Administrador"
+      medico: "Médico",
+      paciente: "Paciente",
+      gestor_casos: "Gestor de Casos",
+      admin: "Administrador"
     }
     return types[type] || type
   }
 
   return (
     <aside className={styles.sidebar}>
-      {/* Encabezado del Sidebar */}
       <div className={styles.sidebarHeader}>
         <div className={styles.logo}>
           <div className={styles.logoIcon}>🏥</div>
@@ -131,9 +118,7 @@ export default function DashboardSidebar({ activeSection, onNavigate }) {
       {/* Perfil del Usuario */}
       <div className={styles.userProfile}>
         <div className={styles.avatarContainer}>
-          <div className={styles.userAvatar}>
-            {getUserInitials()}
-          </div>
+          <div className={styles.userAvatar}>{getUserInitials()}</div>
           <div className={styles.userStatus}></div>
         </div>
         <div className={styles.userInfo}>
@@ -141,9 +126,7 @@ export default function DashboardSidebar({ activeSection, onNavigate }) {
             {profile?.nombre || user?.nombre_usuario || "Usuario"}
             {profile?.apellido ? ` ${profile.apellido}` : ""}
           </span>
-          <span className={styles.userRole}>
-            {formatUserType(userType)}
-          </span>
+          <span className={styles.userRole}>{formatUserType(userType)}</span>
         </div>
       </div>
 
@@ -158,10 +141,11 @@ export default function DashboardSidebar({ activeSection, onNavigate }) {
             {menuItems.map((item) => (
               <li key={item.id}>
                 <button
-                  className={`${styles.navItem} ${activeSection === item.id ? styles.active : ""}`}
+                  className={`${styles.navItem} ${
+                    activeSection === item.id ? styles.active : ""
+                  }`}
                   onClick={() => onNavigate(item.id)}
-                  title={item.description}
-                >
+                  title={item.description}>
                   <span className={styles.navIcon}>{item.icon}</span>
                   <span className={styles.navLabel}>{item.label}</span>
                   {activeSection === item.id && (
@@ -189,65 +173,18 @@ export default function DashboardSidebar({ activeSection, onNavigate }) {
                   key={action.id}
                   className={styles.quickAction}
                   onClick={action.onClick}
-                  style={{ '--action-color': action.color }}
-                >
+                  style={{ "--action-color": action.color }}>
                   <span className={styles.quickActionIcon}>{action.icon}</span>
-                  <span className={styles.quickActionLabel}>{action.label}</span>
+                  <span className={styles.quickActionLabel}>
+                    {action.label}
+                  </span>
                   <span className={styles.quickActionArrow}>→</span>
                 </button>
               ))}
             </div>
           </div>
         )}
-
-        {/* Sistema de Notificaciones */}
-        <div className={styles.notificationSection}>
-          <div className={styles.notificationHeader}>
-            <span className={styles.notificationIcon}>🔔</span>
-            <span className={styles.notificationTitle}>Notificaciones</span>
-            <span className={styles.notificationBadge}>3</span>
-          </div>
-          <div className={styles.notificationList}>
-            <div className={styles.notificationItem}>
-              <span className={styles.notificationDot} style={{ backgroundColor: '#2ecc71' }}></span>
-              <span className={styles.notificationText}>Nuevo paciente registrado</span>
-            </div>
-            <div className={styles.notificationItem}>
-              <span className={styles.notificationDot} style={{ backgroundColor: '#3498db' }}></span>
-              <span className={styles.notificationText}>Plan completado</span>
-            </div>
-            <div className={styles.notificationItem}>
-              <span className={styles.notificationDot} style={{ backgroundColor: '#e74c3c' }}></span>
-              <span className={styles.notificationText}>Prescripción pendiente</span>
-            </div>
-          </div>
-        </div>
       </nav>
-
-      {/* Footer del Sidebar */}
-      <footer className={styles.sidebarFooter}>
-        <div className={styles.systemStatus}>
-          <div className={styles.statusIndicator}>
-            <span className={styles.statusDot}></span>
-            <span className={styles.statusText}>Sistema Activo</span>
-          </div>
-          <div className={styles.systemInfo}>
-            <span className={styles.systemVersion}>v2.1.0</span>
-            <span className={styles.systemHealth}>✓ Saludable</span>
-          </div>
-        </div>
-        
-        <div className={styles.footerActions}>
-          <button className={styles.footerButton} title="Ayuda">
-            <span className={styles.footerIcon}>❓</span>
-            <span className={styles.footerText}>Ayuda</span>
-          </button>
-          <button className={styles.footerButton} title="Reportar problema">
-            <span className={styles.footerIcon}>⚠️</span>
-            <span className={styles.footerText}>Reportar</span>
-          </button>
-        </div>
-      </footer>
     </aside>
   )
 }

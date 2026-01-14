@@ -29,7 +29,6 @@
 }
 
 .modal {
-  background: #f8fdf9; /* Fondo verde muy claro */
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(26, 60, 52, 0.3);
   max-width: 95%;
@@ -39,7 +38,6 @@
   pointer-events: auto;
   animation: slideIn 0.3s ease;
   overflow: hidden;
-  border: 1px solid#2ecc71;
 }
 
 /* Tamaños de Modal */
@@ -62,18 +60,18 @@
 /* Header del Modal */
 .header {
   padding: 22px 28px 18px;
-  border-bottom: 1px solid #2ecc71;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, #2ecc71 0%, #23a758 100%);
+  background: linear-gradient(180deg, #1a3c34 0%, #162a25 100%);
+  
 }
 
 .title {
   margin: 0;
   font-size: 20px;
   font-weight: 600;
-  color: #1a3c34;
+  color: white;
   line-height: 1.4;
 }
 

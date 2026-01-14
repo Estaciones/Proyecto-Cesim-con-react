@@ -4,12 +4,10 @@
   --primary-dark: #27ae60;
   --primary-light: #d5f4e6;
   --secondary-color: #3498db;
-  --text-primary: #1a3c34;
-  --text-secondary: #2d4a43;
+  --text-primary: #d5f4e6;
+  --text-secondary: #d5f4e6;
   --text-muted: #6c8981;
-  --background-light: #f8fdf9;
-  --background-white: #ffffff;
-  --border-color: #e1f5ea;
+  --border-color: #1a3c34;
   --shadow-light: 0 4px 12px rgba(46, 204, 113, 0.1);
   --shadow-medium: 0 6px 20px rgba(46, 204, 113, 0.15);
   --radius-sm: 8px;
@@ -25,7 +23,7 @@
   left: var(--sidebar-width);
   right: 0;
   height: var(--header-height);
-  background: linear-gradient(135deg, var(--background-white) 0%, var(--background-light) 100%);
+  background: linear-gradient(180deg, #1a3c34 0%, #162a25 100%);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border-color);
   box-shadow: var(--shadow-light);
@@ -54,7 +52,7 @@
   margin: 0;
   font-size: 20px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: #f8f8f8;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -151,7 +149,7 @@
 .userName {
   font-size: 15px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: white;
   white-space: nowrap;
 }
 

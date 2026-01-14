@@ -19,7 +19,7 @@ import ViewPrescripcionModal from "../modals/ViewPrescripcionModal/ViewPrescripc
 import EditPrescripcionModal from "../modals/EditPrescripcionModal/EditPrescripcionModal"
 import AsignarGestorModal from "../modals/AsignarGestorModal/AsignarGestorModal"
 import NuevoPacienteModal from "../modals/NuevoPacienteModal/NuevoPacienteModal"
-import EditPacienteModal from "../modals/EditPacienteModal/EditPacienteModal" 
+import EditPacienteModal from "../modals/EditPacienteModal/EditPacienteModal"
 import ViewPacienteModal from "../modals/ViewPacienteModal/ViewPacienteModal"
 // Services
 import { PatientService } from "../../services/patientService"
@@ -64,27 +64,17 @@ export default function Dashboard() {
     [userType]
   )
 
-  const handleSelectPatient = useCallback(
-    (patient) => {
+  const handleSelectPatient = useCallback((patient) => {
+    const selectedPatientData = {
+      id_paciente: patient.id_paciente || patient.id,
+      ci: patient.ci,
+      nombre: patient.nombre,
+      apellido: patient.apellido,
+      email: patient.email
+    }
 
-
-      const selectedPatientData = {
-        id_paciente: patient.id_paciente || patient.id,
-        ci: patient.ci,
-        nombre: patient.nombre,
-        apellido: patient.apellido,
-        email: patient.email
-      }
-
-      setSelectedPatient(selectedPatientData)
-
-      if (isSectionAllowed("historia")) {
-       
-        setActiveSection("historia")
-      }
-    },
-    [isSectionAllowed]
-  )
+    setSelectedPatient(selectedPatientData)
+  }, [])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -344,9 +334,13 @@ export default function Dashboard() {
       {toast && (
         <div className={`${styles.toast} ${styles[toast.type]}`}>
           <span className={styles.toastIcon}>
-            {toast.type === "success" ? "✅" : 
-             toast.type === "error" ? "❌" : 
-             toast.type === "warning" ? "⚠️" : "ℹ️"}
+            {toast.type === "success"
+              ? "✅"
+              : toast.type === "error"
+              ? "❌"
+              : toast.type === "warning"
+              ? "⚠️"
+              : "ℹ️"}
           </span>
           <span className={styles.toastMessage}>{toast.message}</span>
         </div>
@@ -358,13 +352,12 @@ export default function Dashboard() {
       <CrearPlanModal />
       <ViewPlanModal />
       <EditPlanModal />
-      <ViewPrescripcionModal/>
+      <ViewPrescripcionModal />
       <EditPrescripcionModal />
       <AsignarGestorModal />
       <NuevoPacienteModal />
-      <EditPacienteModal /> 
+      <EditPacienteModal />
       <ViewPacienteModal />
-
     </div>
   )
 }

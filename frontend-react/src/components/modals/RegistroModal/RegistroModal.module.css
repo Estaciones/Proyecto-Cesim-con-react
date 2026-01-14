@@ -13,7 +13,7 @@
 .selectedPatientInfo h4 {
   margin: 0 0 0.75rem 0;
   font-size: 1rem;
-  color: #0369a1;
+  color: #2ecc71;
 }
 
 .patientCard {
@@ -25,7 +25,7 @@
 .avatar {
   width: 40px;
   height: 40px;
-  background-color: #3b82f6;
+  background-color: #2ecc71;
   color: white;
   border-radius: 50%;
   display: flex;
