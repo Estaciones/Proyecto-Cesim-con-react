@@ -1,10 +1,5 @@
 import { api } from "../utils/api"
 
-/**
- * HistoryService
- * - Todas las funciones aceptan un segundo parámetro `options` que será
- *   pasado a `api.get/patch/post/delete` (por ejemplo: { signal }).
- */
 export const HistoryService = {
   getAll: (params = {}, options = {}) => {
     const queryString = new URLSearchParams(params).toString()

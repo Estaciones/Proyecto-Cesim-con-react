@@ -1,3 +1,4 @@
+// src/hooks/usePlans.js
 import { useState, useCallback, useRef } from "react"
 import { PlanService } from "../services/planService"
 
@@ -10,6 +11,9 @@ export function usePlans() {
   const inFlightRef = useRef(null)
 
   const fetchPlans = useCallback(async (params = {}, options = {}) => {
+    // Si se pasó un signal ya abortado, salir temprano
+    if (options.signal && options.signal.aborted) return null
+
     if (inFlightRef.current && !options.signal) {
       return inFlightRef.current
     }
@@ -34,6 +38,7 @@ export function usePlans() {
         return data
       } catch (err) {
         if (err && err.name === "AbortError") {
+          // petición abortada intencionalmente: no es error para mostrar
           return null
         }
         console.error("❌ usePlans.fetchPlans - ERROR:", err)
@@ -49,6 +54,7 @@ export function usePlans() {
     return promise
   }, [])
 
+  // resto de funciones (create/update/delete) se mantienen igual
   const createPlan = useCallback(async (planData) => {
     setLoading(true)
     try {

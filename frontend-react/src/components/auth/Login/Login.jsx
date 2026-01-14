@@ -64,12 +64,13 @@ export default function Login() {
             </label>
             <input
               type="text"
+              autoComplete="current-username"
               id="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              placeholder="usuario o email"
               required
               className={styles.input}
-              placeholder="usuario o email@ejemplo.com"
               disabled={loading}
             />
           </div>
@@ -80,12 +81,13 @@ export default function Login() {
             </label>
             <input
               type="password"
+              autoComplete="current-password"
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              placeholder="contraseña"
               className={styles.input}
-              placeholder="••••••••"
               disabled={loading}
             />
           </div>

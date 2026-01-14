@@ -330,7 +330,7 @@ export default function Dashboard() {
       <div className={styles.mainLayout}>
         <Sidebar
           activeSection={activeSection}
-          onNavigate={(sec) => setActiveSection(sec)}
+          onNavigate={setActiveSection}
           userType={userType}
           onLogout={handleLogout}
           profile={profile}

@@ -41,7 +41,7 @@ router.get("/gestores/:id", controllers.getGestorById)
 router.post("/gestores", controllers.createGestor)
 router.patch("/gestores/:id", controllers.updateGestor)
 router.delete("/gestores/:id", controllers.deleteGestor)
-router.post("/asignar-gestor", controllers.postAsignarGestor)
-router.delete("/asignar-gestor", controllers.deleteAsignacionGestor)
+router.post("/asignar_gestor", controllers.postAsignarGestor)
+router.delete("/asignar_gestor", controllers.deleteAsignacionGestor)
 
 export default router

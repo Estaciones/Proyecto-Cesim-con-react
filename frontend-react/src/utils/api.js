@@ -41,22 +41,16 @@ export function getHeaders(contentType = "application/json") {
   return headers
 }
 
-/**
- * handleResponse: parsea la respuesta, con logging detallado cuando la respuesta
- * no es JSON válido (ej. HTML dev server, página de login, etc).
- */
 export async function handleResponse(response) {
   const contentType = (response.headers.get("content-type") || "").toLowerCase()
 
   if (!response.ok) {
-    // Intentamos extraer JSON de error; si falla, guardamos texto crudo
     let errorMessage = `Error ${response.status}: ${response.statusText}`
     try {
       const errorData = await response.json()
       errorMessage = errorData.error || errorData.message || errorMessage
       console.error(`❌ Error JSON:`, errorData)
     } catch {
-      // No era JSON: tomar texto crudo
       try {
         const text = await response.text()
         if (text) {
@@ -71,12 +65,8 @@ export async function handleResponse(response) {
     throw new Error(errorMessage)
   }
 
-  // No content
-  if (response.status === 204) {
-    return null
-  }
+  if (response.status === 204) return null
 
-  // Si Content-Type indica JSON, parseamos; si no, devolvemos texto crudo y avisamos
   if (
     contentType.includes("application/json") ||
     contentType.includes("application/ld+json")
@@ -85,7 +75,6 @@ export async function handleResponse(response) {
       const data = await response.json()
       return data
     } catch (error) {
-      // JSON parsing failed even si content-type decía JSON: log raw text
       try {
         const raw = await response.text()
         console.error(`Error parseando JSON. RAW:`, raw.slice(0, 2000))
@@ -98,7 +87,6 @@ export async function handleResponse(response) {
       }
     }
   } else {
-    // No es JSON: mostrar RAW para debug y lanzar error claro
     try {
       const raw = await response.text()
       console.warn(
@@ -119,13 +107,18 @@ export async function handleResponse(response) {
 
 export async function apiFetch(url, options = {}) {
   try {
+    // Nota: options puede incluir signal; fetch respetará el AbortController
     const response = await fetch(url, options)
-
     const result = await handleResponse(response)
-
     return result
   } catch (error) {
-    console.error(`ERROR:`, {
+    // Si fue abortado: lo consideramos un flujo normal (no spam en consola)
+    if (error && error.name === "AbortError") {
+      // re-lanzamos para que el caller pueda detectarlo si quiere
+      throw error
+    }
+    // Para otros errores, dejamos log y re-lanzamos
+    console.error(`ERROR apiFetch:`, {
       message: error.message,
       name: error.name
     })
@@ -133,63 +126,46 @@ export async function apiFetch(url, options = {}) {
   }
 }
 
-// Métodos HTTP convenience
 export const api = {
   get: (path, options = {}) => {
     const url = apiUrl(path)
     const headers = getHeaders()
-
     return apiFetch(url, {
       ...options,
       method: "GET",
-      headers: headers
-    }).catch((error) => {
-      console.error(`Error:`, error.message)
-      throw error
+      headers
     })
   },
 
   post: (path, data, options = {}) => {
     const url = apiUrl(path)
     const headers = getHeaders()
-
     return apiFetch(url, {
       ...options,
       method: "POST",
-      headers: headers,
+      headers,
       body: JSON.stringify(data)
-    }).catch((error) => {
-      console.error(`Error:`, error.message)
-      throw error
     })
   },
 
   patch: (path, data, options = {}) => {
     const url = apiUrl(path)
     const headers = getHeaders()
-
     return apiFetch(url, {
       ...options,
       method: "PATCH",
-      headers: headers,
+      headers,
       body: JSON.stringify(data)
-    }).catch((error) => {
-      console.error(`Error:`, error.message)
-      throw error
     })
   },
 
   delete: (path, options = {}) => {
     const url = apiUrl(path)
-    const headers = getHeaders(null) // DELETE puede no necesitar Content-Type
-
+    const headers = getHeaders(null)
     return apiFetch(url, {
       ...options,
       method: "DELETE",
-      headers: headers
-    }).catch((error) => {
-      console.error(`Error:`, error.message)
-      throw error
+      headers
     })
   }
 }

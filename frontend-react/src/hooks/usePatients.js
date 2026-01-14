@@ -1,3 +1,4 @@
+// src/hooks/usePatients.js
 import { useState, useCallback, useRef } from "react";
 import { PatientService } from "../services/patientService";
 
@@ -10,6 +11,8 @@ export function usePatients() {
   const inFlightRef = useRef(null);
 
   const fetchPatients = useCallback(async (params = {}, options = {}) => {
+    if (options.signal && options.signal.aborted) return null;
+
     if (inFlightRef.current && !options.signal) {
       return inFlightRef.current;
     }
@@ -49,6 +52,7 @@ export function usePatients() {
     return promise;
   }, []);
 
+  // resto de callbacks (create/update/delete/assignGestor/fetchGestores) iguales al original
   const createPatient = useCallback(async (patientData) => {
     setLoading(true);
     try {

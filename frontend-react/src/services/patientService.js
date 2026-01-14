@@ -1,11 +1,7 @@
 import { api } from "../utils/api"
 
 export const PatientService = {
-  /**
-   * getAll(params = {}, options = {})
-   * - params: objeto para query string (p.ej. { medico_id, gestor_id })
-   * - options: se forwardea a api.get (p.ej. { signal })
-   */
+
   getAll: async (params = {}, options = {}) => {
     const queryString = new URLSearchParams(params).toString()
     const path = queryString ? `pacientes?${queryString}` : "pacientes"

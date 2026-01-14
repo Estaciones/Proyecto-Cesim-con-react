@@ -1,3 +1,4 @@
+// src/hooks/useHistory.js
 import { useState, useCallback } from "react"
 import { HistoryService } from "../services/historyService"
 
@@ -7,12 +8,13 @@ export function useHistory() {
   const [error, setError] = useState(null)
 
   const fetchHistoria = useCallback(async (params = {}, options = {}) => {
+    if (options.signal && options.signal.aborted) return null
+
     setLoading(true)
     setError(null)
     try {
       const data = await HistoryService.getAll(params, options)
 
-      // Normalización robusta: acepta array directo o wrappers comunes
       let arr = []
       if (Array.isArray(data)) {
         arr = data
@@ -25,13 +27,11 @@ export function useHistory() {
       } else if (data && Array.isArray(data.items)) {
         arr = data.items
       } else if (data && typeof data === 'object') {
-        // Si es un solo objeto (no array), lo convertimos en array
         arr = [data]
       } else {
         arr = []
       }
 
-      // Asegurar que cada registro tenga al menos un identificador
       arr = arr.map(item => ({
         ...item,
         _id: item.id_registro || item.id || Math.random().toString(36).substr(2, 9)
@@ -51,6 +51,7 @@ export function useHistory() {
     }
   }, [])
 
+  // create/update/delete igual que antes
   const createRegistro = useCallback(async (historyData) => {
     setLoading(true)
     try {
