@@ -5,7 +5,7 @@ import dotenv from "dotenv"
 import cookieParser from "cookie-parser" // <-- NUEVO
 import authRoutes from "./routes/authRoutes.js"
 import apiRoutes from "./routes/apiRoutes.js"
-
+import { verifyToken } from "./middlewares/authMiddleware.js"
 dotenv.config()
 
 const app = express()
@@ -26,8 +26,8 @@ app.use(helmet())
 app.use(cors(corsOptions)) // Usar la nueva configuración
 app.use(express.json())
 
-app.use("/api/auth", authRoutes)
-app.use("/api", apiRoutes)
+app.use("/api/auth", authRoutes) // Rutas públicas
+app.use("/api", verifyToken, apiRoutes) // ¡TODAS las rutas /api requieren token!
 const PORT = 4000
 app.listen(PORT, () => {
   console.log(`✅ Servidor escuchando en puerto ${PORT}`)

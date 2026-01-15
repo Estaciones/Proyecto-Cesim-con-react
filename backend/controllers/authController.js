@@ -200,3 +200,17 @@ export const logoutUser = async (req, res) => {
     return res.status(500).json({ error: "Error en el servidor" })
   }
 }
+
+export const verifyAuth = async (req, res) => {
+  try {
+    // Este controlador solo se ejecuta si verifyToken pasa
+    return res.json({
+      message: "Autenticación válida",
+      user: req.user,
+      valid: true
+    })
+  } catch (err) {
+    console.error("Error verifyAuth:", err)
+    return res.status(500).json({ error: "Error en verificación" })
+  }
+}

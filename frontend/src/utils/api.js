@@ -8,43 +8,41 @@ export function apiUrl(path = "") {
 }
 
 export function getToken() {
-  const userStr = localStorage.getItem("user")
-  if (userStr) {
-    try {
-      const user = JSON.parse(userStr)
-      return user.token
-    } catch (error) {
-      console.error(
-        "❌ getToken - Error parsing user from localStorage:",
-        error
-      )
-      return null
-    }
-  }
-  return null
+  return null // Las cookies se manejan automáticamente
 }
 
 export function getHeaders(contentType = "application/json") {
   const headers = {
-    Accept: "application/json"
+    'Accept': 'application/json'
   }
-
+  
   if (contentType) {
-    headers["Content-Type"] = contentType
+    headers['Content-Type'] = contentType
   }
-
-  // ❌ TEMPORALMENTE: NO enviar Authorization header
-  // El token vendrá en las cookies automáticamente
-  // const token = getToken()
-  // if (token) {
-  //   headers["Authorization"] = `Bearer ${token}`
-  // }
-
+  
   return headers
 }
 
 export async function handleResponse(response) {
   const contentType = (response.headers.get("content-type") || "").toLowerCase()
+
+  // ✅ MANEJAR ERROR 401 AUTOMÁTICAMENTE
+  if (response.status === 401) {
+    console.log('🔐 handleResponse: 401 Unauthorized - Token inválido/ausente')
+    
+    // Limpiar localStorage
+    localStorage.removeItem("user")
+    localStorage.removeItem("profile")
+    
+    // Si estamos en el navegador, redirigir a login
+    if (typeof window !== "undefined" && !window.location.pathname.includes('/login')) {
+      console.log('🔄 Redirigiendo a login desde handleResponse')
+      window.location.href = "/login"
+    }
+    
+    const errorData = await response.json().catch(() => ({ error: "No autenticado" }))
+    throw new Error(errorData.error || "Sesión expirada. Por favor, inicie sesión nuevamente.")
+  }
 
   if (!response.ok) {
     let errorMessage = `Error ${response.status}: ${response.statusText}`
@@ -108,16 +106,23 @@ export async function handleResponse(response) {
 }
 
 export async function apiFetch(url, options = {}) {
-   try {
-    // ✅ AGREGAR credentials: 'include' - ES CRÍTICO
+  try {
+    // ✅ CONFIGURACIÓN CRÍTICA para cookies
     const fetchOptions = {
       ...options,
-      credentials: 'include' // ← ESTA LÍNEA FALTA
-    };
+      credentials: 'include', // Envía cookies automáticamente
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        ...options.headers
+      }
+    }
     
-    const response = await fetch(url, fetchOptions);
-    const result = await handleResponse(response);
-    return result;
+    console.log('🌐 Fetch a:', url, 'con cookies')
+    
+    const response = await fetch(url, fetchOptions)
+    const result = await handleResponse(response)
+    return result
   } catch (error) {
     // Si fue abortado: lo consideramos un flujo normal (no spam en consola)
     if (error && error.name === "AbortError") {

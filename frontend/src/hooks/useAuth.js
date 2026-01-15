@@ -11,14 +11,16 @@ export function useAuth() {
     }
   })
 
-  const [profile, setProfile] = useState(() => {
-    try {
-      const raw = localStorage.getItem("profile")
-      return raw ? JSON.parse(raw) : null
-    } catch {
-      return null
-    }
-  })
+const [profile, setProfile] = useState(() => {
+  try {
+    const raw = localStorage.getItem("profile")
+    const parsed = raw ? JSON.parse(raw) : null
+    // ✅ Solo parsear, no agregar datos extras
+    return parsed
+  } catch {
+    return null
+  }
+})
 
   const [loading, setLoading] = useState(false)
   const [registerLoading, setRegisterLoading] = useState(false)
@@ -26,7 +28,7 @@ export function useAuth() {
 
   const serviceRef = useRef(AuthService)
 
- const login = useCallback(async (credentials = {}) => {
+const login = useCallback(async (credentials = {}) => {
   setLoading(true)
   setError(null)
 
@@ -46,29 +48,33 @@ export function useAuth() {
 
     const userData = response.user
     
-    // ✅ IMPORTANTE: Ya NO esperamos token en response.user
-    // El token está en las cookies automáticamente
-    // Eliminamos cualquier referencia a token que pudiera haber
-    if (userData.token) {
-      delete userData.token; // ← Limpia por si acaso
+    // ✅ SOLO DATOS MÍNIMOS en localStorage
+    const minimalUser = {
+      id_usuario: userData.id_usuario,
+      tipo_usuario: userData.tipo_usuario,
+      nombre_usuario: userData.nombre_usuario
     }
     
-    localStorage.setItem("user", JSON.stringify(userData))
-    setUser(userData)
+    // Guardar en localStorage
+    localStorage.setItem("user", JSON.stringify(minimalUser))
+    setUser(minimalUser)
 
-    const basicProfile = {
+    // ✅ Profile SOLO con datos mínimos (para compatibilidad)
+    const minimalProfile = {
       id_usuario: userData.id_usuario,
-      email: userData.email,
       nombre_usuario: userData.nombre_usuario,
-      tipo_usuario: userData.tipo_usuario,
-      nombre: userData.nombre || "",
-      apellido: userData.apellido || ""
+      tipo_usuario: userData.tipo_usuario
     }
 
-    localStorage.setItem("profile", JSON.stringify(basicProfile))
-    setProfile(basicProfile)
+    // ✅ Mantener profile en localStorage (solo compatibilidad)
+    localStorage.setItem("profile", JSON.stringify(minimalProfile))
+    setProfile(minimalProfile)
 
-    return { user: userData, profile: basicProfile }
+    // ✅ Datos completos SOLO en estado adicional (no localStorage)
+    // Si necesitas email/nombre en la UI, guárdalos en otro estado
+    // O mejor: obténlos cuando los necesites
+
+    return { user: minimalUser, profile: minimalProfile }
   } catch (err) {
     console.error("useAuth.login - Error:", err)
     setError(err.message || "Error en el login")
@@ -87,65 +93,54 @@ export function useAuth() {
     setError(null)
   }, [])
 
-  const loadProfile = useCallback(
-    async (userId = null) => {
-      if (!user && !userId) {
-        return null
+const loadProfile = useCallback(
+  async (userId = null) => {
+    if (!user && !userId) {
+      return null
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const profileId = userId || user?.id_usuario || user?.id
+      if (!profileId) {
+        throw new Error("No se pudo obtener el ID del usuario")
       }
 
-      setLoading(true)
-      setError(null)
+      const profileData = await serviceRef.current.getProfile(profileId)
 
-      try {
-        const profileId = userId || user?.id_usuario || user?.id
-        if (!profileId) {
-          throw new Error("No se pudo obtener el ID del usuario")
-        }
-
-        const profileData = await serviceRef.current.getProfile(profileId)
-
-        if (!profileData) {
-          return (
-            profile || {
-              id_usuario: user.id_usuario,
-              email: user.email,
-              nombre_usuario: user.nombre_usuario,
-              tipo_usuario: user.tipo_usuario,
-              nombre: user.nombre || "",
-              apellido: user.apellido || ""
-            }
-          )
-        }
-
-        localStorage.setItem("profile", JSON.stringify(profileData))
-        setProfile(profileData)
-
-        return profileData
-      } catch (err) {
-        console.error("useAuth.loadProfile - Error:", err)
-        setError(err.message || "Error cargando perfil")
-
-        if (user) {
-          const basicProfile = {
-            id_usuario: user.id_usuario,
-            email: user.email,
-            nombre_usuario: user.nombre_usuario,
-            tipo_usuario: user.tipo_usuario,
-            nombre: user.nombre || "",
-            apellido: user.apellido || ""
-          }
-          localStorage.setItem("profile", JSON.stringify(basicProfile))
-          setProfile(basicProfile)
-          return basicProfile
-        }
-
-        return null
-      } finally {
-        setLoading(false)
+      if (!profileData) {
+        return profile // Ya tenemos datos mínimos
       }
-    },
-    [user, profile]
-  )
+
+      // ✅ Actualizar profile con datos completos
+      const updatedProfile = {
+        id_usuario: profileData.id_usuario,
+        nombre_usuario: profileData.nombre_usuario,
+        tipo_usuario: profileData.tipo_usuario,
+        // Datos adicionales que vienen de la API
+        email: profileData.email || "",
+        nombre: profileData.nombre || "",
+        apellido: profileData.apellido || "",
+        telefono: profileData.telefono || "",
+        ci: profileData.ci || ""
+      }
+
+      // ✅ NO guardar en localStorage - solo estado
+      setProfile(updatedProfile)
+
+      return updatedProfile
+    } catch (err) {
+      console.error("useAuth.loadProfile - Error:", err)
+      setError(err.message || "Error cargando perfil")
+      return profile // Devolver lo que ya tenemos
+    } finally {
+      setLoading(false)
+    }
+  },
+  [user, profile]
+)
 const register = useCallback(async (formData) => {
   setRegisterLoading(true);
   setError(null);
@@ -238,35 +233,35 @@ const register = useCallback(async (formData) => {
   }
 }, []);
   // sincronización entre pestañas
-  useEffect(() => {
-    function handleStorage(e) {
-      if (e.key === "user") {
-        try {
-          const newVal = e.newValue ? JSON.parse(e.newValue) : null
-          setUser(newVal)
-          if (!newVal) {
-            localStorage.removeItem("profile")
-            setProfile(null)
-          }
-        } catch {
-          setUser(null)
+// sincronización entre pestañas
+useEffect(() => {
+  function handleStorage(e) {
+    if (e.key === "user") {
+      try {
+        const newVal = e.newValue ? JSON.parse(e.newValue) : null
+        setUser(newVal)
+        if (!newVal) {
+          localStorage.removeItem("profile")
           setProfile(null)
         }
-      }
-      if (e.key === "profile") {
-        try {
-          const newVal = e.newValue ? JSON.parse(e.newValue) : null
-          setProfile(newVal)
-        } catch {
-          setProfile(null)
-        }
+      } catch {
+        setUser(null)
+        setProfile(null)
       }
     }
+    if (e.key === "profile") {
+      try {
+        const newVal = e.newValue ? JSON.parse(e.newValue) : null
+        setProfile(newVal)
+      } catch {
+        setProfile(null)
+      }
+    }
+  }
 
-    window.addEventListener("storage", handleStorage)
-    return () => window.removeEventListener("storage", handleStorage)
-  }, [])
-
+  window.addEventListener("storage", handleStorage)
+  return () => window.removeEventListener("storage", handleStorage)
+}, [])
   // cargar perfil automáticamente si es necesario
   useEffect(() => {
     const init = async () => {

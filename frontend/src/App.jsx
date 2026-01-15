@@ -14,7 +14,7 @@ import Register from "./components/auth/Register/Register"
 import Dashboard from "./components/dashboard/Dashboard"
 
 // Componente para rutas protegidas
-import ProtectedRoute from "./components/auth/ProtectedRoute/ProtectedRoute"
+import ProtectedRoute from "./components/common/ProtectedRoute"
 
 function App() {
   return (
