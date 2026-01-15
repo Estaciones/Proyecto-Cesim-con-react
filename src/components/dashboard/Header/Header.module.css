@@ -1,0 +1,282 @@
+/* Variables CSS */
+:root {
+  --primary-color: #2ecc71;
+  --primary-dark: #27ae60;
+  --primary-light: #d5f4e6;
+  --secondary-color: #3498db;
+  --text-primary: #d5f4e6;
+  --text-secondary: #d5f4e6;
+  --text-muted: #6c8981;
+  --border-color: #1a3c34;
+  --shadow-light: 0 4px 12px rgba(46, 204, 113, 0.1);
+  --shadow-medium: 0 6px 20px rgba(46, 204, 113, 0.15);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --transition: all 0.3s ease;
+}
+
+/* Header Principal */
+.header {
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-width);
+  right: 0;
+  height: var(--header-height);
+  background: linear-gradient(180deg, #1a3c34 0%, #162a25 100%);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-light);
+  z-index: 1000;
+  transition: var(--transition);
+}
+
+.container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+  padding: 0 32px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* Sección Izquierda */
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #f8f8f8;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  letter-spacing: -0.02em;
+}
+
+.titleIcon {
+  font-size: 24px;
+  opacity: 0.9;
+}
+
+.userBadge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  border-radius: var(--radius-lg);
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid rgba(46, 204, 113, 0.2);
+}
+
+.badgeIcon {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.badgeText {
+  text-transform: capitalize;
+}
+
+/* Sección Derecha */
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.userProfile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  background: var(--background-white);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  transition: var(--transition);
+}
+
+.userProfile:hover {
+  box-shadow: var(--shadow-light);
+  transform: translateY(-1px);
+}
+
+.avatarContainer {
+  position: relative;
+}
+
+.userAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  border: 2px solid var(--background-white);
+  box-shadow: 0 4px 8px rgba(46, 204, 113, 0.2);
+}
+
+.userStatus {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  background: #27ae60;
+  border-radius: 50%;
+  border: 2px solid var(--background-white);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.userName {
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  white-space: nowrap;
+}
+
+.userRole {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Botón de Cerrar Sesión */
+.logoutButton {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #fff5f5 0%, #ffeaea 100%);
+  color: #e74c3c;
+  border: 1px solid #ffd1d1;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  min-width: 140px;
+  justify-content: center;
+}
+
+.logoutButton:hover {
+  background: linear-gradient(135deg, #ffeaea 0%, #ffd6d6 100%);
+  border-color: #ffb8b8;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(231, 76, 60, 0.15);
+}
+
+.logoutButton:active {
+  transform: translateY(0);
+}
+
+.logoutIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logoutIcon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.logoutText {
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .container {
+    padding: 0 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    left: 72px; /* Ancho del sidebar colapsado */
+  }
+  
+  .title {
+    font-size: 18px;
+  }
+  
+  .userBadge {
+    display: none;
+  }
+  
+  .logoutButton {
+    min-width: auto;
+    padding: 12px;
+  }
+  
+  .logoutText {
+    display: none;
+  }
+  
+  .userInfo {
+    display: none;
+  }
+  
+  .userProfile {
+    padding: 8px;
+  }
+  
+  .userAvatar {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 640px) {
+  .header {
+    left: 0;
+  }
+  
+  .container {
+    padding: 0 16px;
+  }
+  
+  .title {
+    font-size: 16px;
+    gap: 8px;
+  }
+  
+  .titleIcon {
+    font-size: 20px;
+  }
+  
+  .userProfile {
+    background: transparent;
+    border: none;
+    padding: 0;
+  }
+  
+  .userProfile:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  
+  .userStatus {
+    width: 10px;
+    height: 10px;
+  }
+}

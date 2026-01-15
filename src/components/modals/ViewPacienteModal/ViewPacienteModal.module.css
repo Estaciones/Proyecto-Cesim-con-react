@@ -1,0 +1,256 @@
+/* ViewPacienteModal.module.css */
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Encabezado del Paciente */
+.headerSection {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  background: linear-gradient(135deg, #e9f7ef 0%, #d4f1e3 100%);
+  border-radius: 12px;
+  border: 1px solid #c6f0d9;
+  margin-bottom: 8px;
+}
+
+.avatar {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+  flex-shrink: 0;
+}
+
+.headerInfo {
+  flex: 1;
+}
+
+.patientName {
+  margin: 0 0 12px 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: #1a3c34;
+  line-height: 1.2;
+}
+
+.metaInfo {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.metaItem {
+  font-size: 14px;
+  color: #2d4a43;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(198, 240, 217, 0.6);
+}
+
+.metaItem strong {
+  color: #1a3c34;
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+/* Secciones de información */
+.infoSection {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e1f5ea;
+  padding: 24px;
+}
+
+.sectionTitle {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a3c34;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e9f7ef;
+}
+
+.sectionIcon {
+  font-size: 18px;
+  opacity: 0.9;
+}
+
+/* Grid de información */
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.infoLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6c8981;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.infoValue {
+  padding: 12px 16px;
+  background: #f8fdf9;
+  border: 1px solid #e1f5ea;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #1a3c34;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  line-height: 1.4;
+}
+
+.largeField {
+  min-height: 60px;
+  align-items: flex-start;
+  line-height: 1.6;
+}
+
+/* Estado vacío */
+.emptyState {
+  text-align: center;
+  padding: 60px 40px;
+  background: #f8fdf9;
+  border-radius: 12px;
+  border: 1px solid #e1f5ea;
+}
+
+.emptyIcon {
+  font-size: 56px;
+  margin-bottom: 20px;
+  display: block;
+  color: #c6f0d9;
+}
+
+.emptyState h3 {
+  margin: 0 0 12px 0;
+  color: #1a3c34;
+  font-size: 20px;
+}
+
+.emptyState p {
+  margin: 0;
+  color: #6c8981;
+  font-size: 15px;
+}
+
+/* Acciones */
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 20px;
+  border-top: 1px solid #e9f7ef;
+  margin-top: 8px;
+}
+
+.closeButton {
+  padding: 12px 32px;
+  background: #2ecc71;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 150px;
+}
+
+.closeButton:hover {
+  background: #27ae60;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(46, 204, 113, 0.3);
+}
+
+.closeButton:active {
+  transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    gap: 20px;
+  }
+  
+  .headerSection {
+    flex-direction: column;
+    text-align: center;
+    padding: 20px;
+    gap: 16px;
+  }
+  
+  .avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 20px;
+  }
+  
+  .patientName {
+    font-size: 20px;
+  }
+  
+  .metaInfo {
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .metaItem {
+    text-align: center;
+  }
+  
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .infoSection {
+    padding: 20px;
+  }
+  
+  .formActions {
+    justify-content: center;
+  }
+  
+  .closeButton {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .headerSection {
+    padding: 16px;
+  }
+  
+  .infoSection {
+    padding: 16px;
+  }
+  
+  .infoValue {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+}
