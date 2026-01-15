@@ -26,50 +26,57 @@ export function useAuth() {
 
   const serviceRef = useRef(AuthService)
 
-  const login = useCallback(async (credentials = {}) => {
-    setLoading(true)
-    setError(null)
+ const login = useCallback(async (credentials = {}) => {
+  setLoading(true)
+  setError(null)
 
-    try {
-      const identifier = (credentials.identifier ?? "").toString().trim()
-      const password = credentials.password
+  try {
+    const identifier = (credentials.identifier ?? "").toString().trim()
+    const password = credentials.password
 
-      if (!identifier || !password) {
-        throw new Error("Faltan credenciales")
-      }
-
-      const response = await serviceRef.current.login({ identifier, password })
-
-      if (!response.user) {
-        throw new Error("Respuesta del servidor no contiene datos de usuario")
-      }
-
-      const userData = response.user
-      localStorage.setItem("user", JSON.stringify(userData))
-      setUser(userData)
-
-      const basicProfile = {
-        id_usuario: userData.id_usuario,
-        email: userData.email,
-        nombre_usuario: userData.nombre_usuario,
-        tipo_usuario: userData.tipo_usuario,
-        nombre: userData.nombre || "",
-        apellido: userData.apellido || ""
-      }
-
-      localStorage.setItem("profile", JSON.stringify(basicProfile))
-      setProfile(basicProfile)
-
-      return { user: userData, profile: basicProfile }
-    } catch (err) {
-      console.error("useAuth.login - Error:", err)
-      setError(err.message || "Error en el login")
-      throw err
-    } finally {
-      setLoading(false)
+    if (!identifier || !password) {
+      throw new Error("Faltan credenciales")
     }
-  }, [])
 
+    const response = await serviceRef.current.login({ identifier, password })
+
+    if (!response.user) {
+      throw new Error("Respuesta del servidor no contiene datos de usuario")
+    }
+
+    const userData = response.user
+    
+    // ✅ IMPORTANTE: Ya NO esperamos token en response.user
+    // El token está en las cookies automáticamente
+    // Eliminamos cualquier referencia a token que pudiera haber
+    if (userData.token) {
+      delete userData.token; // ← Limpia por si acaso
+    }
+    
+    localStorage.setItem("user", JSON.stringify(userData))
+    setUser(userData)
+
+    const basicProfile = {
+      id_usuario: userData.id_usuario,
+      email: userData.email,
+      nombre_usuario: userData.nombre_usuario,
+      tipo_usuario: userData.tipo_usuario,
+      nombre: userData.nombre || "",
+      apellido: userData.apellido || ""
+    }
+
+    localStorage.setItem("profile", JSON.stringify(basicProfile))
+    setProfile(basicProfile)
+
+    return { user: userData, profile: basicProfile }
+  } catch (err) {
+    console.error("useAuth.login - Error:", err)
+    setError(err.message || "Error en el login")
+    throw err
+  } finally {
+    setLoading(false)
+  }
+}, [])
   const logout = useCallback(() => {
     serviceRef.current.logout()
     localStorage.removeItem("user")

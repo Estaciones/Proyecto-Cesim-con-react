@@ -33,10 +33,12 @@ export function getHeaders(contentType = "application/json") {
     headers["Content-Type"] = contentType
   }
 
-  const token = getToken()
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`
-  }
+  // ❌ TEMPORALMENTE: NO enviar Authorization header
+  // El token vendrá en las cookies automáticamente
+  // const token = getToken()
+  // if (token) {
+  //   headers["Authorization"] = `Bearer ${token}`
+  // }
 
   return headers
 }
@@ -106,11 +108,16 @@ export async function handleResponse(response) {
 }
 
 export async function apiFetch(url, options = {}) {
-  try {
-    // Nota: options puede incluir signal; fetch respetará el AbortController
-    const response = await fetch(url, options)
-    const result = await handleResponse(response)
-    return result
+   try {
+    // ✅ AGREGAR credentials: 'include' - ES CRÍTICO
+    const fetchOptions = {
+      ...options,
+      credentials: 'include' // ← ESTA LÍNEA FALTA
+    };
+    
+    const response = await fetch(url, fetchOptions);
+    const result = await handleResponse(response);
+    return result;
   } catch (error) {
     // Si fue abortado: lo consideramos un flujo normal (no spam en consola)
     if (error && error.name === "AbortError") {

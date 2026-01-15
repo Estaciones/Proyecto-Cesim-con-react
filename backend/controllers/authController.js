@@ -101,44 +101,65 @@ export const registerUser = async (req, res) => {
 
 export const loginUser = async (req, res) => {
   try {
-    // Recibimos tanto email como nombre_usuario (frontend envía ambos)
     const { email, nombre_usuario, password } = req.body
 
     if ((!email && !nombre_usuario) || !password) {
       return res.status(400).json({ error: "Faltan credenciales" })
     }
 
-    // buscamos por email o nombre_usuario
+    // Buscar usuario
     const q = await pool.query(
-      `SELECT id_usuario, email, password_hash, tipo_usuario, nombre_usuario
+      `SELECT id_usuario, email, password_hash, tipo_usuario, 
+              nombre_usuario, esta_activo
        FROM usuario
-       WHERE email = $1 OR nombre_usuario = $2
+       WHERE (email = $1 OR nombre_usuario = $2) AND esta_activo = true
        LIMIT 1`,
       [email || "", nombre_usuario || ""]
     )
 
     if (q.rowCount === 0) {
-      return res.status(401).json({ error: "Credenciales inválidas" })
+      return res.status(401).json({ error: "Credenciales inválidas o usuario inactivo" })
     }
 
     const user = q.rows[0]
 
+    // Verificar contraseña
     const match = await bcrypt.compare(password, user.password_hash)
     if (!match) {
       return res.status(401).json({ error: "Credenciales inválidas" })
     }
 
-    // Generar JWT (usa una variable de entorno en producción)
+    // Generar JWT
     const payload = {
       id_usuario: user.id_usuario,
       nombre_usuario: user.nombre_usuario,
-      tipo_usuario: user.tipo_usuario
+      tipo_usuario: user.tipo_usuario,
+      email: user.email,
     }
 
-    const secret = process.env.JWT_SECRET || "dev_secret" // cambia en prod
-    const token = jwt.sign(payload, secret, { expiresIn: "8h" })
+   const token = jwt.sign(payload, process.env.JWT_SECRET || "dev_secret", { 
+  expiresIn: "24h" 
+});
 
-    // Devolver user normalizado + token (token también fuera por compatibilidad)
+       const isProduction = process.env.NODE_ENV === 'production';
+    
+    // OPCIÓN 1: Para desarrollo local (localhost:5173 -> localhost:4000)
+    res.cookie('auth_token', token, {
+      httpOnly: true,
+      secure: false, // ← CAMBIA A false para desarrollo
+      sameSite: 'lax', // ← CAMBIA a 'lax' para desarrollo
+      maxAge: 24 * 60 * 60 * 1000,
+      path: '/',
+      domain: 'localhost' // ← OPCIONAL pero ayuda
+    });
+
+    // Actualizar último login
+    await pool.query(
+      "UPDATE usuario SET ultimo_login = NOW() WHERE id_usuario = $1",
+      [user.id_usuario]
+    )
+
+    // ✅ Devolver datos del usuario pero NO el token en el body
     return res.json({
       message: "Login correcto",
       user: {
@@ -146,12 +167,36 @@ export const loginUser = async (req, res) => {
         email: user.email,
         tipo_usuario: user.tipo_usuario,
         nombre_usuario: user.nombre_usuario,
-        token // <-- incrustado en user para que el frontend lo encuentre fácilmente
-      },
-      token
+        esta_activo: user.esta_activo
+      }
+
     })
+
   } catch (err) {
     console.error("Error loginUser:", err)
+    return res.status(500).json({ error: "Error en el servidor" })
+  }
+}
+
+export const logoutUser = async (req, res) => {
+  try {
+
+   const isProduction = process.env.NODE_ENV === 'production';
+    
+    res.clearCookie('auth_token', {
+      path: '/',
+      httpOnly: true,
+      secure: false, // ← Igual que en login
+      sameSite: 'lax',
+      domain: 'localhost'
+    });
+    return res.json({
+      message: "Logout exitoso",
+      success: true
+    })
+
+  } catch (err) {
+    console.error("Error logoutUser:", err)
     return res.status(500).json({ error: "Error en el servidor" })
   }
 }

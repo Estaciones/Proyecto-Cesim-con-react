@@ -1,7 +1,7 @@
 import { api } from "../utils/api";
 
 export const AuthService = {
-  login: async (credentials) => {
+   login: async (credentials) => {
     try {
       const { identifier, password } = credentials;
       const isEmail = identifier.includes("@");
@@ -11,12 +11,10 @@ export const AuthService = {
       };
 
       const response = await api.post("auth/login", payload);
-
-      // Normalizar posible token en root
-      if (response && response.token && response.user) {
-        response.user.token = response.token;
-      }
-
+      
+      // ❌ NO guardar token en localStorage - viene en cookies
+      // localStorage.setItem('token', response.token);
+      
       return response;
     } catch (error) {
       console.error("AuthService.login - Error:", error);
@@ -24,13 +22,22 @@ export const AuthService = {
     }
   },
 
-  logout: () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("profile");
-    localStorage.removeItem("token");
-    return Promise.resolve();
+  logout: async () => {
+    try {
+      // Llamar al backend para limpiar cookies
+      await api.post("auth/logout");
+      
+      // Limpiar localStorage (pero NO el token porque está en cookies)
+      localStorage.removeItem("user");
+      localStorage.removeItem("profile");
+      
+      return Promise.resolve();
+    } catch (error) {
+      console.error("AuthService.logout - Error:", error);
+      throw error;
+    }
   },
-
+  
   getProfile: async (userId) => {
     try {
       const response = await api.get(`profile?id=${userId}`);
